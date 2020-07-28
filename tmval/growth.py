@@ -38,7 +38,6 @@ class Amount:
             t1,
             t2
     ):
-        k = self.k
         effective_rate = (self.val(t=t2) - self.val(t=t1)) / self.val(t=t1)
         return effective_rate
 
@@ -53,6 +52,16 @@ class Amount:
             t2=t2
         )
         return effective_rate
+
+    def get_accumulation(self):
+        k = self.k
+        amt_func = self.func
+
+        def acc_func(t):
+            return amt_func(t, k) / k
+
+        accumulation = Accumulation(f=acc_func)
+        return accumulation
 
 
 class Accumulation(Amount):
