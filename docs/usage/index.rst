@@ -7,5 +7,5 @@ This section contains TmVal usage instructions. The order of topics will loosely
 .. toctree::
    :maxdepth: 2
    
-   growth
+   growth/index
    annuities
