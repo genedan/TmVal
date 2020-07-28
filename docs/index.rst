@@ -3,18 +3,13 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to TmVal's documentation!
+TmVal Documentation
 =================================
+TmVal is a Python package for time value of money computations. It is intended for commercial use, open source development, and as a tool for actuarial students studying for the Financial Mathematics exam.
 
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
-
-
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
+   
+   installation/index
+   usage/index
