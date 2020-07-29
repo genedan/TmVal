@@ -56,5 +56,5 @@ TmVal also comes with a simple interest solver that can be used to solve for mis
 .. ipython:: python
 
    from tmval import get_simple_amt
-   my_amt = get_simple_amt(fv=5.25, interest=.05, n=1)
+   my_amt = get_simple_amt(fv=5.25, pv=5, n=1)
    print(my_amt.interest_rate)
