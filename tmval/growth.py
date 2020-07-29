@@ -104,6 +104,30 @@ class Accumulation(Amount):
     def val(self, t):
         return self.func(t=t)
 
+    def discount_func(self, t):
+        return 1 / self.val(t)
+
+    def future_principal(self, fv, t1, t2):
+        """
+        Finds the principal needed at t1 to get fv at t2
+
+        :param fv: future value
+        :param t1: time of investment
+        :param t2: time of goal
+        :return: amount of money needed at t1 to get fv at t2
+        """
+
+        future_principal = fv * self.discount_func(t2) * self.val(t1)
+
+        return future_principal
+
+    def npv(self, payments: list):
+        discount_func = self.discount_func
+
+        res = npv(payments=payments, discount_func=discount_func)
+
+        return res
+
 
 class SimpleAmt(Amount):
     """
@@ -244,6 +268,11 @@ class CompoundAcc(Accumulation):
             f=self.acc_func
         )
 
+    @property
+    def discount_factor(self):
+        discount_factor = 1 / (1 + self.interest_rate)
+        return discount_factor
+
     def acc_func(self, t):
         return (1 + self.interest_rate) ** t
 
@@ -355,4 +384,22 @@ class TieredTime:
 
 def k_solver(f: Callable, fv=None, t=None):
     res = fv / f(t)
+    return res
+
+
+def interest_from_discount(d):
+    i = d / (1 - d)
+    return i
+
+
+def discount_from_interest(i):
+    d = i / (1 + i)
+    return d
+
+
+def npv(payments: list, discount_func: Callable):
+    factors = [discount_func(x[0]) for x in enumerate(payments)]
+
+    res = sum([a * b for a, b in zip(payments, factors)])
+
     return res
