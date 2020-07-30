@@ -14,6 +14,8 @@ We will start by demonstrating some practical applications concerning simple and
    amount
    accumulation
    interest
+   reminder
    tiered
    discount
    presentval
+   npv
