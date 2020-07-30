@@ -1,0 +1,9 @@
+table.align-center {
+    margin-left: auto;
+    margin-right: auto;
+}
+
+table.right-align {
+    text-align: right
+}
+
