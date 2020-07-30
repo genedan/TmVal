@@ -1,5 +1,11 @@
+"""
+Contains general growth functions implemented as Amount and Accumulation classes.
+The simple and compound interest cases are represented as subclasses SimpleAmt and CompoundAmt, respectively.
+"""
+
 import datetime as dt
 import numpy as np
+import warnings
 
 from typing import Callable
 
@@ -190,6 +196,26 @@ def get_simple_amt(pv=None, fv=None, interest=None, n=None):
     simple_amt = SimpleAmt(k=pv, s=interest)
 
     return simple_amt
+
+
+def simple_solver(pv=None, fv=None, s=None, n=None):
+    """
+        Simple amount solver for when one variable is missing - returns missing value
+        """
+    args = [pv, fv, s, n]
+    if args.count(None) > 1:
+        raise Exception("Only one argument can be missing.")
+
+    if pv is None:
+        res = fv / (1 + n * s)
+    elif fv is None:
+        res = pv * (1 + n * s)
+    elif s is None:
+        res = (fv / pv - 1) / n
+    else:
+        res = (fv / pv - 1) / s
+
+    return res
 
 
 def osi(beg_dt: dt.datetime, end_dt: dt.datetime, frac=True):
@@ -397,9 +423,94 @@ def discount_from_interest(i):
     return d
 
 
-def npv(payments: list, discount_func: Callable):
-    factors = [discount_func(x[0]) for x in enumerate(payments)]
+class Payment:
+    def __init__(
+        self,
+        time,
+        amount,
+        discount_factor
+    ):
+        self.time = time
+        self.amount = amount
+        self.discount_factor = discount_factor
 
-    res = sum([a * b for a, b in zip(payments, factors)])
+
+def create_payments(times: list, amounts: list, discount_factors: list = None, discount_function: Callable = None):
+
+    if not (len(times) == len(amounts)):
+        raise Exception("Times and amounts must be the same length.")
+
+    if discount_factors:
+        if not (len(times) == len(amounts) == len(discount_factors)):
+            raise Exception("Each argument must be the same length.")
+
+    if [discount_factors, discount_function].count(None) == 0:
+        raise Exception("You may supply a list of discount factors, a discount function, but not both.")
+
+    if discount_function:
+        discount_factors = [discount_function(x) for x in times]
+
+    if (discount_factors is None) and (discount_function is None):
+        discount_factors = [None] * len(amounts)
+
+    payments = []
+
+    for time, amount, discount_factor in zip(times, amounts, discount_factors):
+        payment = Payment(
+            time=time,
+            amount=amount,
+            discount_factor=discount_factor
+        )
+        payments.append(payment)
+
+    return payments
+
+
+def npv(payments: list, discount_func: Callable):
+
+    factor_none = [x.discount_factor for x in payments].count(None)
+
+    if (factor_none != len(payments)) and discount_func:
+        warnings.warn("When discount factors are supplied with a discount function, "
+                      "the discount function will override the discount factors.")
+
+    payment_amounts = [x.amount for x in payments]
+
+    payment_times = [x.time for x in payments]
+
+    if discount_func:
+        factors = [discount_func(t) for t in payment_times]
+    else:
+        factors = [x.discount_factor for x in payments]
+
+    res = sum([a * b for a, b in zip(payment_amounts, factors)])
+
+    return res
+
+
+def npv_solver(npval: float = None, payments: list = None, discount_func: Callable = None):
+    """
+
+    :param npval: The net present value.
+    :param payments: A list of payments
+    :param discount_func: A discount function
+    :return: Returns either the npv, a missing payment amount, a missing time of payment, or missing discount factor
+    """
+
+    args = [npval, payments, discount_func]
+    if args.count(None) > 1:
+        raise Exception("Only one argument can be missing.")
+
+    if npval is None:
+        res = npv(payments=payments, discount_func=discount_func)
+
+    # exclude missing payment
+
+    payments_excl_missing = [x for x in payments if x.time is not None]
+    missing_pmt = [x for x in payments if x.time is None].pop()
+    payments_excl_missing_npv = npv(payments=payments_excl_missing, discount_func=discount_func)
+
+    missing_pmt_pv = npval - payments_excl_missing_npv
+    res = np.log(missing_pmt.amount / missing_pmt_pv) / np.log(discount_func(1) ** -1)
 
     return res
