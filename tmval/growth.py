@@ -338,6 +338,28 @@ class TieredBal:
         k: float,
         t: float
     ):
+        jump_times = self.get_jump_times(k=k)
+
+        # find applicable tiers
+        jump_times.insert(0, 0)
+        jump_rates = self.rates[-len(jump_times):]
+        jump_tiers = self.tiers[-len(jump_times):]
+
+        # construct growth function and calculate balance
+        index = len([i for i in jump_times if i <= t]) - 1
+        lower_t = jump_times[index]
+        base_amt = max(jump_tiers[index], k)
+        rate = jump_rates[index]
+        time = t - lower_t
+
+        bal = base_amt * ((1 + rate) ** time)
+
+        return bal
+
+    def get_jump_times(
+        self,
+        k: float,
+    ):
         # determine jump balances and rates
         jump_balances = [i for i in self.tiers if i > k]
         if len(jump_balances) == 0:
@@ -356,21 +378,7 @@ class TieredBal:
             t_base = t_base + jump_increment
             pv = fv
 
-        # find applicable tiers
-        jump_times.insert(0, 0)
-        jump_rates = self.rates[-len(jump_times):]
-        jump_tiers = self.tiers[-len(jump_times):]
-
-        # construct growth function and calculate balance
-        index = len([i for i in jump_times if i <= t]) - 1
-        lower_t = jump_times[index]
-        base_amt = max(jump_tiers[index], k)
-        rate = jump_rates[index]
-        time = t - lower_t
-
-        bal = base_amt * ((1 + rate) ** time)
-
-        return bal
+        return jump_times
 
 
 class TieredTime:
@@ -392,13 +400,13 @@ class TieredTime:
             t: float
     ):
         # find the cumulative tiers that apply at time t
-        jump_times = np.cumsum(self.tiers)
+        jump_times = self.tiers
         jump_times = [i for i in jump_times if i < t]
 
         rates = self.rates[:len(jump_times)]
-        times = self.tiers[:len(jump_times)]
-        times.pop(0)
-        times.append(t - max(jump_times))
+        times = jump_times[:len(jump_times)]
+        times.append(t)
+        times = np.diff(times)
 
         # for each tier that applies, calculate the cumulative balance
         bal = k
