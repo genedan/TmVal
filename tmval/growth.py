@@ -443,7 +443,7 @@ class Payment:
         self.discount_factor = discount_factor
 
 
-def create_payments(times: list, amounts: list, discount_factors: list = None, discount_function: Callable = None):
+def create_payments(times: list, amounts: list, discount_factors: list = None, discount_func: Callable = None):
 
     if not (len(times) == len(amounts)):
         raise Exception("Times and amounts must be the same length.")
@@ -452,13 +452,13 @@ def create_payments(times: list, amounts: list, discount_factors: list = None, d
         if not (len(times) == len(amounts) == len(discount_factors)):
             raise Exception("Each argument must be the same length.")
 
-    if [discount_factors, discount_function].count(None) == 0:
+    if [discount_factors, discount_func].count(None) == 0:
         raise Exception("You may supply a list of discount factors, a discount function, but not both.")
 
-    if discount_function:
-        discount_factors = [discount_function(x) for x in times]
+    if discount_func:
+        discount_factors = [discount_func(x) for x in times]
 
-    if (discount_factors is None) and (discount_function is None):
+    if (discount_factors is None) and (discount_func is None):
         discount_factors = [None] * len(amounts)
 
     payments = []
@@ -474,13 +474,17 @@ def create_payments(times: list, amounts: list, discount_factors: list = None, d
     return payments
 
 
-def npv(payments: list, discount_func: Callable):
+def npv(payments: list, discount_func: Callable = None):
 
     factor_none = [x.discount_factor for x in payments].count(None)
 
     if (factor_none != len(payments)) and discount_func:
         warnings.warn("When discount factors are supplied with a discount function, "
                       "the discount function will override the discount factors.")
+
+    if (factor_none != 0) and discount_func is None:
+        raise Exception("There is at least one missing discount factor. "
+                        "Either supply the missing factors or supply a discount function instead.")
 
     payment_amounts = [x.amount for x in payments]
 
@@ -522,3 +526,40 @@ def npv_solver(npval: float = None, payments: list = None, discount_func: Callab
     res = np.log(missing_pmt.amount / missing_pmt_pv) / np.log(discount_func(1) ** -1)
 
     return res
+
+
+class SimpDiscAmt(Amount):
+
+    def __init__(
+        self,
+        k: float,
+        d: float
+    ):
+        self.principal = k
+        self.discount_rate = d
+
+        Amount.__init__(
+            self,
+            f=self.amt_func,
+            k=k
+        )
+
+    def amt_func(self, k, t):
+        return k / (1 - self.discount_rate * t)
+
+
+class SimpDiscAcc(Accumulation):
+
+    def __init__(
+        self,
+        d: float
+    ):
+        self.discount_rate = d
+
+        Accumulation.__init__(
+            self,
+            f=self.acc_func
+         )
+
+    def acc_func(self, t):
+        return 1 / (1 - self.discount_rate * t)
