@@ -2,13 +2,13 @@
 Interest
 ========================
 
-Suppose we invest :math:`K` at time 0. We define the amount of interest earned between times :math:`t_1` and :math:`t_2` as:
+Suppose we invest :math:`K` at time 0. We define the amount of :term:`interest earned` between times :math:`t_1` and :math:`t_2` as:
 
 .. math::
 
    A_K(t_2) - A_K(t_1).
 
-We define the effective rate of interest for the interval as:
+We define the :term:`effective rate of interest` for the interval as:
 
 .. math::
 
@@ -28,14 +28,14 @@ To examine the effective interest rate for a single time period, the :math:`n`-t
 Examples
 ========================
 
-We can use the **Amount** class to make various interest calculations. For example, assume the following amount function:
+We can use the ``Amount`` class to make various interest calculations. For example, assume the following amount function:
 
 .. math::
    A_K(t) = K(.02t^2 + .02t + 1)
 
 If we invest $5 at time 0, What is the interest earned during the 5th time period?
 
-First lets set up our Amount instance:
+First lets set up our ``Amount`` instance:
 
 .. ipython:: python
 
@@ -46,7 +46,7 @@ First lets set up our Amount instance:
 
    my_amt = Amount(f=f, k=5)
 
-We can use the Amount class's **interest_earned()** method to get the answer:
+We can use the ``Amount`` class's ``interest_earned()`` method to get the answer:
 
 .. ipython:: python
 
@@ -54,7 +54,7 @@ We can use the Amount class's **interest_earned()** method to get the answer:
 
    print(interest)
 
-What is the effective interest rate during the 5th time period? We can use the Amount class's **effective_rate()** method to get the answer:
+What is the effective interest rate during the 5th time period? We can use the ``Amount`` class's ``effective_rate()`` method to get the answer:
 
 .. ipython:: python
 
@@ -62,7 +62,7 @@ What is the effective interest rate during the 5th time period? We can use the A
 
    print(eff_interest_rate_amt)
 
-We can also use the **effective_interval()** method to find the effective rate over a longer interval, say from times 1 to 5:
+We can also use the ``effective_interval()`` method to find the effective rate over a longer interval, say from times 1 to 5:
 
 .. ipython:: python
 
@@ -70,7 +70,7 @@ We can also use the **effective_interval()** method to find the effective rate o
 
    print(eff_interval_rate_amt)
 
-TmVal's **Accumulation** class is a subclass of the **Amount** class. This means that many of the methods that can be used from the Amount class can also be used by the Accumulation class.
+TmVal's ``Accumulation`` class is a subclass of the ``Amount`` class. This means that many of the methods that can be used from the ``Amount`` class can also be used by the ``Accumulation`` class.
 
 Assuming proportionality, we can define an amount function from an accumulation function and then get the effective interest rate for the 5th interval. It should be the same answer as that achieved from the amount function:
 
@@ -86,4 +86,4 @@ Assuming proportionality, we can define an amount function from an accumulation 
 
    print(math.isclose(eff_interest_rate_acc, eff_interest_rate_amt, rel_tol=.0001))
 
-Note that there is some loss of precision due to floating point operations, so we use **isclose()** from the **math** library for the comparison.
+Note that there is some loss of precision due to floating point operations, so we use ``isclose()`` from the ``math`` library for the comparison.

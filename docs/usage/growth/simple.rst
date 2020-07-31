@@ -1,7 +1,7 @@
 ========================
 Simple Interest
 ========================
-Simple interest is a pattern of money growth in which the value of money increases at a linear rate:
+:term:`Simple interest<simple interest>` is a pattern of money growth in which the value of money increases at a linear rate:
 
 .. math::
 
@@ -19,7 +19,7 @@ For quantities of money larger than dollar, we can express growth as:
 
    A_K(t) = K(1 + st)
 
-Where :math:`K` refers to the initial amount, or **principal**. For example, if we start with $5 and an interest rate of 5%, it should grow to $5.25 after one year:
+Where :math:`K` refers to the initial amount, or :term:`principal`. For example, if we start with $5 and an interest rate of 5%, it should grow to $5.25 after one year:
 
 .. math::
 
@@ -28,7 +28,7 @@ Where :math:`K` refers to the initial amount, or **principal**. For example, if 
 Examples
 ========================
 
-Let's repeat the above examples using the TmVal package. Let's start by importing SimpleAmt, which is a class that can be used for simple interest calculations:
+Let's repeat the above examples using the TmVal package. Let's start by importing ``SimpleAmt``, which is a class that can be used for simple interest calculations:
 
 .. ipython:: python
 
@@ -51,7 +51,7 @@ Now, let's change the principal to $5:
 
 The output is 5.25, the same as above.
 
-TmVal also comes with a simple interest solver that can be used to solve for missing inputs. For example, what rate of interest would give us $5.25, if we held $5 for a year?
+TmVal also comes with a simple interest solver, ``get_simple_amt()`` that can be used to solve for missing inputs. For example, what rate of interest would give us $5.25, if we held $5 for a year?
 
 .. ipython:: python
 

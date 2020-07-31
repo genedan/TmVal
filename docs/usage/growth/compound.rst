@@ -2,7 +2,7 @@
 Compound Interest
 ========================
 
-Compound interest is a pattern of money growth in which the value of money increases at a geometric rate:
+:term:`Compound interest<compound interest>` is a pattern of money growth in which the value of money increases at a geometric rate:
 
 .. math::
 
@@ -20,7 +20,7 @@ For quantities of money larger than dollar, we can express growth as:
 
    A_K(t) = K(1 + i)^t
 
-Where :math:`K` refers to the initial amount, or **principal**. For example, if we start with $5 and an interest rate of 5%, it should grow to $5.5125 after two years:
+Where :math:`K` refers to the initial amount, or :term:`principal`. For example, if we start with $5 and an interest rate of 5%, it should grow to $5.5125 after two years:
 
 .. math::
 
@@ -29,7 +29,7 @@ Where :math:`K` refers to the initial amount, or **principal**. For example, if 
 Examples
 ========================
 
-Let's repeat the above examples using the TmVal package. Let's start by importing CompoundAmt, which is a class that can be used for compound interest calculations:
+Let's repeat the above examples using the TmVal package. Let's start by importing ``CompoundAmt``, which is a class that can be used for compound interest calculations:
 
 .. ipython:: python
 
@@ -52,7 +52,7 @@ Now, let's change the principal to $5:
 
 The output is 5.5125, the same as above.
 
-TmVal also comes with a compound interest solver that can be used to solve for missing inputs. For example, what rate of interest would give us $5.5125, if we held $5 for two years?
+TmVal also comes with a compound interest solver, ``compound_solver()``, that can be used to solve for missing inputs. For example, what rate of interest would give us $5.5125, if we held $5 for two years?
 
 .. ipython:: python
 

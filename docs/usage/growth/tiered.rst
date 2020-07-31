@@ -39,7 +39,7 @@ TmVal's :code:`TieredBal` class offers a way to model this type of account. You 
        rates=[.01, .02, .03]
    )
 
-:code:`TieredBal` is a growth pattern that can be supplied to the :code:`Amouunt` class, which you can then use to access its methods. If we invest 18000 today, to what value does it grow after 10 years?
+:code:`TieredBal` is a growth pattern that can be supplied to the :code:`Amount` class, which you can then use to access its methods. If we invest 18000 today, to what value does it grow after 10 years?
 
 .. ipython:: python
 

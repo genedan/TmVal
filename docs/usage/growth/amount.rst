@@ -4,7 +4,7 @@ Amount Functions
 
 Although we have introduced the familiar cases of simple and compound interest, not all growth patterns are linear or geometric. Sometimes a growth pattern might be geometric, cubic, or some arbitrary user-defined pattern.
 
-To accommodate these new patterns, we can define an **amount function**, which specifies how money grows for an arbitrary growth pattern:
+To accommodate these new patterns, we can define an :term:`amount function`, which specifies how money grows for an arbitrary growth pattern:
 
 .. math::
    A_K(t)
@@ -21,7 +21,7 @@ Suppose money exhibits a quadratic growth pattern, specified by the amount funct
 
 If we invest :math:`K=5` at time 0, how much does it grow to at time 5?
 
-TmVal's *Amount* class allows us to model this behavior. To solve the above problem, simply call the class and supply the growth function and principal. First, define the growth function as a Python function that takes the time and principal as arguments:
+TmVal's ``Amount`` class allows us to model this behavior. To solve the above problem, simply call the class and supply the growth function and principal. First, define the growth function as a Python function that takes the time and principal as arguments:
 
 .. ipython:: python
 
@@ -30,7 +30,7 @@ TmVal's *Amount* class allows us to model this behavior. To solve the above prob
    def f(t, k):
        return k * (.05 * (t **2) + .05 * t + 1)
 
-Now supply the growth_function to the Amount class, and call :code:`my_amt.val(5)` to get the answer:
+Now supply the growth function to the ``Amount`` class, and call :code:`my_amt.val(5)` to get the answer:
 
 .. ipython:: python
 
