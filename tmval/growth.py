@@ -443,7 +443,13 @@ class Payment:
         self.discount_factor = discount_factor
 
 
-def create_payments(times: list, amounts: list, discount_factors: list = None, discount_func: Callable = None):
+def create_payments(
+        times: list, amounts: list,
+        discount_factors: list = None,
+        discount_func: Callable = None,
+        interest_rate: float = None,
+        accumulation: Accumulation = None
+) -> list:
 
     if not (len(times) == len(amounts)):
         raise Exception("Times and amounts must be the same length.")
@@ -452,11 +458,20 @@ def create_payments(times: list, amounts: list, discount_factors: list = None, d
         if not (len(times) == len(amounts) == len(discount_factors)):
             raise Exception("Each argument must be the same length.")
 
-    if [discount_factors, discount_func].count(None) == 0:
-        raise Exception("You may supply a list of discount factors, a discount function, but not both.")
+    disc_args = [discount_factors, discount_func, interest_rate, accumulation]
+
+    if disc_args.count(None) != (len(disc_args) - 1):
+        raise Exception("You may supply a list of discount factors, a discount function, "
+                        "an interest rate, an amount object, but only one of these.")
 
     if discount_func:
         discount_factors = [discount_func(x) for x in times]
+
+    if interest_rate is not None:
+        discount_factors = [(1 + interest_rate) ** (-x) for x in times]
+
+    if accumulation:
+        discount_factors = [accumulation.discount_func(x) for x in times]
 
     if (discount_factors is None) and (discount_func is None):
         discount_factors = [None] * len(amounts)
@@ -563,3 +578,46 @@ class SimpDiscAcc(Accumulation):
 
     def acc_func(self, t):
         return 1 / (1 - self.discount_rate * t)
+
+
+class SimpleLoan:
+
+    def __init__(
+        self,
+        principal: float,
+        term: float,
+        discount_amt: float = None,
+        discount_rate: float = None
+    ):
+        if [discount_amt, discount_rate].count(None) == 0:
+            raise Exception("May supply discount amount, discount rate, but not both.")
+
+        if [discount_amt, discount_rate].count(None) == 2:
+            raise Exception("Please supply either a discount amount or rate.")
+
+        self.principal = principal
+        if discount_rate is not None:
+            self.discount_rate = discount_rate
+            self.discount_amt = principal * discount_rate
+        else:
+            self.discount_amt = discount_amt
+            self.discount_rate = discount_amt / principal
+
+        self.amount_available = principal - discount_amt
+        self.term = term
+
+
+    def __call__(
+        self,
+        k: float,
+        t: float
+    ) -> float:
+
+        if not ((t == 0) or (t == self.term)):
+            raise Exception("Simple loan has no meaning outside of origination or termination date.")
+
+        if t == 0:
+            return k - self.discount_amt
+
+        if t == self.term:
+            return k
