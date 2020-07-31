@@ -11,6 +11,7 @@ TmVal is a Python package for time value of money computations. It is intended f
 .. toctree::
    :maxdepth: 3
    :caption: Contents:
+   :titlesonly:
    
    quickstart
    usage/index

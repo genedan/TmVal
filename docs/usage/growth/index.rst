@@ -19,3 +19,4 @@ We will start by demonstrating some practical applications concerning simple and
    discount
    presentval
    npv
+   interest_discount
