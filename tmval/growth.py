@@ -1,7 +1,8 @@
 """
-Contains general growth functions implemented as Amount and Accumulation classes.
+Contains general amount functions implemented as Amount and Accumulation classes.
 The simple and compound interest cases are represented as subclasses SimpleAmt and CompoundAmt, respectively.
 """
+from __future__ import annotations
 
 import datetime as dt
 import numpy as np
@@ -12,8 +13,22 @@ from typing import Callable
 
 class Amount:
     """
-    Accepts an amount growth function and starting principal,
-    can return valuation at time t and effective interest rate on an interval
+    The Amount class is an implementation of the amount function, which describes how much an invested
+    amount of money grows over time.
+
+    The amount function's methods can return things like the valuation of an investment after a
+    specified time, and effective interest and discount rates over an interval.
+
+    The accumulation function, which is a special case of the amount function where k=1, can be extracted
+    from the amount function using the get_accumulation() method.
+
+
+    :param f: Callable, a amount function, which must take the parameters t for time and k for principal.
+    :param k: float, the principal, or initial investment.
+
+    :returns: An amount object, which can be used like an amount function in interest theory.
+    :rtype: Amount
+
     """
     def __init__(
             self,
@@ -23,15 +38,30 @@ class Amount:
         self.func = f
         self.k = k
 
-    def val(self, t):
+    def val(self, t: float) -> float:
+        """
+        Calculates the value of the investment at a point in time.
+
+        :param t: float, evaluation date. The date at which you would like to know the value of the investment.
+        :return: the value of the investment at time t.
+        :rtype: float
+        """
         k = self.k
         return self.func(t=t, k=k)
 
     def interest_earned(
         self,
-        t1,
-        t2
-    ):
+        t1: float,
+        t2: float
+    ) -> float:
+        """
+        Calculates the amount of interest earned over a time period.
+
+        :param t1: float, beginning of the period.
+        :param t2: float, end of the period.
+        :returns: The amount of interest earned over the time period.
+        :rtype: float
+        """
         if t2 < t1:
             raise Exception("t2 must be greater than t1")
         if t1 < 0 or t2 < 0:
@@ -42,16 +72,31 @@ class Amount:
 
     def effective_interval(
             self,
-            t1,
-            t2
-    ):
+            t1: float,
+            t2: float
+    ) -> float:
+        """
+        Calculates the effective interest rate over a time period.
+
+        :param t1: float, the beginning of the period.
+        :param t2: float, the end of the period.
+        :return: the effective interest rate over the time period.
+        :rtype: float
+        """
         effective_rate = (self.val(t=t2) - self.val(t=t1)) / self.val(t=t1)
         return effective_rate
 
     def effective_rate(
             self,
-            n
-    ):
+            n: int
+    ) -> float:
+        """
+        Calculates the effective interest rate for the n-th time period.
+
+        :param n: int, the n-th time period.
+        :return: the effective interest rate for the n-th timer period.
+        :rtype: float
+        """
         t1 = n - 1
         t2 = n
         effective_rate = self.effective_interval(
@@ -62,17 +107,32 @@ class Amount:
 
     def discount_interval(
         self,
-        t1,
-        t2
-    ):
+        t1: float,
+        t2: float
+    ) -> float:
+        """
+        Calculates the effective discount rate over a time period.
+
+        :param t1: float, the beginning of the time period.
+        :param t2: float, the end of the time period.
+        :return: the effective discount rate over the time period.
+        :rtype: float
+        """
 
         discount_rate = (self.val(t=t2) - self.val(t=t1)) / self.val(t=t2)
         return discount_rate
 
     def effective_discount(
         self,
-        n
-    ):
+        n: int
+    ) -> float:
+        """
+        Calculates the effective discount rate for the n-th time period.
+
+        :param n: int, the n-th time period.
+        :return: the effective discount rate for the n-th time period.
+        :rtype: float
+        """
         t1 = n - 1
         t2 = n
         effective_discount = self.discount_interval(
@@ -81,7 +141,13 @@ class Amount:
         )
         return effective_discount
 
-    def get_accumulation(self):
+    def get_accumulation(self) -> Accumulation:
+        """
+        Extracts the :term:`accumulation function`, a special case of the amount function where k=1.
+
+        :return: the accumulation function.
+        :rtype: Accumulation
+        """
         amt_func = self.func
 
         def acc_func(t):
@@ -94,8 +160,12 @@ class Amount:
 class Accumulation(Amount):
     """
     Special case of Amount function where k=1,
-    Accepts an accumulation growth function,
+    Accepts an accumulation amount function,
     can return valuation at time t and effective interest rate on an interval
+
+    :param f: Callable, a function or callable that must take a single parameter, the time t.
+    :return: an accumulation object.
+    :rtype: Accumulation
     """
     def __init__(
         self,
@@ -107,27 +177,57 @@ class Accumulation(Amount):
             k=1
         )
 
-    def val(self, t):
+    def val(self, t: float) -> float:
+        """
+        Calculates the value of the investment at a point in time.
+
+        :param t: float, evaluation date. The date at which you would like to know the value of the investment.
+        :return: the value of the investment at time t.
+        :rtype: float
+        """
         return self.func(t=t)
 
-    def discount_func(self, t):
+    def discount_func(self, t: float) -> float:
+        """
+        The discount function is the reciprocal of the accumulation function. Returns the discount
+        factor at time t, which can be used to get the present value of an investment.
+
+        :param t: the time at which you would like to get the discount factor.
+        :return: the discount factor at time t
+        :rtype: float
+        """
         return 1 / self.val(t)
 
-    def future_principal(self, fv, t1, t2):
+    def future_principal(
+            self,
+            fv: float,
+            t1: float,
+            t2: float
+    ) -> float:
         """
-        Finds the principal needed at t1 to get fv at t2
+        Finds the principal needed at t1 to get fv at t2.
 
-        :param fv: future value
-        :param t1: time of investment
-        :param t2: time of goal
-        :return: amount of money needed at t1 to get fv at t2
+        :param fv: float, future value.
+        :param t1: float, time of investment.
+        :param t2: float, time of goal.
+        :return: float, amount of money needed at t1 to get fv at t2.
+        :rtype: float
         """
 
         future_principal = fv * self.discount_func(t2) * self.val(t1)
 
         return future_principal
 
-    def npv(self, payments: list):
+    def npv(
+            self,
+            payments: list
+    ) -> float:
+        """
+        Returns the net present value of a given list of payments.
+
+        :param payments: a list of payment objects.
+        :return: the net present value of the payments.
+        """
         discount_func = self.discount_func
 
         res = npv(payments=payments, discount_func=discount_func)
@@ -137,7 +237,7 @@ class Accumulation(Amount):
 
 class SimpleAmt(Amount):
     """
-    Simple interest scenario, special case of amount function where growth function is linear
+    Simple interest scenario, special case of amount function where amount function is linear
     """
     def __init__(
             self,
@@ -159,7 +259,7 @@ class SimpleAmt(Amount):
 
 class SimpleAcc(Accumulation):
     """
-    Simple interest scenario, special case of accumulation function where growth function is linear
+    Simple interest scenario, special case of accumulation function where amount function is linear
     """
     def __init__(
             self,
@@ -178,7 +278,7 @@ class SimpleAcc(Accumulation):
 
 def get_simple_amt(pv=None, fv=None, interest=None, n=None):
     """
-    Simple amount solver for when one variable is missing - returns a simple amount growth class
+    Simple amount solver for when one variable is missing - returns a simple amount amount class
     """
     args = [pv, fv, interest, n]
     if args.count(None) > 1:
@@ -259,7 +359,7 @@ def bankers_rule(beg_dt: dt.datetime, end_dt: dt.datetime, frac=True):
 
 class CompoundAmt(Amount):
     """
-    Compound interest scenario, special case of amount function where growth function is geometric
+    Compound interest scenario, special case of amount function where amount function is geometric
     """
     def __init__(
             self,
@@ -281,7 +381,7 @@ class CompoundAmt(Amount):
 
 class CompoundAcc(Accumulation):
     """
-    Compound interest scenario, special case of accumulation function where growth function is geometric
+    Compound interest scenario, special case of accumulation function where amount function is geometric
     """
     def __init__(
             self,
@@ -345,7 +445,7 @@ class TieredBal:
         jump_rates = self.rates[-len(jump_times):]
         jump_tiers = self.tiers[-len(jump_times):]
 
-        # construct growth function and calculate balance
+        # construct amount function and calculate balance
         index = len([i for i in jump_times if i <= t]) - 1
         lower_t = jump_times[index]
         base_amt = max(jump_tiers[index], k)
