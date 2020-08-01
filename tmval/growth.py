@@ -23,10 +23,12 @@ class Amount:
     from the amount function using the get_accumulation() method.
 
 
-    :param f: Callable, a amount function, which must take the parameters t for time and k for principal.
-    :param k: float, the principal, or initial investment.
+    :param f: a amount function, which must take the parameters t for time and k for principal.
+    :type f: Callable
+    :param k: the principal, or initial investment.
+    :type k: float
 
-    :returns: An amount object, which can be used like an amount function in interest theory.
+    :return: An amount object, which can be used like an amount function in interest theory.
     :rtype: Amount
 
     """
@@ -42,7 +44,8 @@ class Amount:
         """
         Calculates the value of the investment at a point in time.
 
-        :param t: float, evaluation date. The date at which you would like to know the value of the investment.
+        :param t:evaluation date. The date at which you would like to know the value of the investment.
+        :type t: float
         :return: the value of the investment at time t.
         :rtype: float
         """
@@ -57,9 +60,11 @@ class Amount:
         """
         Calculates the amount of interest earned over a time period.
 
-        :param t1: float, beginning of the period.
-        :param t2: float, end of the period.
-        :returns: The amount of interest earned over the time period.
+        :param t1: beginning of the period.
+        :type t1: float
+        :param t2: end of the period.
+        :type t2: float
+        :return: The amount of interest earned over the time period.
         :rtype: float
         """
         if t2 < t1:
@@ -78,8 +83,10 @@ class Amount:
         """
         Calculates the effective interest rate over a time period.
 
-        :param t1: float, the beginning of the period.
-        :param t2: float, the end of the period.
+        :param t1: the beginning of the period.
+        :type t1: float
+        :param t2: the end of the period.
+        :type t2: float
         :return: the effective interest rate over the time period.
         :rtype: float
         """
@@ -93,7 +100,8 @@ class Amount:
         """
         Calculates the effective interest rate for the n-th time period.
 
-        :param n: int, the n-th time period.
+        :param n: the n-th time period.
+        :type n: int
         :return: the effective interest rate for the n-th timer period.
         :rtype: float
         """
@@ -113,8 +121,10 @@ class Amount:
         """
         Calculates the effective discount rate over a time period.
 
-        :param t1: float, the beginning of the time period.
-        :param t2: float, the end of the time period.
+        :param t1: the beginning of the time period.
+        :type t1: float
+        :param t2: the end of the time period.
+        :type t2: float
         :return: the effective discount rate over the time period.
         :rtype: float
         """
@@ -129,7 +139,8 @@ class Amount:
         """
         Calculates the effective discount rate for the n-th time period.
 
-        :param n: int, the n-th time period.
+        :param n: the n-th time period.
+        :type n: int
         :return: the effective discount rate for the n-th time period.
         :rtype: float
         """
@@ -163,7 +174,8 @@ class Accumulation(Amount):
     Accepts an accumulation amount function,
     can return valuation at time t and effective interest rate on an interval
 
-    :param f: Callable, a function or callable that must take a single parameter, the time t.
+    :param f: a function or callable that must take a single parameter, the time t.
+    :type f: Callable
     :return: an accumulation object.
     :rtype: Accumulation
     """
@@ -181,7 +193,8 @@ class Accumulation(Amount):
         """
         Calculates the value of the investment at a point in time.
 
-        :param t: float, evaluation date. The date at which you would like to know the value of the investment.
+        :param t: evaluation date. The date at which you would like to know the value of the investment.
+        :type t: float
         :return: the value of the investment at time t.
         :rtype: float
         """
@@ -193,6 +206,7 @@ class Accumulation(Amount):
         factor at time t, which can be used to get the present value of an investment.
 
         :param t: the time at which you would like to get the discount factor.
+        :type t: float
         :return: the discount factor at time t
         :rtype: float
         """
@@ -207,10 +221,13 @@ class Accumulation(Amount):
         """
         Finds the principal needed at t1 to get fv at t2.
 
-        :param fv: float, future value.
-        :param t1: float, time of investment.
-        :param t2: float, time of goal.
-        :return: float, amount of money needed at t1 to get fv at t2.
+        :param fv: future value.
+        :type fv: float
+        :param t1: time of investment.
+        :type t1: float
+        :param t2: time of goal.
+        :type t2: float
+        :return: amount of money needed at t1 to get fv at t2.
         :rtype: float
         """
 
@@ -226,6 +243,7 @@ class Accumulation(Amount):
         Returns the net present value of a given list of payments.
 
         :param payments: a list of payment objects.
+        :type payments: list
         :return: the net present value of the payments.
         """
         discount_func = self.discount_func
@@ -237,7 +255,14 @@ class Accumulation(Amount):
 
 class SimpleAmt(Amount):
     """
-    Simple interest scenario, special case of amount function where amount function is linear
+    The ``SimpleAmt`` class is a subclass of the :class:`Amount` class, where the amount function is linear.
+
+    :param k: the principal, or initial investment amount.
+    :type k: float
+    :param s: the interest rate.
+    :type s: float
+    :return: a SimpleAmt object
+    :rtype: SimpleAmt
     """
     def __init__(
             self,
@@ -253,13 +278,34 @@ class SimpleAmt(Amount):
             k=k
         )
 
-    def amt_func(self, k, t):
+    def amt_func(self, k: float, t: float) -> float:
+        """
+        The amount function of the :class:`SimpleAmt` class.
+        Automatically applied to the :class:`Amount` class
+        by providing a linear growth function, instead of a user-defined one.
+
+        :param k: the principal, or initial investment.
+        :type k: float
+        :param t: the time as-of time for the valuation.
+        :type t: float
+        :return: the value of k at time t, invested at time 0.
+        :rtype: float
+        """
+
         return k * (1 + self.interest_rate * t)
 
 
 class SimpleAcc(Accumulation):
     """
-    Simple interest scenario, special case of accumulation function where amount function is linear
+    The ``SimpleAcc`` class is a subclass of the :class:`Accumulation` class where the amount function is linear,
+    i.e., the simple interest scenario. It can also be thought of as a special case of :class:`SimpleAmt` where
+    k=1, although technically it inherits from :class:`Accumulation` directly.
+
+    :param s: the interest rate
+    :type s: float
+    :return: a SimpleAcc object
+    :rtype: SimpleAcc
+
     """
     def __init__(
             self,
@@ -272,7 +318,17 @@ class SimpleAcc(Accumulation):
             f=self.acc_func
         )
 
-    def acc_func(self, t):
+    def acc_func(self, t: float) -> float:
+        """
+        The accumulation function of the :class:`SimpleAcc` class.
+        Automatically applied to the :class:`Accumulation` class
+        by providing a linear growth function, instead of a user-defined one.
+
+        :param t: the time as-of time for the valuation.
+        :type t: float
+        :return: the value of 1 unit of currency at time t, invested at time 0.
+        :rtype: float
+        """
         return 1 + self.interest_rate * t
 
 
@@ -286,8 +342,6 @@ def get_simple_amt(pv=None, fv=None, interest=None, n=None):
 
     if pv is None:
         pv = fv / (1 + n * interest)
-    elif fv is None:
-        fv = pv * (1 + n * interest)
     elif interest is None:
         interest = (fv / pv - 1) / n
     else:
@@ -300,8 +354,8 @@ def get_simple_amt(pv=None, fv=None, interest=None, n=None):
 
 def simple_solver(pv=None, fv=None, s=None, n=None):
     """
-        Simple amount solver for when one variable is missing - returns missing value
-        """
+    Simple amount solver for when one variable is missing - returns missing value
+    """
     args = [pv, fv, s, n]
     if args.count(None) > 1:
         raise Exception("Only one argument can be missing.")
@@ -403,7 +457,7 @@ class CompoundAcc(Accumulation):
         return (1 + self.interest_rate) ** t
 
 
-def compound_solver(pv=None, fv=None, i=None, t=None):
+def compound_solver(pv=None, fv=None, i=None, t=None, m=None, use_apr: bool = False):
 
     args = [pv, fv, i, t]
     if args.count(None) > 1:
@@ -414,7 +468,11 @@ def compound_solver(pv=None, fv=None, i=None, t=None):
     elif fv is None:
         res = pv * ((1 + i) ** t)
     elif i is None:
+        # get the effective rate first
         res = ((fv / pv) ** (1 / t)) - 1
+        # convert to nominal if use_apr is true
+        if use_apr:
+            res = nominal_from_eff(i=res, m=m)
     else:
         res = np.log(fv / pv) / np.log(1 + i)
 
@@ -489,10 +547,15 @@ class TieredTime:
     def __init__(
             self,
             tiers: list,
-            rates: list
+            rates: list,
+            frequencies: list = None,
+            use_apr: bool = False
     ):
         self.tiers = tiers
-        self.rates = rates
+        if use_apr:
+            self.rates = [apy(x, m) for x, m in zip(rates, frequencies)]
+        else:
+            self.rates = rates
 
     def __call__(
             self,
@@ -560,7 +623,7 @@ def create_payments(
 
     disc_args = [discount_factors, discount_func, interest_rate, accumulation]
 
-    if disc_args.count(None) != (len(disc_args) - 1):
+    if disc_args.count(None) < (len(disc_args) - 1):
         raise Exception("You may supply a list of discount factors, a discount function, "
                         "an interest rate, an amount object, but only one of these.")
 
@@ -627,9 +690,6 @@ def npv_solver(npval: float = None, payments: list = None, discount_func: Callab
     args = [npval, payments, discount_func]
     if args.count(None) > 1:
         raise Exception("Only one argument can be missing.")
-
-    if npval is None:
-        res = npv(payments=payments, discount_func=discount_func)
 
     # exclude missing payment
 
@@ -706,7 +766,6 @@ class SimpleLoan:
         self.amount_available = principal - discount_amt
         self.term = term
 
-
     def __call__(
         self,
         k: float,
@@ -721,3 +780,82 @@ class SimpleLoan:
 
         if t == self.term:
             return k
+
+
+class CompDiscAmt(Amount):
+
+    def __init__(
+        self,
+        k: float,
+        d: float
+    ):
+        self.principal = k
+        self.discount_rate = d
+
+        Amount.__init__(
+            self,
+            f=self.amt_func,
+            k=k
+        )
+
+    def amt_func(self, k, t):
+        return k * (1 - self.discount_rate) ** (-t)
+
+
+class CompDiscAcc(Accumulation):
+
+    def __init__(
+        self,
+        d: float
+    ):
+        self.discount_rate = d
+
+        Accumulation.__init__(
+            self,
+            f=self.acc_func
+         )
+
+    def acc_func(self, t):
+        return (1 - self.discount_rate) ** (-t)
+
+
+def effective_from_nominal(im: float, m: int) -> float:
+
+    return (1 + im / m) ** m - 1
+
+
+def nominal_from_eff(i: float, m: int) -> float:
+
+    return m * ((1 + i) ** (1 / m) - 1)
+
+
+def apy(im: float, m: int) -> float:
+    """
+    An alias for :function:`effective_from_nominal`. Returns annual percentage yield, or
+    annual effective yield (APY), given a nominal rate of interest and compounding frequency.
+
+    :param im: the nominal rate of interest
+    :type im: float
+    :param m: the compounding frequency, i.e., compounded m times per year
+    :type m: int
+    :return: the annual percentage yield, or annual effective yield (APY)
+    :rtype: float
+    """
+
+    return effective_from_nominal(im=im, m=m)
+
+
+def apr(i: float, m: int) -> float:
+    """
+        An alias for :function:`nominal_from_eff`. Returns annual percentage rate, or
+        nominal interest rate (APR), given an effective rate of interest and compounding frequency
+        of the desired nominal rate.
+
+        :param i: the effective rate of interest
+        :type i: float
+        :param m: the desired compounding frequency, i.e., compounded m times per year
+        :type m: int
+        :return: the annual percentage rate, or nominal rate of interest (APR)
+        :rtype: float
+        """
+    return nominal_from_eff(i=i, m=m)
