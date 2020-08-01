@@ -29,13 +29,76 @@ author = 'Gene Dan, FCAS, MAAA, CSPA'
 # ones.
 
 import sphinx_rtd_theme
+import os
+from os.path import relpath, dirname
+import sys
+import inspect
+
+
+sys.path.insert(0, os.path.abspath('..'))
+print(sys.path)
+import tmval
+
 extensions = [
     "sphinx_rtd_theme", 
     "sphinx.ext.imgmath", 
     "IPython.sphinxext.ipython_console_highlighting",
     "IPython.sphinxext.ipython_directive",
-    "sphinx.ext.autodoc"
+    "sphinx.ext.autodoc",
+    "sphinx.ext.linkcode"
 ]
+
+def linkcode_resolve(domain, info):
+    """
+    Determine the URL corresponding to Python object
+    """
+    if domain != 'py':
+        return None
+
+    modname = info['module']
+    fullname = info['fullname']
+
+    submod = sys.modules.get(modname)
+    if submod is None:
+        return None
+
+    obj = submod
+    for part in fullname.split('.'):
+        try:
+            obj = getattr(obj, part)
+        except Exception:
+            return None
+
+    # strip decorators, which would resolve to the source of the decorator
+    # possibly an upstream bug in getsourcefile, bpo-1764286
+    try:
+        unwrap = inspect.unwrap
+    except AttributeError:
+        pass
+    else:
+        obj = unwrap(obj)
+
+    try:
+        fn = inspect.getsourcefile(obj)
+    except Exception:
+        fn = None
+    if not fn:
+        return None
+
+    try:
+        source, lineno = inspect.getsourcelines(obj)
+    except Exception:
+        lineno = None
+
+    if lineno:
+        linespec = "#L%d-L%d" % (lineno, lineno + len(source) - 1)
+    else:
+        linespec = ""
+        
+    fn = relpath(fn, start=dirname(tmval.__file__))
+        
+    return "https://github.com/genedan/TmVal/blob/master/tmval/%s%s" % (
+        fn, linespec)
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
