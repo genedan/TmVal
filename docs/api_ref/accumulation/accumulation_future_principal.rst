@@ -2,4 +2,4 @@
 tmval.Accumulation.future_principal
 ===================================
 
-.. autofunction:: tmval.Accumulation.future_principal
+.. automethod:: tmval.growth.Accumulation.future_principal

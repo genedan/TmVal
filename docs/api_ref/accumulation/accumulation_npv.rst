@@ -2,4 +2,4 @@
 tmval.Accumulation.npv
 ===================================
 
-.. autofunction:: tmval.Accumulation.npv
+.. automethod:: tmval.growth.Accumulation.npv

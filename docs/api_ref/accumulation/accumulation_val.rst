@@ -2,4 +2,4 @@
 tmval.Accumulation.val
 ===================================
 
-.. autofunction:: tmval.Accumulation.val
+.. automethod:: tmval.growth.Accumulation.val

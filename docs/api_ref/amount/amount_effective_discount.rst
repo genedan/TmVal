@@ -2,4 +2,4 @@
 tmval.Amount.effective_discount
 ===============================
 
-.. autofunction:: tmval.Amount.effective_discount
+.. automethod:: tmval.growth.Amount.effective_discount
