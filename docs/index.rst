@@ -15,5 +15,5 @@ TmVal is a Python package for time value of money computations. It is intended f
    
    quickstart
    usage/index
-   coderef/index
+   api_ref/index
    glossary

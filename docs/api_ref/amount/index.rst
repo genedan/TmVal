@@ -2,7 +2,7 @@
 Amount
 =============
 
-.. autoclass:: tmval.Amount
+.. autoclass:: tmval.growth.Amount
 
 .. toctree::
    :hidden:
@@ -14,3 +14,5 @@ Amount
    amount_discount_interval
    amount_effective_discount
    amount_get_accumulation
+
+

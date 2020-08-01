@@ -2,7 +2,7 @@
 Accumulation
 ============
 
-.. autoclass:: tmval.Accumulation
+.. autoclass:: tmval.growth.Accumulation
 
 .. toctree::
    :hidden:
@@ -11,3 +11,4 @@ Accumulation
    accumulation_discount_func
    accumulation_future_principal
    accumulation_npv
+
