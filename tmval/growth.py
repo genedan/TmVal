@@ -599,6 +599,12 @@ def compound_solver(
     :rtype: float
     """
 
+    if use_apr and m is None:
+        raise Exception("A compounding frequency must be supplied in APR mode.")
+
+    if m and not use_apr:
+        raise Exception("Compounding frequency is only relevant in APR mode.")
+
     growth_rate = [i, delta]
     if growth_rate.count(None) == 0:
         raise Exception("You can't supply both i and delta at the same time.")
