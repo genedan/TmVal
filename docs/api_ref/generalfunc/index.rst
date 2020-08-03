@@ -20,6 +20,14 @@ This section documents standalone functions that do not belong to a class.
    npv
    npv_solver
    effective_from_nominal
-   nominal_from_eff
+   effective_from_nominal_disc
    apy
    apr
+   eff_int_from_eff_int
+   nom_int_from_eff_int
+   eff_disc_from_eff_int
+   nom_disc_from_eff_int
+   eff_int_from_eff_disc
+   eff_disc_from_eff_disc
+   nom_int_from_eff_disc
+   nom_disc_from_eff_disc

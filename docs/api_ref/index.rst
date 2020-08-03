@@ -21,3 +21,5 @@ API Reference
    simpleloan/index
    compdiscamt/index
    compdiscacc/index
+   nominalint/index
+   nominaldisc/index
