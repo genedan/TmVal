@@ -4,6 +4,7 @@
 Time Value of Money
 
 ### Introduction
+[Documentation](https://genedan.com/tmval/docs) | [Development Blog](https://genedan.com) | [PyPI](https://pypi.org/project/tmval/)
 
 TmVal is a package that provides tools for the valuation of various financial instruments (annutities, bonds).
 
@@ -19,45 +20,57 @@ or
 
 ```
 git clone https://github.com/genedan/TmVal
+cd TmVal
+python3 -m setup sdist bdist_wheel
+cd dist
+sudo pip3 install tmval*
 ```
 
 ### Examples
 
-Define an amount function that pays 25% simple interest per period:
+Suppose we have a nominal discount rate of d<sup>(12)</sup> = .06 compounded monthly. What is the equivalent interest rate compounded quarterly?
 
-```
-import tmval
+```python
+from tmval import convert_rate, NominalDisc
 
-def f(k, t):
-    return k + 250 * t
+nom_d = NominalDisc(dm=.06, m=12)
 
-my_amt = tmval.Amount(f, k=1000)
-```
-Check the value at time t=4
-```
-my_amt.val(t=4)
-Out[3]: 2000
-```
+nom_i = convert_rate(
+    nom_d=nom_d, 
+    intdisc='interest', 
+    effnom='nominal', 
+    freq=4
+)
 
-Check the interest earned during the first 5 periods:
+print(nom_i)
 
-```
-my_amt.interest_earned(t1=0, t2=5)
-Out[4]: 1250
+out:
+Nominal interest rate: 0.06060503776426174
+Compounding Frequency: 4
 ```
 
-Check the interest rate between times t=0 and t=1:
+Suppose we have the following tiered investment account with the following interest rate schedule. This means the account pays 1% if the balance is below 10,000. Once it reaches 10,000, it pays 2%, and beyond 20,000, it pays 3%.
 
-```
-my_amt.effective_rate(1)
-Out[6]: 0.25
-```
+Required Minimum Balance | Interest Rate 
+------------------------------------------
+0|1%
+10,000|2%
+20,000| 3%
+ 
+If we invested 5,000 today and made no further contributions, at what times would we expect to reach 2% and 3% interest?
 
-The above example can also be constructed with a special subclass, SimpleAmt, representing the simple interest amount function:
+```python
+from tmval import Amount, TieredBal
 
+my_tiered_bal = TieredBal(
+    tiers=[0, 10000, 20000],
+    rates=[.01, .02, .03]
+)
+
+my_amt = Amount(f=my_tiered_bal, k=18000)
+
+print(my_amt.val(10))
+
+out:
+22966.846915945713
 ```
-my_simple = tmval.SimpleAmt(k=1000, s=.25)
-my_simple.val(t=4)
-my_simple.interest_earned(t1=0, t2=5)
-my_simple.effective_rate(1)
-``` 
