@@ -69,5 +69,6 @@ my_tiered_bal = TieredBal(
 
 print(my_tiered_bal.get_jump_times(k=5000))
 
+out:
 [69.66071689357483, 104.66350567472134]
 ```
