@@ -4,6 +4,9 @@ Amount
 
 .. autoclass:: tmval.growth.Amount
 
+.. autosummary::
+
+
 .. toctree::
    :hidden:
 

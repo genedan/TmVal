@@ -36,6 +36,9 @@ Glossary
 
          i_{[t_1, t_2]} = \frac{a(t_2) - a(t_1)}{a(t_1)}
 
+   force of interest
+      The limit of the nominal interest or discount rate as the compounding frequency approaches infinity.
+
    growth
       The change in the value of money over time.
 

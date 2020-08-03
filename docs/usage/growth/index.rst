@@ -23,3 +23,4 @@ We will start by demonstrating some practical applications concerning simple and
    npv
    apy_apr
    interest_conversions
+   force_of_interest
