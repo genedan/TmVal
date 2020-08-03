@@ -1,3 +1,66 @@
 ===============================
 Interest-Discount Relationships
 ===============================
+
+The relationship between interest rates and discount rates can be expressed with a variety of equations. One thing to keep in mind is that if we borrow a dollar at time :math:`t_1` a discount rate of :math:`d`, we will receive :math:`(1-d)` dollars today.
+
+If we were to hold invest that dollar for a year at the interest rate :math:`i`, it would grow to:
+
+.. math::
+
+   (1 -d)(1 + i) = 1.
+
+This relationship can be generalized to apply between two time periods, :math:`t_1` and :math:`t_2`:
+
+.. math::
+
+   1 = (1 + i_{[t_1, t_2]})(1 - d_{[t_1, t_2]}).
+
+In the age of hand calculations, several other equations have been useful:
+
+.. math::
+
+   i_{[t_1, t_2]} &= \frac{d_{[t_1, t_2]}}{1-d_{[t_1, t_2]}}\\
+
+   d_{[t_1, t_2]} &= \frac{i_{[t_1, t_2]}}{1 + i_{[t_1, t_2]}}\\
+
+   1 &= (1 + i_n)(1 - d_n)\\
+
+   i_n &= \frac{d_n}{1 - d_n}\\
+
+   d_n &= \frac{i_n}{1 + i_n} \\
+
+   i &= \frac{d}{1-d} \\
+
+   i &= \frac{1}{1-d} - 1 \\
+
+   d &= \frac{i}{1 + i} \\
+
+   d &= 1 - \frac{1}{1 + i}
+
+Examples
+=========
+
+TmVal provides built-in functions to convert interest rates to discount rates and vice-versa. These are simple functions, but are very useful as they tend to be embedded in more complex financial instruments.
+
+Suppose the interest rate is 5%, what is the discount rate? We can use the function, :func:`.discount_from_interest`:
+
+.. ipython:: python
+
+   from tmval import discount_from_interest
+
+   i = .05
+
+   d = discount_from_interest(i=.05)
+
+   print(d)
+
+Using :func:`.interest_from_discount`, we can convert the discount rate back to an interest rate:
+
+.. ipython:: python
+
+   from tmval import interest_from_discount
+
+   i = interest_from_discount(d=d)
+
+   print(i)

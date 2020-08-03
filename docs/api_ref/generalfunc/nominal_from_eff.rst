@@ -1,5 +1,5 @@
 ============================
-tmval.nominal_from_eff
+tmval.nom_int_from_eff_int
 ============================
 
-.. autofunction:: tmval.growth.nominal_from_eff
+.. autofunction:: tmval.growth.nom_int_from_eff_int
