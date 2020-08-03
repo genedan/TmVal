@@ -200,17 +200,22 @@ class Accumulation(Amount):
         """
         return self.func(t=t)
 
-    def discount_func(self, t: float) -> float:
+    def discount_func(self, t: float, fv: float = None) -> float:
         """
         The discount function is the reciprocal of the accumulation function. Returns the discount
         factor at time t, which can be used to get the present value of an investment.
 
         :param t: the time at which you would like to get the discount factor.
         :type t: float
+        :param fv: float: the future value. Assumed to be 1 if not provided.
+        :type fv: float, optional
         :return: the discount factor at time t
         :rtype: float
         """
-        return 1 / self.val(t)
+        if fv is None:
+            fv = 1
+
+        return fv / self.val(t)
 
     def future_principal(
             self,
@@ -601,7 +606,7 @@ def compound_solver(
         res = ((fv / pv) ** (1 / t)) - 1
         # convert to nominal if use_apr is true
         if use_apr:
-            res = nominal_from_eff_int(i=res, m=m)
+            res = nom_int_from_eff_int(i=res, new_m=m)
     else:
         res = np.log(fv / pv) / np.log(1 + i)
 
@@ -1214,22 +1219,26 @@ def effective_from_nominal_int(
     return (1 + im / m) ** m - 1
 
 
-def nominal_from_eff_int(i: float, m: float) -> NominalInt:
-    """
-    A nominal/effective interest rate converter. Given an effective interest rate and desired compounding frequency, \
-    returns the nominal interest rate.
+def effective_from_nominal_disc(
+        nom: NominalDisc = None,
+        dm: float = None,
+        m: float = None
+):
 
-    :param i: the effective interest rate.
-    :type i: float
-    :param m: the desired compounding frequency.
-    :type m: float
-    :return: the nominal interest rate.
-    :rtype: NominalInt
-    """
+    if [dm, m].count(None) != 2 and [dm, m].count(None) > 0 and nom is None:
+        raise Exception("When supplying the nominal discount rate as components, you must supply both the "
+                        "nominal rate and compounding frequency, or you may supply a NominalDisc object instead.")
 
-    im = m * ((1 + i) ** (1 / m) - 1)
+    if nom is not None and [dm, m].count(None) != 2:
+        raise Exception("You may supply a NominalDisc object, the components of a nominal discount rate, but not both.")
 
-    return NominalInt(im=im, m=m)
+    if nom is not None:
+        dm = nom.val
+        m = nom.m
+
+    d = 1 - (1 - dm / m) ** m
+
+    return d
 
 
 def apy(im: float, m: float) -> float:
@@ -1261,7 +1270,7 @@ def apr(i: float, m: float) -> NominalInt:
     :return: the annual percentage rate, or nominal rate of interest (APR)
     :rtype: float
     """
-    return nominal_from_eff_int(i=i, m=m)
+    return nom_int_from_eff_int(i=i, new_m=m)
 
 
 class NominalInt:
@@ -1293,15 +1302,119 @@ class NominalDisc:
         return "Nominal discount rate: " + str(self.val) + "\nCompounding Frequency: " + str(self.m)
 
 
-def convert_effective_int(
+# conversion formulas
+
+def eff_int_from_eff_int(
         i: float,
-        t: float,
+        old_t: float,
         new_t: float
 ):
-    one_year_rate = compound_solver(pv=1, fv=1 + i, t=t)
-    new_i = (1 + one_year_rate) ** new_t - 1
+    # convert i to yearly effective if it is not already
+    if old_t is not None:
+        i = (1 + i) ** (1 / old_t) - 1
 
-    return new_i
+    if new_t is not None:
+        i = (1 + i) ** new_t - 1
+
+    return i
+
+
+def nom_int_from_eff_int(
+        i: float,
+        new_m: float,
+        old_t: float = None
+) -> NominalInt:
+    """
+    A nominal/effective interest rate converter. Given an effective interest rate and desired compounding frequency, \
+    returns the nominal interest rate.
+
+    :param i: the effective interest rate.
+    :type i: float
+    :param new_m: the desired compounding frequency.
+    :type new_m: float,
+    :param old_t: the interval of the effective interest rate. Assumed to be 1 if not provided.
+    :type old_t: float, optional
+    :return: the nominal interest rate.
+    :rtype: NominalInt
+    """
+    # convert i to yearly effective if it is not already
+    if old_t is not None:
+        i = eff_int_from_eff_int(i=i, old_t=old_t, new_t=1)
+
+    im = new_m * ((1 + i) ** (1 / new_m) - 1)
+
+    return NominalInt(im=im, m=new_m)
+
+
+def eff_disc_from_eff_int(
+        i: float,
+        old_t: float = None,
+        new_t: float = None
+) -> float:
+
+    # convert i to yearly effective if it is not already
+    if old_t is not None:
+        i = eff_int_from_eff_int(i=i, old_t=old_t, new_t=1)
+
+    d = discount_from_interest(i=i)
+
+    # assume new interval is 1 if not specified
+    if new_t is not None:
+        d = eff_disc_from_eff_disc(d=d, old_t=1, new_t=new_t)
+
+    return d
+
+
+def nom_disc_from_eff_int(
+        i: float,
+        m: float,
+        old_t: float = None
+
+) -> NominalDisc:
+    # convert i to yearly effective if it is not already
+    if old_t is not None:
+        i = eff_int_from_eff_int(i=i, old_t=old_t, new_t=1)
+
+    d = discount_from_interest(i)
+
+    nom = nom_disc_from_eff_disc(d=d, m=m)
+
+    return nom
+
+
+def eff_int_from_eff_disc(
+        d: float,
+        old_t: float = None,
+        new_t: float = None
+) -> float:
+    # convert d to yearly effective if it is not already
+    if old_t is not None:
+        d = eff_disc_from_eff_disc(d=d, old_t=old_t, new_t=1)
+
+    i = interest_from_discount(d)
+
+    # convert to new interval if given
+    if new_t is not None:
+        i = eff_int_from_eff_int(i=i, old_t=1, new_t=new_t)
+
+    return i
+
+
+def nom_int_from_eff_disc(
+        d: float,
+        m: float,
+        old_t: float = None
+) -> NominalInt:
+
+    # convert d to yearly effective if it is not already
+    if old_t is not None:
+        d = eff_disc_from_eff_disc(d=d, old_t=old_t, new_t=1)
+
+    i = interest_from_discount(d=d)
+
+    im = nom_int_from_eff_int(i=i, new_m=m)
+
+    return im
 
 
 def eff_disc_from_eff_disc(
@@ -1317,32 +1430,16 @@ def eff_disc_from_eff_disc(
     return new_d
 
 
-def effective_from_nominal_disc(
-        nom: NominalDisc = None,
-        dm: float = None,
-        m: float = None
-):
-
-    if [dm, m].count(None) != 2 and [dm, m].count(None) > 0 and nom is None:
-        raise Exception("When supplying the nominal discount rate as components, you must supply both the "
-                        "nominal rate and compounding frequency, or you may supply a NominalDisc object instead.")
-
-    if nom is not None and [dm, m].count(None) != 2:
-        raise Exception("You may supply a NominalDisc object, the components of a nominal discount rate, but not both.")
-
-    if nom is not None:
-        dm = nom.val
-        m = nom.m
-
-    d = 1 - (1 - dm / m) ** m
-
-    return d
-
-
-def nominal_from_effective_disc(
+def nom_disc_from_eff_disc(
         d: float,
-        m: float
+        m: float,
+        old_t: float = None
 ):
+    # convert d to yearly effective if it is not already
+
+    if old_t is not None:
+        d = eff_disc_from_eff_disc(d=d, old_t=old_t, new_t=1)
+
     dm = m * (1 - (1 - d) ** (1 / m))
 
     nom = NominalDisc(dm=dm, m=m)
@@ -1350,35 +1447,52 @@ def nominal_from_effective_disc(
     return nom
 
 
-def nom_int_from_nom_disc(
-        nom_d: NominalDisc
+def eff_int_from_nom_int(
+        nom: NominalInt,
+        new_t: float = None
+):
+    # get yearly rate first
+    i = effective_from_nominal_int(nom=nom)
+
+    if new_t is not None:
+        i = eff_int_from_eff_int(i=i, old_t=1, new_t=new_t)
+
+    return i
+
+
+def nom_int_from_nom_int(
+        nom: NominalInt,
+        new_m: float
 ) -> NominalInt:
-    m = nom_d.m
-    rate = interest_from_discount(d=nom_d.val)
-    im = rate * m
 
-    nom_int = NominalInt(im=im, m=m)
+    i = effective_from_nominal_int(nom=nom)
 
-    return nom_int
+    new_nom = nom_int_from_eff_int(i=i, new_m=new_m)
+
+    return new_nom
+
+
+def eff_disc_from_nom_int(
+    nom: NominalInt,
+    new_t: float = None
+) -> float:
+
+    i = effective_from_nominal_int(nom=nom)
+    d = discount_from_interest(i=i)
+
+    if new_t is not None:
+        d = eff_disc_from_eff_disc(d=d, old_t=1, new_t=new_t)
+
+    return d
 
 
 def nom_disc_from_nom_int(
-    nom_i: NominalInt
-) -> NominalDisc:
-
-    m = nom_i.m
-    rate = discount_from_interest(i=nom_i.val)
-    dm = rate * m
-
-    nom_disc = NominalDisc(dm=dm, m=m)
-
-    return nom_disc
-
-
-def nom_disc_from_nom_int_gen(
         nom_i: NominalInt,
-        new_freq: float
+        new_freq: float = None
 ) -> NominalDisc:
+
+    if new_freq is None:
+        new_freq = nom_i.m
 
     n = nom_i.m
     i_n = nom_i.val
@@ -1394,22 +1508,67 @@ def nom_disc_from_nom_int_gen(
     return nom_d
 
 
-def nom_int_from_nom_disc_gen(
-    nom_d: NominalDisc,
-    new_freq: float
-) -> NominalInt:
+def eff_int_from_nom_disc(
+        nom: NominalDisc,
+        new_t: float = None
+) -> float:
 
-    p = nom_d.m
-    dp = nom_d.val
+    d = effective_from_nominal_disc(nom=nom)
+
+    i = interest_from_discount(d)
+
+    if new_t is not None:
+        i = eff_int_from_eff_int(i=i, old_t=1, new_t=new_t)
+
+    return i
+
+
+def nom_int_from_nom_disc(
+        nom: NominalDisc,
+        new_freq: float = None
+) -> NominalInt:
+    if new_freq is None:
+        new_freq = nom.m
+
+    p = nom.m
+    dp = nom.val
 
     i = ((1 - dp / p) ** (-p)) - 1
 
-    nom_i = nominal_from_eff_int(i=i, m=new_freq)
+    nom_i = nom_int_from_eff_int(i=i, new_m=new_freq)
 
     return nom_i
 
 
+def eff_disc_from_nom_disc(
+        nom: NominalDisc,
+        new_t: float,
+) -> float:
+
+    d = effective_from_nominal_disc(nom=nom)
+
+    if new_t is not None:
+        d = eff_disc_from_eff_disc(d=d, old_t=1, new_t=new_t)
+
+    return d
+
+
+def nom_disc_from_nom_disc(
+        nom: NominalDisc,
+        new_m: float
+) -> NominalDisc:
+
+    d = effective_from_nominal_disc(nom=nom)
+    new_nom = nom_disc_from_eff_disc(d=d, m=new_m)
+
+    return new_nom
+
+
 def convert_rate(
+        intdisc: str,
+        effnom: str,
+        freq: float = None,
+        interval: float = None,
         i: float = None,
         d: float = None,
         nom_i: NominalInt = None,
@@ -1417,8 +1576,7 @@ def convert_rate(
         im: float = None,
         dm: float = None,
         m: float = None,
-        t: float = 1,
-        result_desc: dict = None
+        t: float = 1
 ):
     """
     general interest-discount rate converter for nominal, effective, and multiple periods
@@ -1435,89 +1593,82 @@ def convert_rate(
         nom_d = NominalDisc(dm=dm, m=m)
 
     # if interval not provided, assume 1
-    if 'interval' not in result_desc:
-        result_desc.update({'interval': 1})
+    if interval is None:
+        interval = 1
 
-    int_disc = result_desc['int_disc']
-    eff_nom = result_desc['eff_nom']
-    interval = result_desc['interval']
+    intdisc = intdisc
+    effnom = effnom
+    interval = interval
 
-    if eff_nom == 'nominal':
-        freq = result_desc['freq']
+    if effnom == 'nominal':
+        freq = freq
     else:
         freq = None
 
-    if (i is not None) and (int_disc == 'interest') and (eff_nom == 'effective'):
+    if (i is not None) and (intdisc == 'interest') and (effnom == 'effective'):
 
-        res = convert_effective_int(i=i, t=t, new_t=interval)
+        res = eff_int_from_eff_int(i=i, old_t=t, new_t=interval)
 
-    elif (i is not None) and (int_disc == 'interest') and (eff_nom == 'nominal'):
+    elif (i is not None) and (intdisc == 'interest') and (effnom == 'nominal'):
 
-        res = nominal_from_eff_int(i=i, m=freq)
+        res = nom_int_from_eff_int(i=i, new_m=freq, old_t=t)
 
-    elif (i is not None) and (int_disc == 'discount') and (eff_nom == 'effective'):
+    elif (i is not None) and (intdisc == 'discount') and (effnom == 'effective'):
 
-        res = discount_from_interest(i=i)
+        res = eff_disc_from_eff_int(i=i, old_t=t, new_t=interval)
 
-    elif (i is not None) and (int_disc == 'discount') and (eff_nom == 'nominal'):
+    elif (i is not None) and (intdisc == 'discount') and (effnom == 'nominal'):
 
-        d = discount_from_interest(i)
-        res = nominal_from_effective_disc(d=d, m=freq)
+        res = nom_disc_from_eff_int(i=i, m=freq, old_t=t)
 
-    elif (d is not None) and (int_disc == 'interest') and (eff_nom == 'effective'):
+    elif (d is not None) and (intdisc == 'interest') and (effnom == 'effective'):
 
-        res = discount_from_interest(i=i)
+        res = eff_int_from_eff_disc(d=d, old_t=t, new_t=interval)
 
-    elif (d is not None) and (int_disc == 'interest') and (eff_nom == 'nominal'):
+    elif (d is not None) and (intdisc == 'interest') and (effnom == 'nominal'):
 
-        i = interest_from_discount(d=d)
-        res = nominal_from_eff_int(i=i, m=freq)
+        res = nom_int_from_eff_disc(d=d, m=freq, old_t=t)
 
-    elif (d is not None) and (int_disc == 'discount') and (eff_nom == 'effective'):
+    elif (d is not None) and (intdisc == 'discount') and (effnom == 'effective'):
 
         res = eff_disc_from_eff_disc(d=d, old_t=t, new_t=interval)
 
-    elif (d is not None) and (int_disc == 'discount') and (eff_nom == 'nominal'):
+    elif (d is not None) and (intdisc == 'discount') and (effnom == 'nominal'):
 
-        res = nominal_from_effective_disc(d=d, m=freq)
+        res = nom_disc_from_eff_disc(d=d, m=freq, old_t=t)
 
-    elif (nom_i is not None) and (int_disc == 'interest') and (eff_nom == 'effective'):
+    elif (nom_i is not None) and (intdisc == 'interest') and (effnom == 'effective'):
 
-        res = effective_from_nominal_int(nom=nom_i)
+        res = eff_int_from_nom_int(nom=nom_i, new_t=interval)
 
-        if interval != 1:
-            res = convert_effective_int(i=res, t=1, new_t=interval)
+    elif (nom_i is not None) and (intdisc == 'interest') and (effnom == 'nominal'):
 
-    elif (nom_i is not None) and (int_disc == 'interest') and (eff_nom == 'nominal'):
+        res = nom_int_from_nom_int(nom=nom_i, new_m=freq)
 
-        res = effective_from_nominal_int(nom=nom_i)
-        res = nominal_from_eff_int(i=res, m=freq)
+    elif (nom_i is not None) and (intdisc == 'discount') and (effnom == 'effective'):
 
-    elif (nom_i is not None) and (int_disc == 'discount') and (eff_nom == 'effective'):
+        res = eff_disc_from_nom_int(nom=nom_i, new_t=interval)
 
-        i = effective_from_nominal_int(nom=nom_i)
-        res = discount_from_interest(i=i)
+    elif (nom_i is not None) and (intdisc == 'discount') and (effnom == 'nominal'):
 
-    elif (nom_i is not None) and (int_disc == 'discount') and (eff_nom == 'nominal'):
+        res = nom_disc_from_nom_int(nom_i=nom_i, new_freq=freq)
 
-        res = nom_disc_from_nom_int(nom_i=nom_i)
+    elif (nom_d is not None) and (intdisc == 'interest') and (effnom == 'effective'):
 
-    elif (nom_d is not None) and (int_disc == 'interest') and (eff_nom == 'effective'):
+        res = eff_int_from_nom_disc(nom=nom_d, new_t=freq)
 
-        res = nom_int_from_nom_disc(nom_d=nom_d)
+    elif (nom_d is not None) and (intdisc == 'interest') and (effnom == 'nominal'):
 
-    elif (nom_d is not None) and (int_disc == 'interest') and (eff_nom == 'nominal'):
+        res = nom_int_from_nom_disc(nom=nom_d, new_freq=freq)
 
-        res = nom_int_from_nom_disc_gen(nom_d=nom_d, new_freq=freq)
+    elif (nom_d is not None) and (intdisc == 'discount') and (effnom == 'effective'):
 
-    elif (nom_d is not None) and (int_disc == 'discount') and (eff_nom == 'effective'):
+        res = eff_disc_from_nom_disc(nom=nom_d, new_t=interval)
 
-        res = effective_from_nominal_disc(nom=nom_d)
+    elif (nom_d is not None) and (intdisc == 'discount') and (effnom == 'nominal'):
 
-    elif (nom_d is not None) and (int_disc == 'discount') and (eff_nom == 'nominal'):
+        res = nom_disc_from_nom_disc(nom=nom_d, new_m=freq)
 
-        d = effective_from_nominal_disc(nom=nom_d)
-        res = nominal_from_effective_disc(d=d, m=freq)
     else:
         raise Exception("Conversion failed.")
 
