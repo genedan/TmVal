@@ -10,10 +10,10 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
-# import os
-# import sys
-# sys.path.insert(0, os.path.abspath('.'))
-
+import os
+from os.path import relpath, dirname
+import sys
+sys.path.insert(0, os.path.abspath('..'))
 
 # -- Project information -----------------------------------------------------
 
@@ -29,14 +29,7 @@ author = 'Gene Dan, FCAS, MAAA, CSPA'
 # ones.
 
 import sphinx_rtd_theme
-import os
-from os.path import relpath, dirname
-import sys
 import inspect
-
-
-sys.path.insert(0, os.path.abspath('..'))
-print(sys.path)
 import tmval
 
 extensions = [
@@ -140,3 +133,7 @@ imgmath_font_size = 14
 imgmath_latex_preamble = r'''
 \usepackage{actuarialsymbol}
 '''
+
+latex_elements = {
+    'preamble': '\\usepackage{actuarialsymbol}'
+}
