@@ -4,8 +4,8 @@ with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setuptools.setup(
-    name="tmval", # Replace with your own username
-    version="0.0.5",
+    name="tmval",
+    version="0.0.6",
     author="Gene Dan",
     author_email="genedan@gmail.com",
     description="Time Value of Money",
