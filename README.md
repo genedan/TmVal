@@ -52,7 +52,7 @@ Compounding Frequency: 4
 Suppose we have the following tiered investment account with the following interest rate schedule. This means the account pays 1% if the balance is below 10,000. Once it reaches 10,000, it pays 2%, and beyond 20,000, it pays 3%.
 
 Required Minimum Balance | Interest Rate 
-------------------------------------------
+-------------------------|----------------
 0|1%
 10,000|2%
 20,000| 3%
@@ -67,10 +67,7 @@ my_tiered_bal = TieredBal(
     rates=[.01, .02, .03]
 )
 
-my_amt = Amount(f=my_tiered_bal, k=18000)
+print(my_tiered_bal.get_jump_times(k=5000))
 
-print(my_amt.val(10))
-
-out:
-22966.846915945713
+[69.66071689357483, 104.66350567472134]
 ```
