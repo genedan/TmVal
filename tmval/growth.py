@@ -10,6 +10,9 @@ import warnings
 
 from typing import Callable
 
+from tmval.rates import Rate
+from tmval.conversions import apy, nom_int_from_eff_int, eff_int_from_delta
+
 
 class Amount:
     """
@@ -498,8 +501,23 @@ class CompoundAmt(Amount):
     def __init__(
             self,
             k: float,
-            i: float
+            i: float = None,
+            gr: Rate = None
     ):
+        if (i is not None) and (gr is not None):
+            raise Exception("Only one of i or gr may be supplied.")
+
+        if i is None and gr is None:
+            raise Exception("You must provide a compound interest rate.")
+
+        # Convert to single-period compound interest first
+        if gr is not None:
+            rate = gr.convert_rate(
+                pattern='Effective Interest',
+                interval=1
+            )
+            i = rate.rate
+
         self.principal = k
         self.interest_rate = i
 
@@ -539,8 +557,23 @@ class CompoundAcc(Accumulation):
     """
     def __init__(
             self,
-            i: float
+            i: float = None,
+            gr: Rate = None
     ):
+
+        if (i is not None) and (gr is not None):
+            raise Exception("Only one of i or gr may be supplied.")
+
+        if i is None and gr is None:
+            raise Exception("You must provide a compound interest rate.")
+
+        if gr is not None:
+            rate = gr.convert_rate(
+                pattern='Effective Interest',
+                interval=1
+            )
+            i = rate.rate
+
         self.interest_rate = i
 
         Accumulation.__init__(
@@ -573,8 +606,7 @@ def compound_solver(
     i: float = None,
     delta: float = None,
     t: float = None,
-    m: int = None,
-    use_apr: bool = False
+    gr: Rate = None
 ):
     """
     Solves for a missing value in the case of compound interest supply 3/4 of: a present value, a future value \
@@ -591,23 +623,15 @@ def compound_solver(
     :type delta: float
     :param t: the time, defaults to None.
     :type t: float
-    :param m: the compounding frequency, defaults to None.
-    :type m: int, optional if using APY.
-    :param use_apr: toggle to True if using APR, False otherwise, defaults to False.
-    :type use_apr: bool, optional if using APY.
+    :type gr: a general growth rate.
+    :type gr: Rate
     :return: either a present value, a future value, an interest rate, or a time, depending on which one is missing.
     :rtype: float
     """
 
-    if use_apr and m is None:
-        raise Exception("A compounding frequency must be supplied in APR mode.")
-
-    if m and not use_apr:
-        raise Exception("Compounding frequency is only relevant in APR mode.")
-
-    growth_rate = [i, delta]
+    growth_rate = [i, gr]
     if growth_rate.count(None) == 0:
-        raise Exception("You can't supply both i and delta at the same time.")
+        raise Exception("You can't supply both i and a growth rate at the same time.")
     elif growth_rate.count(None) == 1:
         # extract the valid argument
         gr = [x for x in growth_rate if x is not None].pop(0)
@@ -621,7 +645,7 @@ def compound_solver(
 
     # convert to i:
     if delta:
-        i = eff_int_from_delta(delta)
+        i = eff_int_from_delta(delta, new_t=1)
 
     if pv is None:
         res = fv / ((1 + i) ** t)
@@ -794,33 +818,6 @@ def k_solver(
     res = fv / f(t)
 
     return res
-
-
-def interest_from_discount(d: float) -> float:
-    """
-    An interest/discount rate converter. Returns the interest rate, given the discount rate.
-
-    :param d: the discount rate.
-    :type d: float
-    :return: the interest rate.
-    :rtype: float
-    """
-    i = d / (1 - d)
-
-    return i
-
-
-def discount_from_interest(i: float) -> float:
-    """
-    An interest/discount rate converter. Returns the discount rate, given the interest rate.
-
-    :param i: the interest rate.
-    :type i: float
-    :return: the discount rate.
-    :rtype: float
-    """
-    d = i / (1 + i)
-    return d
 
 
 class Payment:
@@ -1200,7 +1197,7 @@ class CompDiscAcc(Accumulation):
 
         Amount.__init__(
             self,
-            f=self.amt_func,
+            f=self.acc_func,
             k=k
         )
 
@@ -1276,108 +1273,6 @@ class ForceAcc(CompoundAcc):
         return np.exp(self.delta * t)
 
 
-def effective_from_nominal_int(
-        nom: NominalInt = None,
-        im: float = None,
-        m: float = None
-) -> float:
-    """
-    A nominal/effective interest rate converter. Given a :class:`.NominalInt` object, returns the
-    effective interest rate. You may also supply the nominal interest rate and compounding frequency, but not when \
-    a :class:`.NominalInt` is already supplied and vice-versa.
-
-    :param nom: the nominal interest rate, as a NominalInt object.
-    :type nom: NominalInt
-    :param im: the nominal interest rate.
-    :type im: float
-    :param m: the compounding frequency.
-    :type m: float
-    :return: the effective interest rate.
-    :rtype: float
-    """
-
-    if [im, m].count(None) != 2 and [im, m].count(None) > 0 and nom is None:
-        raise Exception("When supplying the nominal interest rate as components, you must supply both the "
-                        "nominal rate and compounding frequency, or you may supply a NominalInt object instead.")
-
-    if nom is not None and [im, m].count(None) != 2:
-        raise Exception("You may supply a NominalInt object, the components of a nominal interest rate, but not both.")
-
-    if nom is not None:
-        im = nom.val
-        m = nom.m
-
-    return (1 + im / m) ** m - 1
-
-
-def effective_from_nominal_disc(
-        nom: NominalDisc = None,
-        dm: float = None,
-        m: float = None
-):
-    """
-    A nominal/effective discount rate converter. Given a :class:`.NominalDisc` object, returns the
-    effective discount rate. You may also supply the nominal discount rate and compounding frequency, but not when \
-    a :class:`.NominalDisc` is already supplied and vice-versa.
-
-    :param nom: the nominal discount rate, as a NominalDisc object.
-    :type nom: NominalDisc
-    :param dm: the nominal discount rate.
-    :type dm: float
-    :param m: the compounding frequency.
-    :type m: float
-    :return: the effective discount rate
-    :rtype: float
-    """
-
-    if [dm, m].count(None) != 2 and [dm, m].count(None) > 0 and nom is None:
-        raise Exception("When supplying the nominal discount rate as components, you must supply both the "
-                        "nominal rate and compounding frequency, or you may supply a nominaldisc object instead.")
-
-    if nom is not None and [dm, m].count(None) != 2:
-        raise Exception("You may supply a nominaldisc object, the components of a nominal discount rate, but not both.")
-
-    if nom is not None:
-        dm = nom.val
-        m = nom.m
-
-    d = 1 - (1 - dm / m) ** m
-
-    return d
-
-
-def apy(im: float, m: float) -> float:
-    """
-    An alias for :func:`effective_from_nominal`. Returns annual percentage yield, or
-    annual effective yield (APY), given a nominal rate of interest and compounding frequency.
-
-    :param im: the nominal rate of interest
-    :type im: float
-    :param m: the compounding frequency, i.e., compounded m times per year
-    :type m: float
-    :return: the annual percentage yield, or annual effective yield (APY)
-    :rtype: float
-    """
-
-    return effective_from_nominal_int(im=im, m=m)
-
-
-def apr(i: float, m: float) -> NominalInt:
-    """
-    An alias for :func:`nominal_from_eff`. Returns annual percentage rate, or
-    nominal interest rate (APR), given an effective rate of interest and compounding frequency
-    of the desired nominal rate.
-
-    :param i: the effective rate of interest
-    :type i: float
-    :param m: the desired compounding frequency, i.e., compounded m times per year
-    :type m: float
-    :return: the annual percentage rate, or nominal rate of interest (APR)
-    :rtype: float
-    """
-    return nom_int_from_eff_int(i=i, new_m=m)
-
-
 class NominalInt:
     """
     A nominal interest rate. Keeps track of the nominal rate and compounding frequency.
@@ -1424,611 +1319,3 @@ class NominalDisc:
 
     def __str__(self):
         return "Nominal discount rate: " + str(self.val) + "\nCompounding Frequency: " + str(self.m)
-
-
-# conversion formulas
-
-def eff_int_from_eff_int(
-        i: float,
-        old_t: float,
-        new_t: float
-):
-    """
-
-    :param i: the effective interest rate.
-    :type i: float
-    :param old_t: the old unit of time.
-    :type old_t: float
-    :param new_t: the new unit of time.
-    :type new_t: float
-    :return: a converted interest rate, based off the new unit of time.
-    :rtype: float
-    """
-    # convert i to yearly effective if it is not already
-    if old_t is not None:
-        i = (1 + i) ** (1 / old_t) - 1
-
-    if new_t is not None:
-        i = (1 + i) ** new_t - 1
-
-    return i
-
-
-def nom_int_from_eff_int(
-        i: float,
-        new_m: float,
-        old_t: float = None
-) -> NominalInt:
-    """
-    A nominal/effective interest/discount rate converter. Given an effective interest rate and desired compounding \
-    frequency, returns the nominal interest rate.
-
-    :param i: the effective interest rate.
-    :type i: float
-    :param new_m: the desired compounding frequency.
-    :type new_m: float,
-    :param old_t: the interval of the effective interest rate. Assumed to be 1 if not provided.
-    :type old_t: float, optional
-    :return: the nominal interest rate.
-    :rtype: NominalInt
-    """
-    # convert i to yearly effective if it is not already
-    if old_t is not None:
-        i = eff_int_from_eff_int(i=i, old_t=old_t, new_t=1)
-
-    im = new_m * ((1 + i) ** (1 / new_m) - 1)
-
-    return NominalInt(im=im, m=new_m)
-
-
-def eff_disc_from_eff_int(
-        i: float,
-        old_t: float = None,
-        new_t: float = None
-) -> float:
-    """
-    A nominal/effective interest/discount rate converter. Given an effective interest rate and applicable unit \
-    of time, along with a desired unit of time for the new rate, returns an effective discount rate at the new unit \
-    of time. If old_t or new_t are not provided, they are each assumed to be 1, i.e., a 1-year period.
-
-    :param i: the effective interest rate
-    :type i: float
-    :param old_t: the old unit of time, defaults to None.
-    :type old_t: float, optional
-    :param new_t: the new unit of time, defaults to None.
-    :type new_t: float, optional
-    :return: an effective discount rate at the new unit of time.
-    :rtype: float
-    """
-
-    # convert i to yearly effective if it is not already
-    if old_t is not None:
-        i = eff_int_from_eff_int(i=i, old_t=old_t, new_t=1)
-
-    d = discount_from_interest(i=i)
-
-    # assume new interval is 1 if not specified
-    if new_t is not None:
-        d = eff_disc_from_eff_disc(d=d, old_t=1, new_t=new_t)
-
-    return d
-
-
-def nom_disc_from_eff_int(
-        i: float,
-        new_m: float,
-        old_t: float = None
-
-) -> NominalDisc:
-    """
-    A nominal/effective interest/discount rate converter. Given an effective interest rate and unit of time, along \
-    with a desired compounding frequency, returns a nominal discount rate at the desired compounding frequency. If \
-    no unit of time (applicable to the effective interest rate) is provided, it is assumed to be 1, i.e., a 1-year \
-    period.
-
-    :param i: the effective interest rate.
-    :type i: float
-    :param new_m: the desired compounding frequency.
-    :type new_m: float
-    :param old_t: the unit of time applicable to the effective interest rate, defaults to None.
-    :type old_t: float, optional
-    :return: a nominal discount rate, compounded new_m times per year.
-    :rtype: NominalDisc
-    """
-    # convert i to yearly effective if it is not already
-    if old_t is not None:
-        i = eff_int_from_eff_int(i=i, old_t=old_t, new_t=1)
-
-    d = discount_from_interest(i)
-
-    nom = nom_disc_from_eff_disc(d=d, new_m=new_m)
-
-    return nom
-
-
-def eff_int_from_eff_disc(
-        d: float,
-        old_t: float = None,
-        new_t: float = None
-) -> float:
-    """
-    A nominal/effective interest/discount rate converter. Given an effective discount rate and unit of time, along \
-    with a desired new unit of time, returns an effective interest rate at the new unit of time. If \
-    no unit of time (either old or new) is provided, it is assumed to be 1, i.e., a 1-year \
-    period.
-
-    :param d: the effective discount rate.
-    :type d: float
-    :param old_t: the old unit of time, defaults to None.
-    :type old_t: float, optional
-    :param new_t: the new unit of time, defaults to None.
-    :type new_t: float, optional
-    :return: an effective interest rate, at the new unit of time.
-    :rtype: float
-    """
-    # convert d to yearly effective if it is not already
-    if old_t is not None:
-        d = eff_disc_from_eff_disc(d=d, old_t=old_t, new_t=1)
-
-    i = interest_from_discount(d)
-
-    # convert to new interval if given
-    if new_t is not None:
-        i = eff_int_from_eff_int(i=i, old_t=1, new_t=new_t)
-
-    return i
-
-
-def nom_int_from_eff_disc(
-        d: float,
-        new_m: float,
-        old_t: float = None
-) -> NominalInt:
-    """
-    A nominal/effective interest/discount rate converter. Given an effective discount rate and unit of time, along \
-    with a desired compounding frequency, returns a nominal interest rate at the desired compounding frequency. If \
-    no unit of time is provided (applicable to the effective discount rate), it is assumed to be 1, i.e., a 1-year \
-    period.
-
-    :param d: the effective discount rate.
-    :type d: float
-    :param new_m: the desired compounding frequency.
-    :type new_m: float
-    :param old_t: the old unit of time, defaults to None.
-    :type old_t: float, optional
-    :return: a nominal interest rate, compounded new_m times per year
-    :rtype: NominalInt
-    """
-
-    # convert d to yearly effective if it is not already
-    if old_t is not None:
-        d = eff_disc_from_eff_disc(d=d, old_t=old_t, new_t=1)
-
-    i = interest_from_discount(d=d)
-
-    im = nom_int_from_eff_int(i=i, new_m=new_m)
-
-    return im
-
-
-def eff_disc_from_eff_disc(
-        d: float,
-        old_t: float,
-        new_t: float
-):
-    """
-    A nominal/effective interest/discount rate converter. Given an effective discount rate and unit of time, along \
-    with a desired new unit of time, returns an effective discount rate at the desired new unit of time.
-    period.
-
-    :param d: the effective discount rate.
-    :type d: float
-    :param old_t: the old unit of time.
-    :type old_t: float
-    :param new_t: the new unit of time.
-    :type new_t: float
-    :return: an effective discount rate at the new unit of time.
-    :rtype: float
-    """
-    # first convert to single-period rate
-    d1 = 1 - (1 - d) ** (1 / old_t)
-    # then, convert to new interval
-    new_d = 1 - ((1 - d1) ** new_t)
-
-    return new_d
-
-
-def nom_disc_from_eff_disc(
-        d: float,
-        new_m: float,
-        old_t: float = None
-):
-    """
-    A nominal/effective interest/discount rate converter. Given an effective discount rate and unit of time, along \
-    with a desired compounding frequency, returns a nominal discount rate at the desired compounding frequency. If \
-    no unit of time is provided (applicable to the effective discount rate), it is assumed to be 1, i.e., a 1-year \
-    period.
-
-    :param d: the effective discount rate.
-    :type d: float
-    :param new_m: the desired compounding frequency.
-    :type new_m: float
-    :param old_t: the old unit of time, defaults to None.
-    :type old_t: float, optional
-    :return: a nominal discount rate, compounded new_m times per year.
-    :rtype: NominalDisc
-    """
-    # convert d to yearly effective if it is not already
-
-    if old_t is not None:
-        d = eff_disc_from_eff_disc(d=d, old_t=old_t, new_t=1)
-
-    dm = new_m * (1 - (1 - d) ** (1 / new_m))
-
-    nom = NominalDisc(dm=dm, m=new_m)
-
-    return nom
-
-
-def eff_int_from_nom_int(
-        nom: NominalInt,
-        new_t: float = None
-):
-    """
-    A nominal/effective interest/discount rate converter. Given a nominal interest rate, along \
-    with a desired unit of time, returns an effective interest rate at the desired unit of time. If \
-    no unit of time is provided, it is assumed to be 1, i.e., a 1-year \
-    period.
-
-    :param nom: the nominal interest rate.
-    :type nom: NominalInt
-    :param new_t: the desired unit of time, defaults to None.
-    :type new_t: float, optional
-    :return: an effective interest rate.
-    :rtype: float
-    """
-    # get yearly rate first
-    i = effective_from_nominal_int(nom=nom)
-
-    if new_t is not None:
-        i = eff_int_from_eff_int(i=i, old_t=1, new_t=new_t)
-
-    return i
-
-
-def nom_int_from_nom_int(
-        nom: NominalInt,
-        new_m: float
-) -> NominalInt:
-    """
-    A nominal/effective interest/discount rate converter. Given a nominal interest rate, along \
-    with a desired compounding frequency, returns a nominal interest rate at the desired compounding frequency.
-
-    :param nom: the nominal interest rate.
-    :type nom: NominalInt
-    :param new_m: the desired compounding frequency.
-    :type new_m: float
-    :return: a nominal interest rate, compounded new_m times per year.
-    :rtype: NominalInt
-    """
-
-    i = effective_from_nominal_int(nom=nom)
-
-    new_nom = nom_int_from_eff_int(i=i, new_m=new_m)
-
-    return new_nom
-
-
-def eff_disc_from_nom_int(
-    nom: NominalInt,
-    new_t: float = None
-) -> float:
-    """
-    A nominal/effective interest/discount rate converter. Given a nominal interest rate, along \
-    with a desired unit of time, returns an effective discount rate at the desired unit of time. If \
-    no unit of time is provided, it is assumed to be 1, i.e., a 1-year \
-    period.
-
-    :param nom: the nominal interest rate.
-    :type nom: float
-    :param new_t: the desired unit of time.
-    :type new_t: float, optional
-    :return: an effective discount rate.
-    :rtype: float
-    """
-
-    i = effective_from_nominal_int(nom=nom)
-    d = discount_from_interest(i=i)
-
-    if new_t is not None:
-        d = eff_disc_from_eff_disc(d=d, old_t=1, new_t=new_t)
-
-    return d
-
-
-def nom_disc_from_nom_int(
-        nom: NominalInt,
-        new_m: float = None
-) -> NominalDisc:
-    """
-    A nominal/effective interest/discount rate converter. Given a nominal interest rate, along \
-    with a desired compounding frequency, returns an nominal discount rate at the desired compounding frequency.
-
-
-    :param nom: the nominal interest rate.
-    :type nom: NominalInt
-    :param new_m: the desired compounding frequency.
-    :type new_m: float
-    :return: a nominal discount rate, compounded new_m times per year
-    :rtype: NominalDisc
-    """
-
-    if new_m is None:
-        new_freq = nom.m
-
-    n = nom.m
-    i_n = nom.val
-
-    i = (1 + i_n / n) ** n - 1
-
-    p = new_freq
-
-    dp = 1 - i ** (-1 / p) * p
-
-    nom_d = NominalDisc(dm=dp, m=p)
-
-    return nom_d
-
-
-def eff_int_from_nom_disc(
-        nom: NominalDisc,
-        new_t: float = None
-) -> float:
-    """
-    A nominal/effective interest/discount rate converter. Given a nominal discount rate, along \
-    with a desired unit of time, returns an effective interest rate at the desired unit of time. If \
-    no unit of time is provided, it is assumed to be 1, i.e., a 1-year \
-    period.
-
-    :param nom: the nominal discount rate.
-    :type nom: NominalDisc
-    :param new_t: the desired unit of time, defaults to None.
-    :type new_t: float
-    :return: an effective interest rate.
-    :rtype: float
-    """
-
-    d = effective_from_nominal_disc(nom=nom)
-
-    i = interest_from_discount(d)
-
-    if new_t is not None:
-        i = eff_int_from_eff_int(i=i, old_t=1, new_t=new_t)
-
-    return i
-
-
-def nom_int_from_nom_disc(
-        nom: NominalDisc,
-        new_m: float = None
-) -> NominalInt:
-    """
-    A nominal/effective interest/discount rate converter. Given a nominal discount rate, along \
-    with a desired compounding frequency, returns a nominal interest rate at the desired compounding frequency.
-
-    :param nom: the nominal discount rate.
-    :type nom: NominalDisc
-    :param new_m: the desired compounding frequency.
-    :type new_m: float
-    :return: a nominal interest rate, compounded new_m times per year
-    :rtype: NominalInt
-    """
-    if new_m is None:
-        new_m = nom.m
-
-    p = nom.m
-    dp = nom.val
-
-    i = ((1 - dp / p) ** (-p)) - 1
-
-    nom_i = nom_int_from_eff_int(i=i, new_m=new_m)
-
-    return nom_i
-
-
-def eff_disc_from_nom_disc(
-        nom: NominalDisc,
-        new_t: float,
-) -> float:
-    """
-    A nominal/effective interest/discount rate converter. Given a nominal discount rate, along \
-    with a desired unit of time, returns an effective discount rate at the desired unit of time.
-
-
-    :param nom: the nominal discount rate.
-    :type nom: NominalDisc
-    :param new_t: the desired unit of time.
-    :type new_t: float
-    :return: an effective discount rate, at the desired unit of time.
-    :rtype: float
-    """
-
-    d = effective_from_nominal_disc(nom=nom)
-
-    if new_t is not None:
-        d = eff_disc_from_eff_disc(d=d, old_t=1, new_t=new_t)
-
-    return d
-
-
-def nom_disc_from_nom_disc(
-        nom: NominalDisc,
-        new_m: float
-) -> NominalDisc:
-    """
-    A nominal/effective interest/discount rate converter. Given a nominal discount rate, along \
-    with a desired compounding frequency, returns an nominal discount rate at the desired compounding frequency.
-
-    :param nom: the nominal discount rate.
-    :type nom: NominalDisc
-    :param new_m: the desired compounding frequency.
-    :type new_m: float
-    :return: a nominal discount rate, compounded new_m times per year.
-    :rtype: NominalDisc
-    """
-
-    d = effective_from_nominal_disc(nom=nom)
-    new_nom = nom_disc_from_eff_disc(d=d, new_m=new_m)
-
-    return new_nom
-
-
-def convert_rate(
-        intdisc: str = None,
-        effnom: str = None,
-        freq: float = None,
-        interval: float = None,
-        i: float = None,
-        d: float = None,
-        nom_i: NominalInt = None,
-        nom_d: NominalDisc = None,
-        im: float = None,
-        dm: float = None,
-        m: float = None,
-        t: float = 1,
-        force: bool = True
-):
-    """
-    general interest-discount rate converter for nominal, effective, and multiple periods
-
-    :return:
-    """
-
-    # check arguments
-
-    if im is not None:
-        nom_i = NominalInt(im=im, m=m)
-
-    if dm is not None:
-        nom_d = NominalDisc(dm=dm, m=m)
-
-    # if interval not provided, assume 1
-    if interval is None:
-        interval = 1
-
-    intdisc = intdisc
-    effnom = effnom
-    interval = interval
-
-    if effnom == 'nominal':
-        freq = freq
-    else:
-        freq = None
-
-    if (i is not None) and (intdisc == 'interest') and (effnom == 'effective'):
-
-        res = eff_int_from_eff_int(i=i, old_t=t, new_t=interval)
-
-    elif (i is not None) and (intdisc == 'interest') and (effnom == 'nominal'):
-
-        res = nom_int_from_eff_int(i=i, new_m=freq, old_t=t)
-
-    elif (i is not None) and (intdisc == 'discount') and (effnom == 'effective'):
-
-        res = eff_disc_from_eff_int(i=i, old_t=t, new_t=interval)
-
-    elif (i is not None) and (intdisc == 'discount') and (effnom == 'nominal'):
-
-        res = nom_disc_from_eff_int(i=i, new_m=freq, old_t=t)
-
-    elif (d is not None) and (intdisc == 'interest') and (effnom == 'effective'):
-
-        res = eff_int_from_eff_disc(d=d, old_t=t, new_t=interval)
-
-    elif (d is not None) and (intdisc == 'interest') and (effnom == 'nominal'):
-
-        res = nom_int_from_eff_disc(d=d, new_m=freq, old_t=t)
-
-    elif (d is not None) and (intdisc == 'discount') and (effnom == 'effective'):
-
-        res = eff_disc_from_eff_disc(d=d, old_t=t, new_t=interval)
-
-    elif (d is not None) and (intdisc == 'discount') and (effnom == 'nominal'):
-
-        res = nom_disc_from_eff_disc(d=d, new_m=freq, old_t=t)
-
-    elif (nom_i is not None) and (intdisc == 'interest') and (effnom == 'effective'):
-
-        res = eff_int_from_nom_int(nom=nom_i, new_t=interval)
-
-    elif (nom_i is not None) and (intdisc == 'interest') and (effnom == 'nominal'):
-
-        res = nom_int_from_nom_int(nom=nom_i, new_m=freq)
-
-    elif (nom_i is not None) and (intdisc == 'discount') and (effnom == 'effective'):
-
-        res = eff_disc_from_nom_int(nom=nom_i, new_t=interval)
-
-    elif (nom_i is not None) and (intdisc == 'discount') and (effnom == 'nominal'):
-
-        res = nom_disc_from_nom_int(nom_i=nom_i, new_freq=freq)
-
-    elif (nom_d is not None) and (intdisc == 'interest') and (effnom == 'effective'):
-
-        res = eff_int_from_nom_disc(nom=nom_d, new_t=freq)
-
-    elif (nom_d is not None) and (intdisc == 'interest') and (effnom == 'nominal'):
-
-        res = nom_int_from_nom_disc(nom=nom_d, new_freq=freq)
-
-    elif (nom_d is not None) and (intdisc == 'discount') and (effnom == 'effective'):
-
-        res = eff_disc_from_nom_disc(nom=nom_d, new_t=interval)
-
-    elif (nom_d is not None) and (intdisc == 'discount') and (effnom == 'nominal'):
-
-        res = nom_disc_from_nom_disc(nom=nom_d, new_m=freq)
-    elif force:
-        if i:
-            res = convert_any_to_delta(i=i)
-        elif d:
-            res = convert_any_to_delta(d=d)
-        elif nom_i:
-            res = convert_any_to_delta(nom_i=nom_i)
-        else:
-            res = convert_any_to_delta(nom_d=nom_d)
-
-    else:
-        raise Exception("Conversion failed.")
-
-    return res
-
-
-def convert_any_to_delta(
-        i: float = None,
-        d: float = None,
-        nom_i: NominalInt = None,
-        nom_d: NominalDisc = None,
-        delta: float = None
-):
-    def delta_from_i(x):
-        return np.log(1 + x)
-
-    if i:
-        pass
-    elif d:
-        i = eff_int_from_eff_disc(d)
-    elif nom_i:
-        i = eff_int_from_nom_int(nom=nom_i)
-    elif nom_d:
-        i = eff_int_from_nom_disc(nom=nom_d)
-    else:
-        i = np.exp(delta) - 1
-
-    res = delta_from_i(i)
-
-    return res
-
-
-def eff_int_from_delta(delta):
-    return np.exp(delta) - 1
