@@ -2,4 +2,4 @@
 tmval.apy
 ============================
 
-.. autofunction:: tmval.growth.apy
+.. autofunction:: tmval.conversions.apy

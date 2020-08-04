@@ -2,4 +2,4 @@
 tmval.apr
 ============================
 
-.. autofunction:: tmval.growth.apr
+.. autofunction:: tmval.conversions.apr
