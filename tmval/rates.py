@@ -39,7 +39,13 @@ class Rate:
         # handle convenience cases
 
         # effective interest
-        if i is not None:
+
+        if rate is not None and arg_not_none == [rate]:
+            self.rate = rate
+            self.pattern = 'i'
+            self.interval = 1
+
+        elif i is not None:
             self.rate = i
             self.pattern = 'i'
             self.interval = 1
