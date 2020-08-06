@@ -647,6 +647,13 @@ def compound_solver(
     if delta:
         i = eff_int_from_delta(delta, new_t=1)
 
+    if gr:
+        rate = gr.convert_rate(
+            pattern='Effective Interest',
+            interval=1
+        )
+        i = rate.rate
+
     if pv is None:
         res = fv / ((1 + i) ** t)
     elif fv is None:
