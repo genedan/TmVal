@@ -555,6 +555,7 @@ class CompoundAcc(Accumulation):
     :return: a CompoundAcc object.
     :rtype: CompoundAcc
     """
+
     def __init__(
             self,
             i: float = None,
@@ -574,7 +575,7 @@ class CompoundAcc(Accumulation):
             )
             i = rate.rate
 
-        self.interest_rate = i
+        self.interest_rate = Rate(i)
 
         Accumulation.__init__(
             self,
@@ -583,7 +584,7 @@ class CompoundAcc(Accumulation):
 
     @property
     def discount_factor(self) -> float:
-        discount_factor = 1 / (1 + self.interest_rate)
+        discount_factor = 1 / (1 + self.interest_rate.rate)
         return discount_factor
 
     def acc_func(self, t) -> float:
@@ -597,14 +598,12 @@ class CompoundAcc(Accumulation):
         :return: the value of 1 unit of currency at time t, invested at time 0.
         :rtype: float
         """
-        return (1 + self.interest_rate) ** t
+        return (1 + self.interest_rate.rate) ** t
 
 
 def compound_solver(
     pv: float = None,
     fv: float = None,
-    i: float = None,
-    delta: float = None,
     t: float = None,
     gr: Rate = None
 ):
@@ -617,10 +616,6 @@ def compound_solver(
     :type pv: float
     :param fv: the future value, defaults to None.
     :type fv: float
-    :param i: the interest rate, either in APY or APR form, defaults to None.
-    :type i: float
-    :param delta: the force of interest
-    :type delta: float
     :param t: the time, defaults to None.
     :type t: float
     :type gr: a general growth rate.
@@ -629,23 +624,13 @@ def compound_solver(
     :rtype: float
     """
 
-    growth_rate = [i, gr]
-    if growth_rate.count(None) == 0:
-        raise Exception("You can't supply both i and a growth rate at the same time.")
-    elif growth_rate.count(None) == 1:
-        # extract the valid argument
-        gr = [x for x in growth_rate if x is not None].pop(0)
-    else:
-        gr = None
-
     args = [pv, fv, gr, t]
+
     if args.count(None) > 1:
         raise Exception("You are missing either a present value (pv), future value(fv), "
-                        "time (t), or growth rate (i or delta")
+                        "time (t), or growth rate.")
 
     # convert to i:
-    if delta:
-        i = eff_int_from_delta(delta, new_t=1)
 
     if gr:
         rate = gr.convert_rate(
@@ -653,17 +638,17 @@ def compound_solver(
             interval=1
         )
         i = rate.rate
+    else:
+        i = None
 
     if pv is None:
         res = fv / ((1 + i) ** t)
     elif fv is None:
         res = pv * ((1 + i) ** t)
-    elif i is None:
+    elif gr is None:
         # get the effective rate first
         res = ((fv / pv) ** (1 / t)) - 1
-        # convert to nominal if use_apr is true
-        if use_apr:
-            res = nom_int_from_eff_int(i=res, new_m=m)
+        res = Rate(res)
     else:
         res = np.log(fv / pv) / np.log(1 + i)
 
