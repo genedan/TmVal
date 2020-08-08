@@ -104,7 +104,8 @@ class Rate:
 
         elif self.formal_pattern == 'Effective Discount':
             template = any_from_eff_disc(
-                d=self.rate, old_t=self.interval,
+                d=self.rate,
+                old_t=self.interval,
                 formal_pattern=pattern,
                 freq=freq,
                 interval=interval
