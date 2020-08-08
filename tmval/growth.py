@@ -8,10 +8,10 @@ import datetime as dt
 import numpy as np
 import warnings
 
-from typing import Callable
+from typing import Callable, Union
 
 from tmval.rates import Rate
-from tmval.conversions import apy, nom_int_from_eff_int, eff_int_from_delta
+from tmval.conversions import apy
 
 
 class Amount:
@@ -493,33 +493,32 @@ class CompoundAmt(Amount):
 
     :param k: principal, or the initial investment.
     :type k: float
-    :param i: the interest rate.
-    :type i: float
+    :param gr: the growth rate, can be a compound interest rate supplied as a float or a Rate object
+    :type gr: float or Rate
     :return: a CompoundAmt object.
     :rtype: CompoundAmt
     """
     def __init__(
             self,
             k: float,
-            i: float = None,
-            gr: Rate = None
+            gr: Union[float, Rate]
     ):
-        if (i is not None) and (gr is not None):
-            raise Exception("Only one of i or gr may be supplied.")
-
-        if i is None and gr is None:
-            raise Exception("You must provide a compound interest rate.")
 
         # Convert to single-period compound interest first
-        if gr is not None:
+
+        if isinstance(gr, Rate):
             rate = gr.convert_rate(
                 pattern='Effective Interest',
                 interval=1
             )
             i = rate.rate
+        elif isinstance(gr, (int, float)):
+            i = gr
+        else:
+            raise Exception("Invalid type passed to growth rate.")
 
         self.principal = k
-        self.interest_rate = i
+        self.interest_rate = Rate(i)
 
         Amount.__init__(
             self,
@@ -540,7 +539,7 @@ class CompoundAmt(Amount):
         :return: the value of k at time t, invested at time 0.
         :rtype: float
         """
-        return k * ((1 + self.interest_rate) ** t)
+        return k * ((1 + self.interest_rate.rate) ** t)
 
 
 class CompoundAcc(Accumulation):
@@ -550,30 +549,27 @@ class CompoundAcc(Accumulation):
     your problem involves compound interest, you should probably use this class or the :class:`CompoundAmt` class
     instead of the more general classes of :class:`Amount` and :class:`Accumulation`.
 
-    :param i: the interest rate.
-    :type i: float
+    :param gr: the growth rate, can be a compound interest rate supplied as a float or a Rate object
+    :type gr: float or Rate
     :return: a CompoundAcc object.
     :rtype: CompoundAcc
     """
 
     def __init__(
             self,
-            i: float = None,
-            gr: Rate = None
+            gr: Union[float, Rate]
     ):
 
-        if (i is not None) and (gr is not None):
-            raise Exception("Only one of i or gr may be supplied.")
-
-        if i is None and gr is None:
-            raise Exception("You must provide a compound interest rate.")
-
-        if gr is not None:
+        if isinstance(gr, Rate):
             rate = gr.convert_rate(
                 pattern='Effective Interest',
                 interval=1
             )
             i = rate.rate
+        elif isinstance(gr, (int, float)):
+            i = gr
+        else:
+            raise Exception("Invalid type passed to growth rate.")
 
         self.interest_rate = Rate(i)
 
@@ -729,7 +725,7 @@ class TieredBal:
         pv = k
         t_base = 0
         for fv, i in zip(jump_balances, jump_rates):
-            jump_increment = compound_solver(pv=pv, fv=fv, i=i)
+            jump_increment = compound_solver(pv=pv, fv=fv, gr=i)
             jump_times.append(t_base + jump_increment)
             t_base = t_base + jump_increment
             pv = fv
@@ -1218,7 +1214,7 @@ class ForceAmt(CompoundAmt):
 
         CompoundAmt.__init__(
             self,
-            i=np.exp(delta) - 1,
+            gr=np.exp(delta) - 1,
             k=k
         )
 
@@ -1248,7 +1244,7 @@ class ForceAcc(CompoundAcc):
 
         CompoundAcc.__init__(
             self,
-            i=np.exp(self.delta) - 1
+            gr=np.exp(self.delta) - 1
         )
 
     def acc_func(self, t) -> float:
