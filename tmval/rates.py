@@ -39,7 +39,7 @@ class Rate:
         # handle convenience cases
 
         # effective interest
-
+        # if rate is the only argument provided, compound effective interest with an interval of 1 year
         if rate is not None and arg_not_none == [rate]:
             self.rate = rate
             self.pattern = 'i'
@@ -93,6 +93,24 @@ class Rate:
             freq: float = None,
             interval: float = None
     ):
+
+        if FORMAL_PATTERNS[pattern] in ['Effective Interest', 'Effective Discount']:
+            if interval is None:
+                raise Exception("Must provide an interval for conversions to effective rates.")
+            if freq is not None:
+                raise Exception("Frequency only valid for conversions to nominal rates.")
+        elif FORMAL_PATTERNS[pattern] in ['Nominal Interest', 'Nominal Discount']:
+            if freq is None:
+                raise Exception("Must provide compounding frequency for conversions to nominal rates.")
+            if interval is not None:
+                raise Exception("Interval only valid for conversions to effective rates.")
+        elif FORMAL_PATTERNS[pattern] in ['Force of Interest']:
+            if freq is None or interval is None:
+                raise Exception("Frequency or interval parameters are invalid for conversions to force of interest.")
+            pass
+        else:
+            raise Exception("Invalid pattern provided.")
+
         if self.formal_pattern == 'Effective Interest':
             template = any_from_eff_int(
                 i=self.rate,
