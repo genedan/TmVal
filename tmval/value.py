@@ -75,6 +75,18 @@ class Payments:
 
         return i_s
 
+    def equated_time(self, c: float) -> float:
+
+        acc = self.acc
+
+        num = np.log(self.npv() / c)
+
+        denom = np.log(1 / (1 + acc.interest_rate.rate))
+
+        t = num / denom
+
+        return t
+
 
 class Payment:
     """
