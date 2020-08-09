@@ -1,10 +1,79 @@
 import numpy as np
 import warnings
 
-from typing import Callable
+from itertools import groupby
+
+from typing import Callable, Union
 
 from tmval.growth import Accumulation, CompoundAcc, compound_solver
 from tmval.rates import Rate
+
+
+class Payments:
+    def __init__(
+        self,
+        amounts: list,
+        times: list,
+        gr: Union[float, Rate, Accumulation] = None
+    ):
+        if len(amounts) != len(times):
+            raise Exception("Amounts and times must be of the same length.")
+
+        self.amounts = amounts
+        self.times = times
+        self.acc = None
+        if gr is not None:
+            self.set_accumulation(gr=gr)
+
+    def set_accumulation(self, gr: Union[float, Rate, Accumulation]):
+
+        # if float, assume compound annual effective
+        if isinstance(gr, float):
+            acc = CompoundAcc(gr=gr)
+
+        elif isinstance(gr, Rate):
+            acc = CompoundAcc(gr=gr)
+
+        elif isinstance(gr, (Accumulation, CompoundAcc)):
+            acc = gr
+        else:
+            raise Exception("Invalid growth rate object provided.")
+
+        self.acc = acc
+
+    def npv(self):
+        if self.acc is None:
+            raise Exception("Growth rate object not set.")
+
+        pv = sum([self.acc.discount_func(t=t, fv=fv) for t, fv in zip(self.times, self.amounts)])
+
+        return pv
+
+    def irr(self):
+        times = self.times
+        amounts = self.amounts
+        payments = [[x, y] for x, y in zip(times, amounts)]
+        payments.sort()
+        payments_grouped = []
+        for i, g in groupby(payments, key=lambda x: x[0]):
+            payments_grouped.append([i, sum(v[1] for v in g)])
+
+        payments_dict = {x[0]: x[1] for x in payments_grouped}
+
+        degree = max(payments_dict, key=int)
+
+        coefficients = [(payments_dict[i] if i in payments_dict else 0) for i in range(degree +1)]
+
+        roots = np.roots(coefficients)
+
+        reals = roots[np.isreal(roots)]
+
+        if len(reals) == 0:
+            warnings.warn("Unable to find real roots.")
+
+        i_s = [np.real(x) - 1 for x in reals]
+
+        return i_s
 
 
 class Payment:
