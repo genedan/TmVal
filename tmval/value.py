@@ -87,6 +87,59 @@ class Payments:
 
         return t
 
+    def eq_val(self, t: float) -> float:
+
+        b = sum([c * self.acc.val(t) / self.acc.val(tk) for c, tk in zip(self.amounts, self.times)])
+
+        return b
+
+    def dollar_weighted_yield(
+        self,
+        a: float = None,
+        b: float = None,
+        w_t: float = None,
+        k_approx: bool = False,
+        annual: bool = False
+    ) -> Rate:
+        if [a, b, w_t].count(None) not in [0, 3]:
+            raise Exception("a, b, w_t must all be provided or left none.")
+
+        times = self.times.copy()
+        amounts = self.amounts.copy()
+
+        if a is None:
+            w_t = times.pop()
+            b = amounts.pop()
+            a = amounts.pop(0)
+            times.pop(0)
+
+        c = sum(amounts)
+        i = b - a - c
+
+        if k_approx:
+
+            j = (2 * i) / (a + b - i)
+
+        else:
+            # normalize times
+            max_t = w_t
+            t_s = [t / max_t for t in times]
+            j = i / (a + sum([ct * (1-t) for ct, t in zip(amounts, t_s)]))
+
+        j = Rate(
+            rate=j,
+            pattern="Effective Interest",
+            interval=w_t
+        )
+
+        if annual:
+            j = j.convert_rate(
+                pattern="Effective Interest",
+                interval=1
+            )
+
+        return j
+
 
 class Payment:
     """
