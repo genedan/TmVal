@@ -25,8 +25,9 @@ class Amount:
     from the amount function using the get_accumulation() method.
 
 
-    :param f: a amount function, which must take the parameters t for time and k for principal.
-    :type f: Callable
+    :param gr: a growth object, which can either be a function that must take the parameters t \
+    for time and k for principal, or a Rate object representing an interest rate.
+    :type gr: Callable, Rate
     :param k: the principal, or initial investment.
     :type k: float
 
@@ -36,11 +37,21 @@ class Amount:
     """
     def __init__(
             self,
-            f: Callable,
+            gr: Union[Callable, Rate],
             k: float
     ):
-        self.func = f
+        self.__gr = gr
+        self.func = self.__extract_func()
         self.k = k
+
+    def __extract_func(self):
+
+        if isinstance(self.__gr, Callable):
+            return self.__gr
+        elif isinstance(self.__gr, Rate):
+            return self.__gr.amt_func
+        else:
+            raise Exception("Growth object must be a callable or Rate object.")
 
     def val(self, t: float) -> float:
         """
@@ -243,123 +254,6 @@ class Accumulation(Amount):
         return future_principal
 
 
-class SimpleAmt(Amount):
-    """
-    The ``SimpleAmt`` class is a subclass of the :class:`Amount` class, where the amount function is linear.
-
-    :param k: the principal, or initial investment amount.
-    :type k: float
-    :param s: the interest rate.
-    :type s: float
-    :return: a SimpleAmt object
-    :rtype: SimpleAmt
-    """
-    def __init__(
-            self,
-            k: float,
-            s: float
-    ):
-        self.principal = k
-        self.interest_rate = s
-
-        Amount.__init__(
-            self,
-            f=self.amt_func,
-            k=k
-        )
-
-    def amt_func(self, k: float, t: float) -> float:
-        """
-        The amount function of the :class:`SimpleAmt` class.
-        Automatically applied to the :class:`Amount` class
-        by providing a linear growth function, instead of a user-defined one.
-
-        :param k: the principal, or initial investment.
-        :type k: float
-        :param t: the time as-of time for the valuation.
-        :type t: float
-        :return: the value of k at time t, invested at time 0.
-        :rtype: float
-        """
-
-        return k * (1 + self.interest_rate * t)
-
-
-class SimpleAcc(Accumulation):
-    """
-    The ``SimpleAcc`` class is a subclass of the :class:`Accumulation` class where the amount function is linear,
-    i.e., the simple interest scenario. It can also be thought of as a special case of :class:`SimpleAmt` where
-    k=1, although technically it inherits from :class:`Accumulation` directly.
-
-    :param s: the interest rate
-    :type s: float
-    :return: a SimpleAcc object
-    :rtype: SimpleAcc
-
-    """
-    def __init__(
-            self,
-            s: float
-    ):
-        self.interest_rate = s
-
-        Accumulation.__init__(
-            self,
-            f=self.acc_func
-        )
-
-    def acc_func(self, t: float) -> float:
-        """
-        The accumulation function of the :class:`SimpleAcc` class.
-        Automatically applied to the :class:`Accumulation` class
-        by providing a linear growth function, instead of a user-defined one.
-
-        :param t: the time as-of time for the valuation.
-        :type t: float
-        :return: the value of 1 unit of currency at time t, invested at time 0.
-        :rtype: float
-        """
-        return 1 + self.interest_rate * t
-
-    def delta_t(self, t: float) -> float:
-        return self.interest_rate / (1 + self.interest_rate * t)
-
-
-def get_simple_amt(
-    pv: float = None,
-    fv: float = None,
-    s: float = None,
-    t: float = None
-) -> SimpleAmt:
-    """
-    Simple amount solver for when one variable is missing - returns a simple amount amount class
-
-    :param pv: the present value of the investment
-    :type pv: float
-    :param fv: the future value of the investment
-    :type fv: float
-    :param s: the interest rate
-    :type s: float
-    :param t: the time of the investment
-    :type t: float
-    """
-    args = [pv, fv, s, t]
-
-    if args.count(None) > 1:
-        raise Exception("Only one argument can be missing.")
-
-    if pv is None:
-        pv = fv / (1 + t * s)
-    elif s is None:
-        s = (fv / pv - 1) / t
-    else:
-        pass
-
-    simple_amt = SimpleAmt(k=pv, s=s)
-
-    return simple_amt
-
-
 def simple_solver(
     pv: float = None,
     fv: float = None,
@@ -504,7 +398,7 @@ class CompoundAmt(Amount):
 
         Amount.__init__(
             self,
-            f=self.amt_func,
+            gr=self.amt_func,
             k=k
         )
 
@@ -813,7 +707,7 @@ class SimpDiscAmt(Amount):
 
         Amount.__init__(
             self,
-            f=self.amt_func,
+            gr=self.amt_func,
             k=k
         )
 
@@ -953,7 +847,7 @@ class CompDiscAmt(Amount):
 
         Amount.__init__(
             self,
-            f=self.amt_func,
+            gr=self.amt_func,
             k=k
         )
 
@@ -994,7 +888,7 @@ class CompDiscAcc(Accumulation):
 
         Amount.__init__(
             self,
-            f=self.acc_func,
+            gr=self.acc_func,
             k=k
         )
 
