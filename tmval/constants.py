@@ -18,5 +18,9 @@ FORMAL_PATTERNS = {
 
     'delta': 'Force of Interest',
     'force': 'Force of Interest',
-    'Force of Interest': 'Force of Interest'
+    'Force of Interest': 'Force of Interest',
+
+    's': 'Simple Interest',
+    'simple interest': 'Simple Interest',
+    'simp': 'Simple Interest'
 }
