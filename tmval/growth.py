@@ -285,6 +285,7 @@ def simple_solver(
         res = pv * (1 + t * s)
     elif s is None:
         res = (fv / pv - 1) / t
+        res = Rate(s=res)
     else:
         res = (fv / pv - 1) / s
 
