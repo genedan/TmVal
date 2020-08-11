@@ -23,18 +23,35 @@ class Rate:
             interval: float = None,
             i: float = None,  # convenience argument for effective 1-yr interest rate
             d: float = None,  # convenience argument for effective 1-yr discount rate
-            delta: float = None  # convenience argument for force of interest
+            delta: float = None,  # convenience argument for force of interest
+            s: float = None # convenience argument for simple interest
     ):
 
         # check arguments
-        convenience_types = ['i', 'd', 'delta']
-        args = [rate, pattern, freq, interval, i, d, delta]
+
+        convenience_types = [
+            'i',
+            'd',
+            'delta',
+            's'
+        ]
+
+        args = [
+            rate,
+            pattern,
+            freq,
+            interval,
+            i,
+            d,
+            delta,
+            s
+        ]
         arg_not_none = [x for x in args if x is not None]
 
         # if a convenience method is used, make sure they are the only argument supplied
         conveniences = [i for i in convenience_types if i in arg_not_none]
         if len(conveniences) > 1:
-            raise Exception("You may only supply 1 of i, d, or delta.")
+            raise Exception("You may only supply 1 of i, d, s, or delta.")
 
         # handle convenience cases
 
@@ -61,6 +78,12 @@ class Rate:
             self.rate = delta
             self.pattern = 'force'
 
+        # simple interest
+        elif s is not None:
+            self.rate = s
+            self.pattern = 's'
+            self.interval =1
+
         else:
             self.rate = rate
             self.pattern = pattern
@@ -70,8 +93,31 @@ class Rate:
         self.formal_pattern = FORMAL_PATTERNS[self.pattern]
 
     def __repr__(self):
-        effectives = ['interest', 'discount', 'i', 'd', 'APY', 'Effective Interest', 'Effective Discount']
-        nominals = ['nomint', 'nomdisc', 'APR', 'Nominal Interest', 'Nominal Discount']
+
+        effectives = [
+            'interest',
+            'discount',
+            'i',
+            'd',
+            'APY',
+            'Effective Interest',
+            'Effective Discount'
+        ]
+
+        nominals = [
+            'nomint',
+            'nomdisc',
+            'APR',
+            'Nominal Interest',
+            'Nominal Discount'
+        ]
+
+        simple = [
+            's',
+            'simp',
+            'simple interest',
+            'Simple Interest'
+        ]
 
         if self.pattern in effectives:
             rep_str = 'Pattern: ' + self.formal_pattern + \
@@ -81,6 +127,10 @@ class Rate:
             rep_str = 'Pattern: ' + self.formal_pattern + \
                       '\nRate: ' + str(self.rate) + \
                       '\nCompounding Frequency: ' + str(self.freq) + ' times per year'
+        elif self.pattern in simple:
+            rep_str = 'Pattern: ' + self.formal_pattern + \
+                      '\nRate: ' + str(self.rate) + \
+                      '\nUnit of time: ' + str(self.interval) + 'year' + ('s' if self.interval != 1 else '')
         else:
             rep_str = 'Pattern: Force of Interest' + \
                       '\nRate: ' + str(self.rate)
@@ -93,6 +143,15 @@ class Rate:
             freq: float = None,
             interval: float = None
     ):
+
+        if FORMAL_PATTERNS[pattern] not in [
+            'Effective Interest',
+            'Effective Discount',
+            'Nominal Interest',
+            'Nominal Discount',
+            'Force of Interest'
+        ]:
+            raise Exception("Rate conversions only valid for compound patterns.")
 
         if FORMAL_PATTERNS[pattern] in ['Effective Interest', 'Effective Discount']:
             if interval is None:
@@ -165,3 +224,27 @@ class Rate:
         )
 
         return res
+
+    def amt_func(self, k, t):
+
+        if FORMAL_PATTERNS[self.pattern] in ['Simple Interest']:
+
+            return k * (1 + self.rate / self.interval * t)
+
+        elif FORMAL_PATTERNS[self.pattern] in [
+            'Effective Interest',
+            'Effective Discount',
+            'Nominal Interest',
+            'Nominal Discount',
+            'Force of Interest'
+        ]:
+            i = self.convert_rate(
+                pattern='Effective Interest',
+                interval=1
+            ).rate
+
+            return k * ((1 + i) ** t)
+
+    def acc_func(self, t):
+
+        return self.amt_func(k=1, t=t)
