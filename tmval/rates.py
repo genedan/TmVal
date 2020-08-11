@@ -130,7 +130,7 @@ class Rate:
         elif self.pattern in simple:
             rep_str = 'Pattern: ' + self.formal_pattern + \
                       '\nRate: ' + str(self.rate) + \
-                      '\nUnit of time: ' + str(self.interval) + 'year' + ('s' if self.interval != 1 else '')
+                      '\nUnit of time: ' + str(self.interval) + ' year' + ('s' if self.interval != 1 else '')
         else:
             rep_str = 'Pattern: Force of Interest' + \
                       '\nRate: ' + str(self.rate)
@@ -143,15 +143,24 @@ class Rate:
             freq: float = None,
             interval: float = None
     ):
-
-        if FORMAL_PATTERNS[pattern] not in [
+        compounds = [
             'Effective Interest',
             'Effective Discount',
             'Nominal Interest',
             'Nominal Discount',
             'Force of Interest'
-        ]:
-            raise Exception("Rate conversions only valid for compound patterns.")
+        ]
+
+        simples = [
+            'Simple Interest',
+            'Simple Discount'
+        ]
+
+        if FORMAL_PATTERNS[self.pattern] not in compounds and pattern in compounds:
+            raise Exception("Simple interest rate cannot be converted to compound patterns.")
+
+        if FORMAL_PATTERNS[self.pattern] in compounds and pattern in simples:
+            raise Exception("Compound rate cannot be converted to simple patterns.")
 
         if FORMAL_PATTERNS[pattern] in ['Effective Interest', 'Effective Discount']:
             if interval is None:
@@ -163,6 +172,11 @@ class Rate:
                 raise Exception("Must provide compounding frequency for conversions to nominal rates.")
             if interval is not None:
                 raise Exception("Interval only valid for conversions to effective rates.")
+        elif FORMAL_PATTERNS[pattern] in ['Simple Interest']:
+            if interval is None:
+                raise Exception("Must provide an interval for conversions to effective rates.")
+            if freq is not None:
+                raise Exception("Frequency only valid for conversions to nominal rates.")
         elif FORMAL_PATTERNS[pattern] in ['Force of Interest']:
             if freq is None or interval is None:
                 raise Exception("Frequency or interval parameters are invalid for conversions to force of interest.")
@@ -213,6 +227,15 @@ class Rate:
                 freq=freq,
                 interval=interval
             )
+        elif self.formal_pattern == 'Simple Interest':
+            rate = self.rate / self.interval * interval
+
+            template = RateTemplate(
+                rate=rate,
+                formal_pattern='Simple Interest',
+                interval=interval
+            )
+
         else:
             raise Exception("Rate has an invalid formal pattern.")
 
