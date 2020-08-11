@@ -1,4 +1,7 @@
+import functools
+import itertools
 import numpy as np
+from scipy.optimize import newton
 import warnings
 
 from itertools import groupby
@@ -49,7 +52,7 @@ class Payments:
 
         return pv
 
-    def irr(self):
+    def irr(self, x0: float = .05):
         times = self.times
         amounts = self.amounts
         payments = [[x, y] for x, y in zip(times, amounts)]
@@ -62,18 +65,27 @@ class Payments:
 
         degree = max(payments_dict, key=int)
 
-        coefficients = [(payments_dict[i] if i in payments_dict else 0) for i in range(degree +1)]
+        # if times are integral, equation of value is polynomial, might be solved with NumPy roots
+        if isinstance(degree, int):
+            coefficients = [(payments_dict[i] if i in payments_dict else 0) for i in range(degree + 1)]
+            roots = np.roots(coefficients)
+            reals = roots[np.isreal(roots)]
 
-        roots = np.roots(coefficients)
+            if len(reals) == 0:
+                warnings.warn("Unable to find real roots.")
 
-        reals = roots[np.isreal(roots)]
+            i_s = [np.real(x) - 1 for x in reals]
 
-        if len(reals) == 0:
-            warnings.warn("Unable to find real roots.")
+            return i_s
+        # if times are fractional, use Newton's method:
+        else:
+            tau = max(times)
 
-        i_s = [np.real(x) - 1 for x in reals]
-
-        return i_s
+            def f(x):
+                return sum([payments_dict[k] * (x ** (tau - k)) for k in payments_dict.keys()])
+            i_s = newton(func=f, x0=x0) - 1
+            i_s = Rate(i_s)
+            return i_s
 
     def equated_time(self, c: float) -> float:
 
@@ -139,6 +151,22 @@ class Payments:
             )
 
         return j
+
+    def time_weighted_yield(
+        self,
+        balance_times: list,
+        balance_amounts: list,
+        annual: bool = False
+    ):
+
+        jtw = time_weighted_yield(
+            payments=self,
+            balance_times=balance_times,
+            balance_amounts=balance_amounts,
+            annual=annual
+        )
+
+        return jtw
 
 
 class Payment:
@@ -238,18 +266,32 @@ def create_payments(
 
 def npv(
         payments: list,
-        discount_func: Callable = None
+        gr: Union[Accumulation, float, Rate]
 ) -> float:
     """
     Calculates the net present value for a stream of payments.
 
     :param payments: a list of :class:`Payment` objects.
     :type payments: list
-    :param discount_func: a discount function.
-    :type discount_func: Callable
+    :param gr: a growth rate object, can be interest rate as a float, Accumulation object, or Rate
+    :type gr: Accumulation, float, or Rate
     :return: the net present value
     :rtype: float
     """
+    if isinstance(gr, Accumulation):
+        acc = Accumulation
+    elif isinstance(gr, float):
+        acc = CompoundAcc(gr)
+    elif isinstance(gr, Rate):
+        i = gr.convert_rate(
+            pattern="Effective Interest",
+            freq=1
+        )
+        acc = CompoundAcc(i)
+    else:
+        raise Exception("Invalid type passed to gr.")
+
+    discount_func = acc.discount_func
 
     factor_none = [x.discount_factor for x in payments].count(None)
 
@@ -316,7 +358,7 @@ def npv_solver(
 
 def payment_solver(payments: list, t: float, ca: CompoundAcc) -> float:
 
-    all_other_pv = - npv(payments=payments, discount_func=ca.discount_func)
+    all_other_pv = - npv(payments=payments, gr=ca)
 
     p = compound_solver(pv=all_other_pv, t=t, gr=ca.interest_rate)
 
@@ -379,12 +421,143 @@ def time_solver(amounts: list, gr: Rate) -> list:
 
 def equated_time(payments: list, gr: Rate, c: float) -> float:
 
-    acc = CompoundAcc(gr=gr)
+    num = np.log(npv(payments=payments, gr=gr) / c)
 
-    num = np.log(npv(payments=payments, discount_func=acc.discount_func) / c)
-
-    denom = np.log(1/(1+acc.interest_rate.rate))
+    denom = np.log(1/(1+gr.rate))
 
     t = num / denom
 
     return t
+
+
+def dollar_weighted_yield(
+        payments: Payments = None,
+        times: list = None,
+        amounts: list = None,
+        a: float = None,
+        b: float = None,
+        i: float = None,
+        w_t: float = None,
+        k_approx: bool = False,
+        annual: bool = False
+) -> Rate:
+    if [a, b, w_t].count(None) not in [0, 3] and k_approx is False:
+        raise Exception("a, b, w_t must all be provided or left none.")
+
+    if payments:
+        times = payments.times.copy()
+        amounts = payments.amounts.copy()
+    elif times and amounts:
+        times = times
+        amounts = amounts
+    elif k_approx:
+        pass
+    else:
+        raise Exception("Must supply a Payments object or list of payment times and amounts if not "
+                        "using k-approximation.")
+
+    if a is None:
+        w_t = times.pop()
+        b = amounts.pop()
+        a = amounts.pop(0)
+        times.pop(0)
+
+    if amounts is not None:
+        c = sum(amounts)
+
+    if i is None:
+        i = b - a - c
+
+    if k_approx:
+
+        j = (2 * i) / (a + b - i)
+
+    else:
+        # normalize times
+        max_t = w_t
+        t_s = [t / max_t for t in times]
+        j = i / (a + sum([ct * (1 - t) for ct, t in zip(amounts, t_s)]))
+
+    j = Rate(
+        rate=j,
+        pattern="Effective Interest",
+        interval=w_t
+    )
+
+    if annual:
+        j = j.convert_rate(
+            pattern="Effective Interest",
+            interval=1
+        )
+
+    return j
+
+
+def dollar_weighted_time(a, b, i, j):
+
+    c = b - a - i
+
+    k = 1 - (i / j - a) / c
+
+    return k
+
+
+def time_weighted_yield(
+    balance_times,
+    balance_amounts: list,
+    payments: Payments = None,
+    payment_times: list = None,
+    payment_amounts: list = None,
+    annual: bool = False
+) -> float:
+    # group payments by time
+
+    if payments:
+        payment_times = payments.times
+        payment_amounts = payments.amounts
+    else:
+        payment_times = payment_times
+        payment_amounts = payment_amounts
+
+    payments = [[x, y] for x, y in zip(payment_times, payment_amounts)]
+    payments.sort()
+    payments_grouped = []
+    for i, g in groupby(payments, key=lambda x: x[0]):
+        payments_grouped.append([i, sum(v[1] for v in g)])
+
+    payments_dict = {x[0]: x[1] for x in payments_grouped}
+
+    balance_zip = zip(balance_times, balance_amounts)
+    balance_dict = {x[0]: x[1] for x in balance_zip}
+
+    j_factors = []
+    for t_prior, t in pairwise(balance_dict.keys()):
+
+        if t_prior == 0:
+            j_factor = balance_dict[t] / balance_dict[t_prior]
+        else:
+            j_factor = balance_dict[t] / (balance_dict[t_prior] + payments_dict[t_prior])
+
+        j_factors.append(j_factor)
+
+    jtw = functools.reduce(lambda x, y: x*y, j_factors) - 1
+
+    jtw = Rate(
+        rate=jtw,
+        pattern="Effective Interest",
+        interval=max(balance_times)
+    )
+
+    if annual:
+        jtw = jtw.convert_rate(
+            pattern="Effective Interest",
+            interval=1
+        )
+
+    return jtw
+
+
+def pairwise(iterable):
+    a, b = itertools.tee(iterable)
+    next(b, None)
+    return zip(a, b)
