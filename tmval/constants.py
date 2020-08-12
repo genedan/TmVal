@@ -25,3 +25,17 @@ FORMAL_PATTERNS = {
     'simp': 'Simple Interest',
     'Simple Interest': 'Simple Interest'
 }
+
+
+COMPOUNDS = [
+            'Effective Interest',
+            'Effective Discount',
+            'Nominal Interest',
+            'Nominal Discount',
+            'Force of Interest'
+        ]
+
+SIMPLES = [
+    'Simple Interest',
+    'Simple Discount'
+]
