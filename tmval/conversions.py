@@ -150,7 +150,7 @@ def nom_disc_from_eff_int(
     """
     # convert i to yearly effective if it is not already
     if old_t is not None:
-        i = eff_int_from_eff_int(i=i, old_t=old_t, new_t=1)
+        i = eff_int_from_eff_int(i=i, old_t=old_t, new_t=1).rate
 
     d = discount_from_interest(i)
 
@@ -181,13 +181,13 @@ def eff_int_from_eff_disc(
     """
     # convert d to yearly effective if it is not already
     if old_t is not None:
-        d = eff_disc_from_eff_disc(d=d, old_t=old_t, new_t=1)
+        d = eff_disc_from_eff_disc(d=d, old_t=old_t, new_t=1).rate
 
     i = interest_from_discount(d)
 
     # convert to new interval if given
     if new_t is not None:
-        i = eff_int_from_eff_int(i=i, old_t=1, new_t=new_t)
+        i = eff_int_from_eff_int(i=i, old_t=1, new_t=new_t).rate
 
     res = RateTemplate(
         rate=i,
