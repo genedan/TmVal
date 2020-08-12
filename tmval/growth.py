@@ -177,7 +177,7 @@ class Amount:
         def acc_func(t):
             return amt_func(k=1, t=t)
 
-        accumulation = Accumulation(f=acc_func)
+        accumulation = Accumulation(gr=acc_func)
         return accumulation
 
 
@@ -187,20 +187,33 @@ class Accumulation(Amount):
     Accepts an accumulation amount function,
     can return valuation at time t and effective interest rate on an interval
 
-    :param f: a function or callable that must take a single parameter, the time t.
-    :type f: Callable
+    :param gr: a growth object, which can either be a function that must take the parameters t \
+    for time and k for principal, or a Rate object representing an interest rate.
+    :type gr: Callable, Rate
     :return: an accumulation object.
     :rtype: Accumulation
     """
     def __init__(
         self,
-        f: Callable,
+        gr: Union[Callable, Rate]
     ):
         Amount.__init__(
             self,
-            f,
+            gr=gr,
             k=1
         )
+
+        self.__gr = gr
+        self.func = self.__extract_func()
+
+    def __extract_func(self):
+
+        if isinstance(self.__gr, Callable):
+            return self.__gr
+        elif isinstance(self.__gr, Rate):
+            return self.__gr.acc_func
+        else:
+            raise Exception("Growth object must be a callable or Rate object.")
 
     def val(self, t: float) -> float:
         """
@@ -257,7 +270,7 @@ class Accumulation(Amount):
 def simple_solver(
     pv: float = None,
     fv: float = None,
-    s: float = None,
+    s: Union[float, Rate] = None,
     t: float = None
 ):
     """
@@ -452,7 +465,7 @@ class CompoundAcc(Accumulation):
 
         Accumulation.__init__(
             self,
-            f=self.acc_func
+            gr=self.acc_func
         )
 
     @property
@@ -746,7 +759,7 @@ class SimpDiscAcc(Accumulation):
 
         Accumulation.__init__(
             self,
-            f=self.acc_func
+            gr=self.acc_func
          )
 
     def acc_func(self, t: float) -> float:
@@ -963,3 +976,18 @@ class ForceAcc(CompoundAcc):
         :rtype: float
         """
         return np.exp(self.delta * t)
+
+
+def simple_interval_solver(s, es):
+    """
+    Finds the interval at which the simple interest rate equals es
+
+    :param s:
+    :type s:
+    :param es:
+    :type es:
+    :return:
+    :rtype:
+    """
+
+    return 1 / es + 1 - 1 / s
