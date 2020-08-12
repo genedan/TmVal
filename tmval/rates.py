@@ -2,7 +2,7 @@
 Contains general growth rate class, and interest-discount conversion functions
 """
 from tmval.conversions import *
-from tmval.constants import FORMAL_PATTERNS
+from tmval.constants import COMPOUNDS, FORMAL_PATTERNS, SIMPLES
 
 
 class Rate:
@@ -24,7 +24,7 @@ class Rate:
             i: float = None,  # convenience argument for effective 1-yr interest rate
             d: float = None,  # convenience argument for effective 1-yr discount rate
             delta: float = None,  # convenience argument for force of interest
-            s: float = None # convenience argument for simple interest
+            s: float = None  # convenience argument for simple interest
     ):
 
         # check arguments
@@ -82,7 +82,7 @@ class Rate:
         elif s is not None:
             self.rate = s
             self.pattern = 's'
-            self.interval =1
+            self.interval = 1
 
         else:
             self.rate = rate
@@ -137,29 +137,249 @@ class Rate:
 
         return rep_str
 
+    # allow arithmetic operations using the rate attribute
+
+    def __add__(self, other):
+        return self.rate + other
+
+    def __radd__(self, other):
+        return other + self.rate
+
+    def __sub__(self, other):
+        return self.rate - other
+
+    def __rsub__(self, other):
+        return other - self.rate
+
+    def __mul__(self, other):
+        return self.rate * other
+
+    def __rmul__(self, other):
+        return other * self.rate
+
+    def __truediv__(self, other):
+        return self.rate / other
+
+    def __rtruediv__(self, other):
+        return other / self.rate
+
+    def __pow__(self, other):
+        return self.rate ** other
+
+    def __rpow__(self, other):
+        return other ** self.rate
+
+    def __floordiv__(self, other):
+        return self.rate // other
+
+    def __rfloordiv__(self, other):
+        return other // self.rate
+
+    def __mod__(self, other):
+        return self.rate % other
+
+    def __rmod__(self, other):
+        return other % self.rate
+
+    def __neg__(self):
+        return - self.rate
+
+    def __pos__(self):
+        return + self.rate
+
+    def __abs__(self):
+        return abs(self.rate)
+
+    # relational comparisons
+
+    def __eq__(self, other):
+        if not isinstance(other, Rate):
+            raise TypeError("Comparisons only supported if both objects are type Rate.")
+
+        if self.formal_pattern in COMPOUNDS and other.formal_pattern in COMPOUNDS:
+
+            self_std = self.convert_rate(
+                pattern="Effective Interest",
+                interval=1
+            )
+
+            other_std = other.convert_rate(
+                pattern="Effective Interest",
+                interval=1
+            )
+
+            if self_std.rate == other_std.rate:
+                return True
+            else:
+                return False
+
+        elif self.formal_pattern in SIMPLES and other.formal_pattern in SIMPLES:
+
+            self_std = self.convert_rate(
+                pattern="Simple Interest",
+                interval=1
+            )
+
+            other_std = other.convert_rate(
+                pattern="Simple Interest",
+                interval=1
+            )
+
+            if self_std.rate == other_std.rate:
+                return True
+            else:
+                return False
+
+    def __gt__(self, other):
+        if not isinstance(other, Rate):
+            raise TypeError("Comparisons only supported if both objects are type Rate.")
+
+        if self.formal_pattern in COMPOUNDS and other.formal_pattern in COMPOUNDS:
+
+            self_std = self.convert_rate(
+                pattern="Effective Interest",
+                interval=1
+            )
+
+            other_std = other.convert_rate(
+                pattern="Effective Interest",
+                interval=1
+            )
+
+            return self_std.rate > other_std.rate
+
+        elif self.formal_pattern in SIMPLES and other.formal_pattern in SIMPLES:
+
+            self_std = self.convert_rate(
+                pattern="Simple Interest",
+                interval=1
+            )
+
+            other_std = other.convert_rate(
+                pattern="Simple Interest",
+                interval=1
+            )
+
+            return self_std.rate > other_std.rate
+        else:
+            raise TypeError("> only supported if both rates are compound or simple.")
+
+    def __ge__(self, other):
+        if not isinstance(other, Rate):
+            raise TypeError("Comparisons only supported if both objects are type Rate.")
+
+        if self.formal_pattern in COMPOUNDS and other.formal_pattern in COMPOUNDS:
+
+            self_std = self.convert_rate(
+                pattern="Effective Interest",
+                interval=1
+            )
+
+            other_std = other.convert_rate(
+                pattern="Effective Interest",
+                interval=1
+            )
+
+            return self_std.rate >= other_std.rate
+
+        elif self.formal_pattern in SIMPLES and other.formal_pattern in SIMPLES:
+
+            self_std = self.convert_rate(
+                pattern="Simple Interest",
+                interval=1
+            )
+
+            other_std = other.convert_rate(
+                pattern="Simple Interest",
+                interval=1
+            )
+
+            return self_std.rate >= other_std.rate
+        else:
+            raise TypeError("> only supported if both rates are compound or simple.")
+
+    def __lt__(self, other):
+        if not isinstance(other, Rate):
+            raise TypeError("Comparisons only supported if both objects are type Rate.")
+
+        if self.formal_pattern in COMPOUNDS and other.formal_pattern in COMPOUNDS:
+
+            self_std = self.convert_rate(
+                pattern="Effective Interest",
+                interval=1
+            )
+
+            other_std = other.convert_rate(
+                pattern="Effective Interest",
+                interval=1
+            )
+
+            return self_std.rate < other_std.rate
+
+        elif self.formal_pattern in SIMPLES and other.formal_pattern in SIMPLES:
+
+            self_std = self.convert_rate(
+                pattern="Simple Interest",
+                interval=1
+            )
+
+            other_std = other.convert_rate(
+                pattern="Simple Interest",
+                interval=1
+            )
+
+            return self_std.rate < other_std.rate
+        else:
+            raise TypeError("> only supported if both rates are compound or simple.")
+
+    def __le__(self, other):
+        if not isinstance(other, Rate):
+            raise TypeError("Comparisons only supported if both objects are type Rate.")
+
+        if self.formal_pattern in COMPOUNDS and other.formal_pattern in COMPOUNDS:
+
+            self_std = self.convert_rate(
+                pattern="Effective Interest",
+                interval=1
+            )
+
+            other_std = other.convert_rate(
+                pattern="Effective Interest",
+                interval=1
+            )
+
+            return self_std.rate <= other_std.rate
+
+        elif self.formal_pattern in SIMPLES and other.formal_pattern in SIMPLES:
+
+            self_std = self.convert_rate(
+                pattern="Simple Interest",
+                interval=1
+            )
+
+            other_std = other.convert_rate(
+                pattern="Simple Interest",
+                interval=1
+            )
+
+            return self_std.rate <= other_std.rate
+        else:
+            raise TypeError("> only supported if both rates are compound or simple.")
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
     def convert_rate(
             self,
             pattern,
             freq: float = None,
             interval: float = None
     ):
-        compounds = [
-            'Effective Interest',
-            'Effective Discount',
-            'Nominal Interest',
-            'Nominal Discount',
-            'Force of Interest'
-        ]
 
-        simples = [
-            'Simple Interest',
-            'Simple Discount'
-        ]
-
-        if FORMAL_PATTERNS[self.pattern] not in compounds and pattern in compounds:
+        if FORMAL_PATTERNS[self.pattern] not in COMPOUNDS and pattern in COMPOUNDS:
             raise Exception("Simple interest rate cannot be converted to compound patterns.")
 
-        if FORMAL_PATTERNS[self.pattern] in compounds and pattern in simples:
+        if FORMAL_PATTERNS[self.pattern] in COMPOUNDS and pattern in SIMPLES:
             raise Exception("Compound rate cannot be converted to simple patterns.")
 
         if FORMAL_PATTERNS[pattern] in ['Effective Interest', 'Effective Discount']:
@@ -178,7 +398,7 @@ class Rate:
             if freq is not None:
                 raise Exception("Frequency only valid for conversions to nominal rates.")
         elif FORMAL_PATTERNS[pattern] in ['Force of Interest']:
-            if freq is None or interval is None:
+            if freq is not None or interval is not None:
                 raise Exception("Frequency or interval parameters are invalid for conversions to force of interest.")
             pass
         else:
