@@ -13,6 +13,21 @@ from tmval.rates import Rate
 
 
 class Payments:
+    """
+    A collection of payments, and corresponding growth object. If no growth object (an interest rate, Rate object, \
+    Accumulation object) is provided, the payments are assumed to be undiscounted. The Payments class serves as the \
+    backbone for major types of financial instruments, such as annuities and bonds. It provides methods for \
+    calculating net present value, internal rate of return (dollar weighted yield), equated time, equated value, \
+     and time-weighted yield.
+
+    :param amounts: a list of payment amounts.
+    :type amounts: list
+    :param times: a list of payment times.
+    :type times: list
+    :param gr: a growth rate object, can be supplied as a float, a Rate object, or an Accumulation object.
+    :type gr: float, Rate, or Accumulation
+
+    """
     def __init__(
         self,
         amounts: list,
