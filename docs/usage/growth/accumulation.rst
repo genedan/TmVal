@@ -34,7 +34,7 @@ How much does $1 invested at time 0 grow to at time 5? To solve this problem, we
    def f(t):
        return .05 * (t **2) + .05 * t + 1
 
-   my_acc = Accumulation(f=f)
+   my_acc = Accumulation(gr=f)
 
     print(my_acc.val(5))
 
@@ -47,7 +47,7 @@ Note that we could have also solved this problem with the ``Amount`` class, by s
    def f(t, k):
        return k * (.05 * (t **2) + .05 * t + 1)
 
-   my_amt = Amount(f=f, k=1)
+   my_amt = Amount(gr=f, k=1)
 
    print(my_amt.val(5))
 
@@ -60,7 +60,7 @@ If the amount and accumulation functions are proportionally related, we can extr
    def f(t, k):
        return k * (.05 * (t **2) + .05 * t + 1)
 
-   my_amt = Amount(f=f, k=1)
+   my_amt = Amount(gr=f, k=1)
 
    my_acc = my_amt.get_accumulation()
 
