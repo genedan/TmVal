@@ -193,8 +193,10 @@ class Rate:
     # relational comparisons
 
     def __eq__(self, other):
-        if not isinstance(other, Rate):
-            raise TypeError("Comparisons only supported if both objects are type Rate.")
+        # if not isinstance(other, Rate):
+        #     raise TypeError("Comparisons only supported if both objects are type Rate.")
+        if other is None:
+            return False
 
         if self.formal_pattern in COMPOUNDS and other.formal_pattern in COMPOUNDS:
 
