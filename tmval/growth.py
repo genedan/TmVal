@@ -10,7 +10,6 @@ import numpy as np
 from typing import Callable, Union
 
 from tmval.rates import Rate
-from tmval.conversions import apy
 
 
 class Amount:
@@ -645,14 +644,21 @@ class TieredTime:
             self,
             tiers: list,
             rates: list,
-            frequencies: list = None,
-            use_apr: bool = False
     ):
         self.tiers = tiers
-        if use_apr:
-            self.rates = [apy(x, m) for x, m in zip(rates, frequencies)]
-        else:
-            self.rates = rates
+        rates_std = []
+        for x in rates:
+            if isinstance(x, Rate):
+                pass
+            elif isinstance(x, float):
+                x = Rate(x)
+            else:
+                raise TypeError("Invalid type passed to rates, \
+                use either a list of floats or Rate objects.")
+
+            rates_std.append(x)
+
+        self.rates = rates_std
 
     def __call__(
             self,
@@ -671,7 +677,8 @@ class TieredTime:
         # for each tier that applies, calculate the cumulative balance
         bal = k
         for rate, time in zip(rates, times):
-            bal = bal * ((1 + rate) ** time)
+            acc = Accumulation(gr=rate)
+            bal = bal * acc.val(time)
 
         return bal
 
