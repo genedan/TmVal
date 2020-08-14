@@ -190,6 +190,9 @@ class Rate:
     def __abs__(self):
         return abs(self.rate)
 
+    def __round__(self, ndigits):
+        return round(self.rate, ndigits=ndigits)
+
     # relational comparisons
 
     def __eq__(self, other):
