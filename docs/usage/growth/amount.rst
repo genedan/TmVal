@@ -34,6 +34,6 @@ Now supply the growth function to the ``Amount`` class, and call :code:`my_amt.v
 
 .. ipython:: python
 
-   my_amt = Amount(f=f, k=5)
+   my_amt = Amount(gr=f, k=5)
 
     print(my_amt.val(5))
