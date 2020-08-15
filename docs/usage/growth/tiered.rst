@@ -45,7 +45,7 @@ TmVal's :code:`TieredBal` class offers a way to model this type of account. You 
 
    from tmval import Amount
 
-   my_amt = Amount(f=my_tiered_bal, k=18000)
+   my_amt = Amount(gr=my_tiered_bal, k=18000)
    print(my_amt.val(10))
 
 You can also use :code:`TieredBal` to find the times at which you would expect the interest rate to jump, given an initial investment. We do this by calling the method :code:`get_jump_times()`. How long will it take to hit 2% and 3% interest?
@@ -83,6 +83,6 @@ This means, the account pays 1% during the first year, 2% during the second year
        rates=[.01, .02, .03]
    )
 
-   my_amt = Amount(f=my_tiered_time, k=18000)
+   my_amt = Amount(gr=my_tiered_time, k=18000)
 
    print(my_amt.val(10))

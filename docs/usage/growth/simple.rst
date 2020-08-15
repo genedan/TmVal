@@ -30,13 +30,13 @@ Examples
 
 Let's repeat the above examples using the TmVal package. Let's start by importing ``SimpleAmt``, which is a class that can be used for simple interest calculations:
 
-.. ipython:: python
+
 
    from tmval import SimpleAmt
 
 Let's see how much $1 grows to after 1 year, at an interest rate of 5%:
 
-.. ipython:: python
+
 
    my_amt = SimpleAmt(k=1, s=.05)
    print(my_amt.val(1))
@@ -44,7 +44,7 @@ Let's see how much $1 grows to after 1 year, at an interest rate of 5%:
 
 Now, let's change the principal to $5:
 
-.. ipython:: python
+
 
    my_amt = SimpleAmt(k=5, s=.05)
    print(my_amt.val(1))
@@ -53,7 +53,7 @@ The output is 5.25, the same as above.
 
 TmVal also comes with a simple interest solver, ``get_simple_amt()`` that can be used to solve for missing inputs. For example, what rate of interest would give us $5.25, if we held $5 for a year?
 
-.. ipython:: python
+
 
    from tmval import get_simple_amt
    my_amt = get_simple_amt(fv=5.25, pv=5, t=1)

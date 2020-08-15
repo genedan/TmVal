@@ -46,7 +46,7 @@ To create a simple loan, supply the principal, term, and discount amount to ``Si
 
    my_loan = SimpleLoan(principal=1000, term=1, discount_amt=100)
 
-   my_amt = Amount(f=my_loan, k=1000)
+   my_amt = Amount(gr=my_loan, k=1000)
 
    print(my_amt.discount_interval(t1=0, t2=1))
 

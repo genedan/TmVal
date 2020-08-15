@@ -29,43 +29,4 @@ The nominal and effective interest rates are related by the following equations:
 Examples
 ==========
 
-TmVal offers a way to convert between nominal and effective interest rates with the :func:`.eff_int_from_nom_int` and :func:`.nom_int_from_eff_int`.
-
-
-Suppose we have a nominal interest rate of 6% compounded twice per year. What is the annual effective interest rate?
-
-To start, we need to declare a nominal interest rate using TmVal's :class:`.NominalInt` class. This class takes the nominal interest rate and compounding frequency as arguments:
-
-.. ipython:: python
-
-   from tmval import NominalInt, eff_int_from_nom_int
-
-   nom = NominalInt(im=.06, m=2)
-
-   i = eff_int_from_nom_int(nom=nom)
-
-   print(i)
-
-Let's do the reverse to confirm that it's working. :class:`.NominalInt` has two attributes, the rate, which can be extracted with `NominalInt.val` and the compounding frequency, which can be extracted with `NominalInd.m`:
-
-.. ipython:: python
-
-   from tmval import nom_int_from_eff_int
-
-   im = nom_int_from_eff_int(i=i, new_m=2)
-
-   print(im.val)
-
-If these function names seemed cumbersome, there's indeed a better way to do the conversions. TmVal has a general interest rate conversion function called convert_rate, to handle conversions between any two types of rates, including both interest and discount rates, which we'll expand upon in the next section:
-
-.. ipython:: python
-
-   from tmval import convert_rate
-
-   i = convert_rate(
-       nom_i=nom,
-       intdisc='interest',
-       effnom='effective'
-   )
-
-   print(i)
+Rework section - had conversions

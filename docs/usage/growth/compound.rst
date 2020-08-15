@@ -39,14 +39,14 @@ Let's see how much $1 grows to after 2 years, at an interest rate of 5%:
 
 .. ipython:: python
 
-   my_amt = CompoundAmt(k=1, i=.05)
+   my_amt = CompoundAmt(k=1, gr=.05)
    print(my_amt.val(2))
 
 Now, let's change the principal to $5:
 
 .. ipython:: python
 
-   my_amt = CompoundAmt(k=5, i=.05)
+   my_amt = CompoundAmt(k=5, gr=.05)
    print(my_amt.val(2))
 
 

@@ -39,8 +39,10 @@ This could have also been solved by using the previously-introduced :func:`.comp
 
 .. ipython:: python
 
-   from tmval import compound_solver
+   from tmval import compound_solver, Rate
 
-   pv = compound_solver(delta=.05, fv=5000, t=5)
+   gr = Rate(delta=.05)
+
+   pv = compound_solver(gr=gr, fv=5000, t=5)
 
    print(pv)

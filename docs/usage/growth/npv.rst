@@ -19,7 +19,6 @@ TmVal's :func:`.npv` function accepts a list of payments, a discount function, a
 
 Suppose we are considering a potential investment where we must pay 10,000 up front, in exchange for payments of 1000 occurring at time 1, 2000 occurring at time 2, and 9000 occurring at time 3. If the effective interest rate is 10% compounded annually, should we make the investment?
 
-.. ipython:: python
 
    from tmval import create_payments, CompoundAcc, npv
 
@@ -36,7 +35,7 @@ Suppose we are considering a potential investment where we must pay 10,000 up fr
 
 The NPV is negative, so we should not make this investment. Note that we can simplify what we had just done if the payments already have discount factors attached. Since we know the interest rate, it is not necessary to create an :class:`.Accumulation` object for it. For example:
 
-.. ipython:: python
+
 
    payments = [-10000, 1000, 2000, 9000]
    times = [0, 1, 2, 3]

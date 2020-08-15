@@ -46,30 +46,11 @@ Examples
 
 Suppose we have a nominal discount rate of :math:`d^{(12)} = .06` compounded monthly. What is the equivalent nominal interest rate compounded quarterly?
 
-TmVal also comes with the class :class:`NominalDisc` to handle nominal discount rates, like :class:`NominalInt`, you supply the nominal rate and compounding frequency:
 
-.. ipython:: python
-
-   from tmval import convert_rate, NominalDisc
-
-   nom_d = NominalDisc(dm=.06, m=12)
-
-   nom_i = convert_rate(nom_d=nom_d, intdisc='interest', effnom='nominal', freq=4)
-
-   print(nom_i)
 
 Now, let's convert it to an annual effective interest rate:
 
-.. ipython:: python
 
-   i = convert_rate(nom_i=nom_i, intdisc='interest', effnom='effective')
 
-   print(i)
 
 Now, let's convert it back to a nominal discount rate compounded monthly:
-
-.. ipython:: python
-
-   nom_d2 = convert_rate(i=i, intdisc='discount', effnom='nominal', freq=12)
-
-   print(nom_d2)

@@ -44,7 +44,7 @@ First lets set up our ``Amount`` instance:
    def f(t, k):
        return k * (.02 * (t **2) + .02 * t + 1)
 
-   my_amt = Amount(f=f, k=5)
+   my_amt = Amount(gr=f, k=5)
 
 We can use the ``Amount`` class's ``interest_earned()`` method to get the answer:
 

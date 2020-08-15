@@ -8,7 +8,6 @@ This section documents standalone functions that do not belong to a class.
    :maxdepth: 1
    :titlesonly:
 
-   get_simple_amt
    simple_solver
    osi
    bankers_rule
@@ -16,9 +15,6 @@ This section documents standalone functions that do not belong to a class.
    k_solver
    interest_from_discount
    discount_from_interest
-   create_payments
-   npv
-   npv_solver
    effective_from_nominal
    effective_from_nominal_disc
    apy
