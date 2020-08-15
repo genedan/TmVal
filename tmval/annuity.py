@@ -20,11 +20,22 @@ class Annuity(Payments):
         self.amount = amount
         self.period = period
         self.imd = imd
+        imd_ind = 1 if imd == 'immediate' else 0
 
         n_payments = term / period
-        n_payments = int(ceil(n_payments))
-        amounts = [amount] * n_payments
-        times = [period * (x + 1) for x in range(n_payments)]
+
+        if term == np.inf:
+
+            amounts = [np.inf]
+            times = [np.inf]
+            self._ann_perp = 'perpetuity'
+        else:
+
+            n_payments = int(ceil(n_payments))
+            amounts = [amount] * n_payments
+            times = [period * (x + imd_ind) for x in range(n_payments)]
+            self._ann_perp = 'annuity'
+
         Payments.__init__(
             self,
             amounts=amounts,
@@ -32,11 +43,24 @@ class Annuity(Payments):
             gr=gr
         )
 
-    def pv(self):
+        self.pattern = self._ann_perp + '-' + imd
 
-        pv = self.amount * \
-             (1 - self.acc.discount_func(self.term)) /\
-             (self.acc.val(self.period) - 1)
+        if imd not in ['immediate', 'due']:
+            raise ValueError('imd can either be immediate or due.')
+
+    def pv(self):
+        if self._ann_perp == 'perpetuity':
+
+            pv = self.amount / (self.acc.val(self.period) - 1)
+
+        else:
+
+            pv = self.amount * \
+                 (1 - self.acc.discount_func(self.term)) /\
+                 (self.acc.val(self.period) - 1)
+
+        if self.imd == 'due':
+            pv = pv * self.acc.val(self.period)
 
         return pv
 
@@ -45,6 +69,9 @@ class Annuity(Payments):
         sv = self.amount * \
              ((1 + self.acc.interest_rate) ** self.term - 1) / \
              (self.acc.val(self.period) - 1)
+
+        if self.imd == 'due':
+            sv = sv * self.acc.val(self.period)
 
         return sv
 
@@ -74,13 +101,15 @@ def get_loan_pmt(
         period: float,
         term: float,
         gr: Rate,
+        imd: str = 'immediate',
         cents=False
 ):
 
     ann = Annuity(
         period=period,
         term=term,
-        gr=gr
+        gr=gr,
+        imd=imd
     )
 
     pmt = loan_amt / ann.pv()
@@ -95,7 +124,8 @@ def get_loan_pmt(
             amount=pmt_round,
             period=period,
             term=term,
-            gr=gr
+            gr=gr,
+            imd=imd
         ).pv()
 
         if loan_amt == round(pv, 2):
@@ -117,7 +147,8 @@ def get_loan_pmt(
                 amount=pmt_round2,
                 period=period,
                 term=term,
-                gr=gr
+                gr=gr,
+                imd=imd
             ).pv() - loan_amt
 
             last_pmt = pmt_round2 - round(diff * acc.val(t=term), 2)
