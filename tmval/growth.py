@@ -490,7 +490,7 @@ def compound_solver(
     pv: float = None,
     fv: float = None,
     t: float = None,
-    gr: Rate = None
+    gr: Union[float, Rate] = None
 ):
     """
     Solves for a missing value in the case of compound interest supply 3/4 of: a present value, a future value \
@@ -518,11 +518,21 @@ def compound_solver(
     # convert to i:
 
     if gr:
-        rate = gr.convert_rate(
+
+        if isinstance(gr, Rate):
+            rate = gr
+        elif isinstance(gr, float):
+            rate = Rate(gr)
+        else:
+            raise TypeError("Invalid type passed to gr. Should pass a float or Rate object.")
+
+        rate = rate.convert_rate(
             pattern='Effective Interest',
             interval=1
         )
-        i = rate.rate
+
+        i = rate
+
     else:
         i = None
 
@@ -614,7 +624,7 @@ class TieredBal:
         pv = k
         t_base = 0
         for fv, i in zip(jump_balances, jump_rates):
-            jump_increment = compound_solver(pv=pv, fv=fv, gr=i)
+            jump_increment = compound_solver(pv=pv, fv=fv, gr=Rate(i))
             jump_times.append(t_base + jump_increment)
             t_base = t_base + jump_increment
             pv = fv
