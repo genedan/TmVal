@@ -713,9 +713,9 @@ class TieredTime:
         # for each tier that applies, calculate the cumulative balance
         bal = k
         for rate, time in zip(rates, times):
-            rate = standardize_rate(gr=rate)
 
-            bal = bal * (1 + rate) ** time
+            rate = standardize_rate(gr=rate)
+            bal = bal * rate.amt_func(k=1, t=time)
 
         return bal
 
