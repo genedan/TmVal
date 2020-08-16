@@ -10,6 +10,7 @@ import numpy as np
 from inspect import signature
 from typing import Callable, Union
 
+from tmval.constants import COMPOUNDS
 from tmval.rates import Rate, standardize_rate
 
 
@@ -40,18 +41,20 @@ class Amount:
             gr: Union[Callable, Rate, float],
             k: float
     ):
-        self.__gr = gr
-        self.func = self.__extract_func()
+        self._gr = gr
+        self.func = self._extract_func()
         self.k = k
-
         self._validate_func()
+        self.is_compound = self.__is_compound()
+        if self.is_compound:
+            self.interest_rate = self.effective_rate(1)
 
-    def __extract_func(self):
+    def _extract_func(self):
 
-        if isinstance(self.__gr, Callable):
-            return self.__gr
-        elif isinstance(self.__gr, (float, Rate)):
-            return standardize_rate(self.__gr).amt_func
+        if isinstance(self._gr, Callable):
+            return self._gr
+        elif isinstance(self._gr, (float, Rate)):
+            return standardize_rate(self._gr).amt_func
         else:
             raise Exception("Growth object must be a callable or Rate object.")
 
@@ -71,6 +74,28 @@ class Amount:
 
         if 't' not in sig.parameters:
             raise Exception("Growth function must take a parameter t for time.")
+
+    def __is_compound(self):
+        if isinstance(self._gr, float):
+            return True
+
+        elif isinstance(self._gr, Rate) and self._gr.formal_pattern in COMPOUNDS:
+            return True
+
+        elif isinstance(self._gr, Callable):
+            for i in range(10):
+                try:
+                    cond = round(self.val(i) / self.val(i - 1), 5) != round(self.val(i + 1) / self.val(i), 5)
+                except ValueError:
+                    return False
+                if cond:
+                    return False
+                else:
+                    continue
+
+            return True
+        else:
+            return False
 
     def val(self, t: float) -> float:
         """
@@ -237,24 +262,24 @@ class Accumulation(Amount):
             k=1
         )
 
-        self.__gr = gr
-        self.func = self.__extract_func()
+        self._gr = gr
+        self.func = self._extract_func()
 
-    def __extract_func(self):
+    def _extract_func(self):
 
-        if isinstance(self.__gr, Callable):
-            params = signature(self.__gr).parameters
+        if isinstance(self._gr, Callable):
+            params = signature(self._gr).parameters
 
             if 'k' in params:
                 def f(t: float) -> float:
-                    return self.__gr(t=t, k=1)
+                    return self._gr(t=t, k=1)
             else:
-                f = self.__gr
+                f = self._gr
 
             return f
 
-        elif isinstance(self.__gr, (float, Rate)):
-            return standardize_rate(self.__gr).acc_func
+        elif isinstance(self._gr, (float, Rate)):
+            return standardize_rate(self._gr).acc_func
         else:
             raise Exception("Growth object must be a callable or Rate object.")
 
@@ -427,104 +452,6 @@ def bankers_rule(
         return days / 360
     else:
         return days
-
-
-class CompoundAmt(Amount):
-    """
-    Compound interest scenario, special case of amount function where amount function is geometric. \
-    :class:`CompoundAmt` is a subclass of the :class:`Amount` class in the case of compound interest. If \
-    your problem involves compound interest, you should probably use this class or the :class:`CompoundAcc` class
-    instead of the more general classes of :class:`Amount` and :class:`Accumulation`.
-
-    With this class, you do not need to supply a growth function, just pass an interest rate and and the growth \
-    function will be constructed automatically.
-
-    :param k: principal, or the initial investment.
-    :type k: float
-    :param gr: the growth rate, can be a compound interest rate supplied as a float or a Rate object
-    :type gr: float or Rate
-    :return: a CompoundAmt object.
-    :rtype: CompoundAmt
-    """
-    def __init__(
-            self,
-            k: float,
-            gr: Union[float, Rate]
-    ):
-
-        # Convert to single-period compound interest first
-
-        i = standardize_rate(gr)
-
-        self.principal = k
-        self.interest_rate = Rate(i)
-
-        Amount.__init__(
-            self,
-            gr=self.amt_func,
-            k=k
-        )
-
-    def amt_func(self, k, t):
-        """
-        The amount function of the :class:`CompoundAmt` class.
-        Automatically applied to the :class:`Amount` class
-        by providing a compound growth function, instead of a user-defined one.
-
-        :param k: the principal, or initial investment.
-        :type k: float
-        :param t: the time as-of time for the valuation.
-        :type t: float
-        :return: the value of k at time t, invested at time 0.
-        :rtype: float
-        """
-        return k * ((1 + self.interest_rate.rate) ** t)
-
-
-class CompoundAcc(Accumulation):
-    """
-    Compound interest scenario, special case of accumulation function where amount function is geometric.  \
-    :class:`CompoundAcc` is a subclass of the :class:`Accumulation` class in the case of compound interest. If \
-    your problem involves compound interest, you should probably use this class or the :class:`CompoundAmt` class
-    instead of the more general classes of :class:`Amount` and :class:`Accumulation`.
-
-    :param gr: the growth rate, can be a compound interest rate supplied as a float or a Rate object
-    :type gr: float or Rate
-    :return: a CompoundAcc object.
-    :rtype: CompoundAcc
-    """
-
-    def __init__(
-            self,
-            gr: Union[float, Rate]
-    ):
-
-        i = standardize_rate(gr)
-
-        self.interest_rate = Rate(i)
-
-        Accumulation.__init__(
-            self,
-            gr=self.acc_func
-        )
-
-    @property
-    def discount_factor(self) -> float:
-        discount_factor = 1 / (1 + self.interest_rate.rate)
-        return discount_factor
-
-    def acc_func(self, t) -> float:
-        """
-        The accumulation function of the :class:`CompoundAcc` class.
-        Automatically applied to the :class:`Accumulation` class
-        by providing a compound growth function, instead of a user-defined one.
-
-        :param t: the time as-of time for the valuation.
-        :type t: float
-        :return: the value of 1 unit of currency at time t, invested at time 0.
-        :rtype: float
-        """
-        return (1 + self.interest_rate.rate) ** t
 
 
 def compound_solver(
@@ -742,87 +669,6 @@ def k_solver(
     return res
 
 
-class SimpDiscAmt(Amount):
-    """
-    A special case of the :class:`Amount` class where discount is applied linearly. Note by discount, we mean \
-    discounted interest, as in interest up front, which is not the same thing as the interest rate.
-
-    :param k: the principal, or initial investment amount.
-    :type k: float
-    :param d: the discount rate.
-    :type d: float
-    :return: a :class:`SimpleDiscAmt` object
-    :rtype: SimpDiscAmt
-    """
-
-    def __init__(
-        self,
-        k: float,
-        d: float
-    ):
-        self.principal = k
-        self.discount_rate = d
-
-        Amount.__init__(
-            self,
-            gr=self.amt_func,
-            k=k
-        )
-
-    def amt_func(self, k: float, t: float) -> float:
-        """
-        The amount function of the :class:`SimpDiscAmt` class.
-        Automatically applied to the :class:`Amount` class
-        by providing a linear discount function, instead of a user-defined one.
-
-        :param k: the principal, or initial investment.
-        :type k: float
-        :param t: the time as-of time for the valuation.
-        :type t: float
-        :return: the value of k at time t, invested at time 0.
-        :rtype: float
-        """
-        return k / (1 - self.discount_rate * t)
-
-
-class SimpDiscAcc(Accumulation):
-    """
-    A special case of the :class:`Accumulation` class where discount is applied linearly. Note by discount, we mean \
-    discounted interest, as in interest up front, which is not the same thing as the interest rate.
-
-    :param d: the discount rate.
-    :type d: float
-    :return: a :class:`SimpDiscAcc` object
-    :rtype: SimpDiscAcc
-    """
-    def __init__(
-        self,
-        d: float
-    ):
-        self.discount_rate = d
-
-        Accumulation.__init__(
-            self,
-            gr=self.acc_func
-         )
-
-    def acc_func(self, t: float) -> float:
-        """
-        The accumulation function of the :class:`SimpDiscAcc` class.
-        Automatically applied to the :class:`Accumulation` class
-        by providing a linear discount function, instead of a user-defined one.
-
-        :param t: the time as-of time for the valuation.
-        :type t: float
-        :return: the value of k at time t, invested at time 0.
-        :rtype: float
-        """
-        return 1 / (1 - self.discount_rate * t)
-
-    def delta_t(self, t: float) -> float:
-        return self.discount_rate / (1 - self.discount_rate * t)
-
-
 class SimpleLoan:
     """
     A callable growth pattern for a simple loan, which is a lump sum loan to be paid back with a single payment \
@@ -874,152 +720,13 @@ class SimpleLoan:
     ) -> float:
 
         if not ((t == 0) or (t == self.term)):
-            raise Exception("Simple loan has no meaning outside of origination or termination date.")
+            raise ValueError("Simple loan has no meaning outside of origination or termination date.")
 
         if t == 0:
             return k - self.discount_amt
 
         if t == self.term:
             return k
-
-
-class CompDiscAmt(Amount):
-    """
-    A special case of the :class:`Amount` class where discount is compounded. Note by discount, we mean \
-    discounted interest, as in interest up front, which is not the same thing as the interest rate.
-
-    :param k: the principal, or initial investment amount.
-    :type k: float
-    :param d: the discount rate.
-    :type d: float
-    :return: a :class:`CompDiscAmt` object
-    :rtype: CompDiscAmt
-    """
-    def __init__(
-        self,
-        k: float,
-        d: float
-    ):
-        self.principal = k
-        self.discount_rate = d
-
-        Amount.__init__(
-            self,
-            gr=self.amt_func,
-            k=k
-        )
-
-    def amt_func(self, k, t):
-        """
-        The amount function of the :class:`CompDiscAmt` class.
-        Automatically applied to the :class:`Amount` class
-        by providing a linear compound function, instead of a user-defined one.
-
-        :param k: the principal, or initial investment.
-        :type k: float
-        :param t: the time as-of time for the valuation.
-        :type t: float
-        :return: the value of k at time t, invested at time 0.
-        :rtype: float
-        """
-        return k * (1 - self.discount_rate) ** (-t)
-
-
-class CompDiscAcc(Accumulation):
-    """
-    A special case of the :class:`Accumulation` class where discount is compounded. Note by discount, we mean \
-    discounted interest, as in interest up front, which is not the same thing as the interest rate.
-
-    :param d: the discount rate.
-    :type d: float
-    :return: a :class:`CompDiscAcc` object
-    :rtype: CompDiscAcc
-    """
-
-    def __init__(
-            self,
-            k: float,
-            d: float
-    ):
-        self.principal = k
-        self.discount_rate = d
-
-        Amount.__init__(
-            self,
-            gr=self.acc_func,
-            k=k
-        )
-
-    def acc_func(self, t):
-        """
-        The accumulation function of the :class:`CompDiscAcc` class.
-        Automatically applied to the :class:`Accumulation` class
-        by providing a compound growth function, instead of a user-defined one.
-        :param t: the time as-of time for the valuation.
-        :type t: float
-        :return: the value of k at time t, invested at time 0.
-        :rtype: float
-        """
-        return (1 - self.discount_rate) ** (-t)
-
-
-class ForceAmt(CompoundAmt):
-
-    def __init__(
-            self,
-            k: float,
-            delta: float
-    ):
-        self.principal = k
-        self.delta = delta
-
-        CompoundAmt.__init__(
-            self,
-            gr=np.exp(delta) - 1,
-            k=k
-        )
-
-    def amt_func(self, k, t):
-        """
-        The amount function of the :class:`CompoundAmt` class.
-        Automatically applied to the :class:`Amount` class
-        by providing a continually compounded growth function, instead of a user-defined one.
-
-        :param k: the principal, or initial investment.
-        :type k: float
-        :param t: the time as-of time for the valuation.
-        :type t: float
-        :return: the value of k at time t, invested at time 0.
-        :rtype: float
-        """
-        return k * np.exp(self.delta * t)
-
-
-class ForceAcc(CompoundAcc):
-
-    def __init__(
-            self,
-            delta: float
-    ):
-        self.delta = delta
-
-        CompoundAcc.__init__(
-            self,
-            gr=np.exp(self.delta) - 1
-        )
-
-    def acc_func(self, t) -> float:
-        """
-        The accumulation function of the :class:`CompoundAcc` class.
-        Automatically applied to the :class:`Accumulation` class
-        by providing a compound growth function, instead of a user-defined one.
-
-        :param t: the time as-of time for the valuation.
-        :type t: float
-        :return: the value of 1 unit of currency at time t, invested at time 0.
-        :rtype: float
-        """
-        return np.exp(self.delta * t)
 
 
 def simple_interval_solver(s, es):
@@ -1035,3 +742,26 @@ def simple_interval_solver(s, es):
     """
 
     return 1 / es + 1 - 1 / s
+
+
+def standardize_acc(gr: Union[float, Rate, Accumulation]) -> Accumulation:
+    """
+    returns an compound accumulation object
+
+    :param gr:
+    :type gr:
+    :return:
+    :rtype:
+    """
+
+    if isinstance(gr, Accumulation):
+        if not gr.is_compound:
+            raise TypeError("Standardization of Accumulation class only valid for compound interest.")
+        else:
+            pass
+    elif isinstance(gr, (float, Rate)):
+        gr = Accumulation(gr)
+    else:
+        raise TypeError("Invalid type passed to gr.")
+
+    return gr

@@ -47,11 +47,14 @@ Suppose the interest rate is 5%, what is the discount rate? We can use the funct
 
 .. ipython:: python
 
-   from tmval import discount_from_interest
+   from tmval import Rate
 
-   i = .05
+   i = Rate(.05)
 
-   d = discount_from_interest(i=.05)
+   d = i.convert_rate(
+      pattern='Effective Discount',
+      interval=1
+   )
 
    print(d)
 
@@ -59,8 +62,11 @@ Using :func:`.interest_from_discount`, we can convert the discount rate back to 
 
 .. ipython:: python
 
-   from tmval import interest_from_discount
+   from tmval import Rate
 
-   i = interest_from_discount(d=d)
+   i = d.convert_rate(
+      pattern='Effective Interest',
+      interval=1
+   )
 
    print(i)

@@ -2,7 +2,7 @@ from collections import namedtuple
 import decimal
 import numpy as np
 from tmval.value import Payments, Rate
-from tmval.growth import CompoundAcc
+from tmval.growth import Accumulation
 from math import ceil
 
 
@@ -116,7 +116,7 @@ def get_loan_pmt(
 
     if cents:
 
-        acc = CompoundAcc(gr=gr)
+        acc = Accumulation(gr=gr)
 
         pmt_round = round(pmt, 2)
 

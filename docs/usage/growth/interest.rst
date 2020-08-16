@@ -84,6 +84,6 @@ Assuming proportionality, we can define an amount function from an accumulation 
 
    print(eff_interest_rate_acc)
 
-   print(math.isclose(eff_interest_rate_acc, eff_interest_rate_amt, rel_tol=.0001))
+   print(math.isclose(eff_interest_rate_acc.rate, eff_interest_rate_amt.rate, rel_tol=.0001))
 
 Note that there is some loss of precision due to floating point operations, so we use ``isclose()`` from the ``math`` library for the comparison.

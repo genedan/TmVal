@@ -11,15 +11,15 @@ It can be shown that as the compounding frequency approaches infinity, the nomin
 Examples
 ========
 
-TmVal has special classes :class:`.ForceAmt` and :class:`.ForceAcc` that inherit from their corresponding compound interest classes to handle continuously compounded interest.
+TmVal can handle force of interest problems by supplying a continually compounded interest rate to the :class:`.Amount` or :class:`.Accumulation` classes.
 
 Suppose we have the force of interest :math:`\delta = .05`. What is the value at time 5 of 5000 invested at time 0?
 
 .. ipython:: python
 
-   from tmval import ForceAmt
+   from tmval import Amount, Rate
 
-   my_amt = ForceAmt(delta=.05, k=5000)
+   my_amt = Amount(gr=Rate(delta=.05), k=5000)
 
    print(my_amt.val(5))
 
@@ -27,9 +27,9 @@ Suppose instead, we have 5000 at time 5. What is the present value if the force 
 
 .. ipython:: python
 
-   from tmval import ForceAcc
+   from tmval import Accumulation, Rate
 
-   my_acc = ForceAcc(delta=.05)
+   my_acc = Accumulation(gr=Rate(delta=.05))
 
    pv = my_acc.discount_func(t=5, fv=5000)
 

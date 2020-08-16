@@ -29,24 +29,24 @@ Where :math:`K` refers to the initial amount, or :term:`principal`. For example,
 Examples
 ========================
 
-Let's repeat the above examples using the TmVal package. Let's start by importing ``CompoundAmt``, which is a class that can be used for compound interest calculations:
+Let's repeat the above examples using the TmVal package. Let's start by importing ``Amount``, which is a class that can be used for compound interest calculations:
 
 .. ipython:: python
 
-   from tmval import CompoundAmt
+   from tmval import Amount
 
 Let's see how much $1 grows to after 2 years, at an interest rate of 5%:
 
 .. ipython:: python
 
-   my_amt = CompoundAmt(k=1, gr=.05)
+   my_amt = Amount(k=1, gr=.05)
    print(my_amt.val(2))
 
 Now, let's change the principal to $5:
 
 .. ipython:: python
 
-   my_amt = CompoundAmt(k=5, gr=.05)
+   my_amt = Amount(k=5, gr=.05)
    print(my_amt.val(2))
 
 

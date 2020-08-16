@@ -23,9 +23,9 @@ Suppose we will receive 5000 at time 5. If the effective interest rate is 5%, ho
 
 .. ipython:: python
 
-   from tmval import CompoundAcc
+   from tmval import Accumulation
 
-   my_acc = CompoundAcc(.05)
+   my_acc = Accumulation(.05)
 
    pv = my_acc.discount_func(t=5, fv=5000)
 
@@ -35,9 +35,9 @@ One neat thing TmVal can do is that if you want to find out how much you need to
 
 .. ipython:: python
 
-   from tmval import CompoundAcc
+   from tmval import Accumulation
 
-   my_acc = CompoundAcc(.05)
+   my_acc = Accumulation(.05)
 
    future_principal = my_acc.future_principal(t1=5, t2=10, fv=10000)
 

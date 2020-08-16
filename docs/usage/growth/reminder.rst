@@ -10,9 +10,9 @@ For example, if money grows at a compound rate of 5%, we can define an accumulat
 
 .. ipython:: python
 
-   from tmval import CompoundAcc, Rate
+   from tmval import Accumulation, Rate
 
-   my_acc = CompoundAcc(gr=Rate(.05))
+   my_acc = Accumulation(gr=Rate(.05))
 
    print(my_acc.val(5))
 

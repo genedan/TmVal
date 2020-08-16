@@ -8,8 +8,8 @@ from itertools import groupby
 
 from typing import Callable, Union
 
-from tmval.growth import Accumulation, CompoundAcc, compound_solver
-from tmval.rates import Rate
+from tmval.growth import Accumulation, compound_solver, standardize_acc
+from tmval.rates import Rate, standardize_rate
 
 
 class Payments:
@@ -47,12 +47,12 @@ class Payments:
 
         # if float, assume compound annual effective
         if isinstance(gr, float):
-            acc = CompoundAcc(gr=gr)
+            acc = Accumulation(gr=gr)
 
         elif isinstance(gr, Rate):
-            acc = CompoundAcc(gr=gr)
+            acc = Accumulation(gr=gr)
 
-        elif isinstance(gr, (Accumulation, CompoundAcc)):
+        elif isinstance(gr, (Accumulation, Accumulation)):
             acc = gr
         else:
             raise Exception("Invalid growth rate object provided.")
@@ -296,13 +296,13 @@ def npv(
     if isinstance(gr, Accumulation):
         acc = Accumulation
     elif isinstance(gr, float):
-        acc = CompoundAcc(gr)
+        acc = Accumulation(gr)
     elif isinstance(gr, Rate):
         i = gr.convert_rate(
             pattern="Effective Interest",
             freq=1
         )
-        acc = CompoundAcc(i)
+        acc = Accumulation(i)
     else:
         raise Exception("Invalid type passed to gr.")
 
@@ -335,7 +335,7 @@ def npv(
 def npv_solver(
         npval: float = None,
         payments: list = None,
-        discount_func: Callable = None
+        gr: Union[Accumulation, float, Rate] = None
 ):
     """
     An experimental net present value solver. Finds a missing component given a stream of payments and net present \
@@ -349,33 +349,38 @@ def npv_solver(
     :type npval: float
     :param payments: A list of payments.
     :type payments: list
-    :param discount_func: A discount function.
-    :type discount_func: Callable
+    :param gr: A growth rate object.
+    :type gr: Callable
     :return: Returns either the npv, a missing payment amount, a missing time of payment, or missing discount factor.
     :rtype: float
     """
 
-    args = [npval, payments, discount_func]
+    args = [npval, payments, gr]
     if args.count(None) > 1:
         raise Exception("Only one argument can be missing.")
+
+    if gr:
+        gr = standardize_rate(gr)
+        acc = Accumulation(gr=gr)
 
     # exclude missing payment
 
     payments_excl_missing = [x for x in payments if x.time is not None]
     missing_pmt = [x for x in payments if x.time is None].pop()
-    payments_excl_missing_npv = npv(payments=payments_excl_missing, discount_func=discount_func)
+    payments_excl_missing_npv = npv(payments=payments_excl_missing, gr=gr)
 
     missing_pmt_pv = npval - payments_excl_missing_npv
-    res = np.log(missing_pmt.amount / missing_pmt_pv) / np.log(discount_func(1) ** -1)
+    res = np.log(missing_pmt.amount / missing_pmt_pv) / np.log(acc.discount_func(1) ** -1)
 
     return res
 
 
-def payment_solver(payments: list, t: float, ca: CompoundAcc) -> float:
+def payment_solver(payments: list, t: float, gr: Union[float, Rate, Accumulation]) -> float:
+    gr = standardize_acc(gr)
 
-    all_other_pv = - npv(payments=payments, gr=ca)
+    all_other_pv = - npv(payments=payments, gr=gr)
 
-    p = compound_solver(pv=all_other_pv, t=t, gr=ca.interest_rate)
+    p = compound_solver(pv=all_other_pv, t=t, gr=gr.interest_rate)
 
     return p
 
