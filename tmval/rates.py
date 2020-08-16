@@ -216,39 +216,48 @@ class Rate:
         if other is None:
             return False
 
-        if self.formal_pattern in COMPOUNDS and other.formal_pattern in COMPOUNDS:
-
-            self_std = self.convert_rate(
-                pattern="Effective Interest",
-                interval=1
-            )
-
-            other_std = other.convert_rate(
-                pattern="Effective Interest",
-                interval=1
-            )
-
-            if self_std.rate == other_std.rate:
+        elif isinstance(other, float):
+            self_std = self.standardize()
+            if self_std.rate == other:
                 return True
             else:
                 return False
 
-        elif self.formal_pattern in SIMPLES and other.formal_pattern in SIMPLES:
+        elif isinstance(other, Rate):
 
-            self_std = self.convert_rate(
-                pattern="Simple Interest",
-                interval=1
-            )
+            if self.formal_pattern in COMPOUNDS and other.formal_pattern in COMPOUNDS:
 
-            other_std = other.convert_rate(
-                pattern="Simple Interest",
-                interval=1
-            )
+                self_std = self.convert_rate(
+                    pattern="Effective Interest",
+                    interval=1
+                )
 
-            if self_std.rate == other_std.rate:
-                return True
-            else:
-                return False
+                other_std = other.convert_rate(
+                    pattern="Effective Interest",
+                    interval=1
+                )
+
+                if self_std.rate == other_std.rate:
+                    return True
+                else:
+                    return False
+
+            elif self.formal_pattern in SIMPLES and other.formal_pattern in SIMPLES:
+
+                self_std = self.convert_rate(
+                    pattern="Simple Interest",
+                    interval=1
+                )
+
+                other_std = other.convert_rate(
+                    pattern="Simple Interest",
+                    interval=1
+                )
+
+                if self_std.rate == other_std.rate:
+                    return True
+                else:
+                    return False
 
     def __gt__(self, other):
         if not isinstance(other, Rate):
@@ -513,10 +522,20 @@ class Rate:
         return self.amt_func(k=1, t=t)
 
     def standardize(self):
-        return self.convert_rate(
-            pattern="Effective Interest",
-            interval=1
-        )
+        if self.formal_pattern in COMPOUNDS:
+            rate = self.convert_rate(
+                pattern="Effective Interest",
+                interval=1
+            )
+        elif self.formal_pattern in SIMPLES:
+            rate = self.convert_rate(
+                pattern="Simple Interest",
+                interval=1
+            )
+        else:
+            raise Exception("Unable to convert rate.")
+
+        return rate
 
 
 def standardize_rate(gr: Union[float, Rate]):
