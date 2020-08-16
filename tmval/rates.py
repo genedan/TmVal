@@ -1,8 +1,23 @@
 """
 Contains general growth rate class, and interest-discount conversion functions
 """
-from tmval.conversions import *
-from tmval.constants import COMPOUNDS, FORMAL_PATTERNS, SIMPLES
+
+from typing import Union
+
+from tmval.conversions import (
+    any_from_eff_int,
+    any_from_eff_disc,
+    any_from_nom_int,
+    any_from_nom_disc,
+    any_from_delta,
+    RateTemplate
+)
+
+from tmval.constants import (
+    COMPOUNDS,
+    FORMAL_PATTERNS,
+    SIMPLES
+)
 
 
 class Rate:
@@ -496,3 +511,21 @@ class Rate:
     def acc_func(self, t):
 
         return self.amt_func(k=1, t=t)
+
+    def standardize(self):
+        return self.convert_rate(
+            pattern="Effective Interest",
+            interval=1
+        )
+
+
+def standardize_rate(gr: Union[float, Rate]):
+    if isinstance(gr, float):
+        gr = Rate(gr)
+    elif isinstance(gr, Rate):
+        gr = gr.standardize()
+    else:
+        raise TypeError("Invalid type passed to gr, got ", str(type(gr)) + " instead. "
+                        "You must supply a float or a Rate object to gr. ")
+
+    return gr
