@@ -112,14 +112,14 @@ def eff_disc_from_eff_int(
     if old_t is not None:
         i = eff_int_from_eff_int(i=i, old_t=old_t, new_t=1)
 
-    d = discount_from_interest(i=i)
+    d = discount_from_interest(i=i.rate)
 
     # assume new interval is 1 if not specified
     if new_t is not None:
         d = eff_disc_from_eff_disc(d=d, old_t=1, new_t=new_t)
 
     res = RateTemplate(
-        rate=d,
+        rate=d.rate,
         formal_pattern="Effective Discount",
         interval=new_t
     )
