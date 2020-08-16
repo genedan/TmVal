@@ -27,7 +27,7 @@ class Amount:
 
     :param gr: a growth object, which can either be a function that must take the parameters t \
     for time and k for principal, or a Rate object representing an interest rate.
-    :type gr: Callable, Rate
+    :type gr: Callable, float, Rate
     :param k: the principal, or initial investment.
     :type k: float
 
@@ -50,8 +50,8 @@ class Amount:
 
         if isinstance(self.__gr, Callable):
             return self.__gr
-        elif isinstance(self.__gr, Rate):
-            return self.__gr.amt_func
+        elif isinstance(self.__gr, (float, Rate)):
+            return standardize_rate(self.__gr).amt_func
         else:
             raise Exception("Growth object must be a callable or Rate object.")
 
@@ -224,13 +224,13 @@ class Accumulation(Amount):
 
     :param gr: a growth object, which can either be a function that must take the parameters t \
     for time and k for principal, or a Rate object representing an interest rate.
-    :type gr: Callable, Rate
+    :type gr: Callable, float, Rate
     :return: an accumulation object.
     :rtype: Accumulation
     """
     def __init__(
         self,
-        gr: Union[Callable, Rate]
+        gr: Union[Callable, float, Rate]
     ):
         super().__init__(
             gr=gr,
@@ -253,8 +253,8 @@ class Accumulation(Amount):
 
             return f
 
-        elif isinstance(self.__gr, Rate):
-            return self.__gr.acc_func
+        elif isinstance(self.__gr, (float, Rate)):
+            return standardize_rate(self.__gr).acc_func
         else:
             raise Exception("Growth object must be a callable or Rate object.")
 
