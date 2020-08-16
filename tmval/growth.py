@@ -7,9 +7,10 @@ from __future__ import annotations
 import datetime as dt
 import numpy as np
 
+from inspect import signature
 from typing import Callable, Union
 
-from tmval.rates import Rate
+from tmval.rates import Rate, standardize_rate
 
 
 class Amount:
@@ -36,12 +37,14 @@ class Amount:
     """
     def __init__(
             self,
-            gr: Union[Callable, Rate],
+            gr: Union[Callable, Rate, float],
             k: float
     ):
         self.__gr = gr
         self.func = self.__extract_func()
         self.k = k
+
+        self._validate_func()
 
     def __extract_func(self):
 
@@ -51,6 +54,23 @@ class Amount:
             return self.__gr.amt_func
         else:
             raise Exception("Growth object must be a callable or Rate object.")
+
+    def _validate_func(self):
+        """
+        Check if func object is properly formed.
+        """
+        sig = signature(self.func)
+
+        # check return type
+        # if not isinstance(sig.return_annotation, float):
+        #     raise TypeError("Growth function must return a float, got type " + str(sig.return_annotation))
+
+        # check arguments
+        if 'k' not in sig.parameters:
+            raise Exception("Growth function must take a parameter k for the principal.")
+
+        if 't' not in sig.parameters:
+            raise Exception("Growth function must take a parameter t for time.")
 
     def val(self, t: float) -> float:
         """
@@ -89,9 +109,10 @@ class Amount:
 
     def effective_interval(
             self,
-            t1: float,
-            t2: float
-    ) -> float:
+            t2: float,
+            t1: float = 0,
+            annualized: bool = False
+    ) -> Rate:
         """
         Calculates the effective interest rate over a time period.
 
@@ -101,14 +122,28 @@ class Amount:
         :type t2: float
         :return: the effective interest rate over the time period.
         :rtype: float
+        :param annualized: whether you want the results to be annualized.
+        :rtype annualized: bool
         """
+
+        interval = t2 - t1
         effective_rate = (self.val(t=t2) - self.val(t=t1)) / self.val(t=t1)
+
+        effective_rate = Rate(
+            rate=effective_rate,
+            pattern="Effective Interest",
+            interval=interval
+        )
+
+        if annualized:
+            effective_rate = effective_rate.standardize()
+
         return effective_rate
 
     def effective_rate(
             self,
             n: int
-    ) -> float:
+    ) -> Rate:
         """
         Calculates the effective interest rate for the n-th time period.
 
@@ -123,6 +158,7 @@ class Amount:
             t1=t1,
             t2=t2
         )
+
         return effective_rate
 
     def discount_interval(
@@ -196,8 +232,7 @@ class Accumulation(Amount):
         self,
         gr: Union[Callable, Rate]
     ):
-        Amount.__init__(
-            self,
+        super().__init__(
             gr=gr,
             k=1
         )
@@ -208,11 +243,35 @@ class Accumulation(Amount):
     def __extract_func(self):
 
         if isinstance(self.__gr, Callable):
-            return self.__gr
+            params = signature(self.__gr).parameters
+
+            if 'k' in params:
+                def f(t: float) -> float:
+                    return self.__gr(t=t, k=1)
+            else:
+                f = self.__gr
+
+            return f
+
         elif isinstance(self.__gr, Rate):
             return self.__gr.acc_func
         else:
             raise Exception("Growth object must be a callable or Rate object.")
+
+    def _validate_func(self):
+        """
+        Check if func object is properly formed.
+        """
+        sig = signature(self.func)
+
+        # check return type
+        # if sig.return_annotation != 'float':
+        #     raise TypeError("Growth function must return a float, got type " + str(sig.return_annotation))
+
+        # check arguments
+
+        if 't' not in sig.parameters:
+            raise Exception("Growth function must take a parameter t for time.")
 
     def val(self, t: float) -> float:
         """
@@ -395,16 +454,7 @@ class CompoundAmt(Amount):
 
         # Convert to single-period compound interest first
 
-        if isinstance(gr, Rate):
-            rate = gr.convert_rate(
-                pattern='Effective Interest',
-                interval=1
-            )
-            i = rate.rate
-        elif isinstance(gr, (int, float)):
-            i = gr
-        else:
-            raise Exception("Invalid type passed to growth rate.")
+        i = standardize_rate(gr)
 
         self.principal = k
         self.interest_rate = Rate(i)
@@ -449,16 +499,7 @@ class CompoundAcc(Accumulation):
             gr: Union[float, Rate]
     ):
 
-        if isinstance(gr, Rate):
-            rate = gr.convert_rate(
-                pattern='Effective Interest',
-                interval=1
-            )
-            i = rate.rate
-        elif isinstance(gr, (int, float)):
-            i = gr
-        else:
-            raise Exception("Invalid type passed to growth rate.")
+        i = standardize_rate(gr)
 
         self.interest_rate = Rate(i)
 
@@ -515,23 +556,8 @@ def compound_solver(
         raise Exception("You are missing either a present value (pv), future value(fv), "
                         "time (t), or growth rate.")
 
-    # convert to i:
-
     if gr:
-
-        if isinstance(gr, Rate):
-            rate = gr
-        elif isinstance(gr, float):
-            rate = Rate(gr)
-        else:
-            raise TypeError("Invalid type passed to gr. Should pass a float or Rate object.")
-
-        rate = rate.convert_rate(
-            pattern='Effective Interest',
-            interval=1
-        )
-
-        i = rate
+        i = standardize_rate(gr)
 
     else:
         i = None
@@ -687,8 +713,9 @@ class TieredTime:
         # for each tier that applies, calculate the cumulative balance
         bal = k
         for rate, time in zip(rates, times):
-            acc = Accumulation(gr=rate)
-            bal = bal * acc.val(time)
+            rate = standardize_rate(gr=rate)
+
+            bal = bal * (1 + rate) ** time
 
         return bal
 
