@@ -1,6 +1,8 @@
 from collections import namedtuple
 import decimal
 import numpy as np
+from typing import Union
+
 from tmval.value import Payments, Rate
 from tmval.growth import Accumulation
 from math import ceil
@@ -51,27 +53,27 @@ class Annuity(Payments):
     def pv(self):
         if self._ann_perp == 'perpetuity':
 
-            pv = self.amount / (self.acc.val(self.period) - 1)
+            pv = self.amount / (self.gr.val(self.period) - 1)
 
         else:
 
             pv = self.amount * \
-                 (1 - self.acc.discount_func(self.term)) /\
-                 (self.acc.val(self.period) - 1)
+                 (1 - self.gr.discount_func(self.term)) /\
+                 (self.gr.val(self.period) - 1)
 
         if self.imd == 'due':
-            pv = pv * self.acc.val(self.period)
+            pv = pv * self.gr.val(self.period)
 
         return pv
 
     def sv(self):
 
         sv = self.amount * \
-             ((1 + self.acc.interest_rate) ** self.term - 1) / \
-             (self.acc.val(self.period) - 1)
+             ((1 + self.gr.interest_rate) ** self.term - 1) / \
+             (self.gr.val(self.period) - 1)
 
         if self.imd == 'due':
-            sv = sv * self.acc.val(self.period)
+            sv = sv * self.gr.val(self.period)
 
         return sv
 
@@ -225,7 +227,6 @@ def get_number_of_pmts(
         period: float,
         gr: Rate
 ):
-
     i = gr.convert_rate(
         'Effective Interest',
         interval=period
@@ -236,3 +237,75 @@ def get_number_of_pmts(
     n = ceil(n)
 
     return n
+
+
+def olb_r(
+        loan: float,
+        q: float,
+        period: float,
+        gr: Union[Accumulation, float, Rate],
+        t
+) -> float:
+
+    ann = Annuity(
+        period=period,
+        term=t,
+        gr=gr,
+        amount=q
+    )
+
+    acc = Accumulation(gr=gr)
+    olb = loan * acc.val(t) - ann.sv()
+
+    return max(olb, 0)
+
+
+def olb_p(
+    q: float,
+    period: float,
+    term: float,
+    gr: Union[float, Rate, Accumulation],
+    t: float,
+    r: float = None
+) -> float:
+    """
+    Outstanding loan balance - prospective method.
+
+    :param q:
+    :type q:
+    :param period:
+    :type period:
+    :param term:
+    :type term:
+    :param gr:
+    :type gr:
+    :param t:
+    :type t:
+    :param r:
+    :type r:
+    :return:
+    :rtype:
+    """
+
+    if r is not None:
+        ann = Annuity(
+            period=period,
+            term=term - t - period,
+            gr=gr,
+            amount=q
+        )
+
+        acc = Accumulation(gr=gr)
+        r_pv = r * acc.discount_func(term - t)
+
+        return ann.pv() + r_pv
+
+    else:
+        ann = Annuity(
+            period=period,
+            term=term - t,
+            gr=gr,
+            amount=q
+        )
+
+        return ann.pv()
