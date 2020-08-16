@@ -8,7 +8,7 @@ from itertools import groupby
 
 from typing import Callable, Union
 
-from tmval.growth import Accumulation, compound_solver, standardize_acc
+from tmval.growth import Accumulation, Amount, compound_solver, standardize_acc, TieredBal
 from tmval.rates import Rate, standardize_rate
 
 
@@ -32,44 +32,45 @@ class Payments:
         self,
         amounts: list,
         times: list,
-        gr: Union[float, Rate, Accumulation] = None
+        gr: Union[float, Rate, Accumulation, TieredBal] = None
     ):
         if len(amounts) != len(times):
             raise Exception("Amounts and times must be of the same length.")
 
         self.amounts = amounts
         self.times = times
-        self.acc = None
+        self.gr = None
         if gr is not None:
             self.set_accumulation(gr=gr)
 
-    def set_accumulation(self, gr: Union[float, Rate, Accumulation]):
+    def set_accumulation(self, gr: Union[float, Rate, Accumulation, TieredBal]):
 
         # if float, assume compound annual effective
-        if isinstance(gr, float):
-            acc = Accumulation(gr=gr)
-
-        elif isinstance(gr, Rate):
-            acc = Accumulation(gr=gr)
-
-        elif isinstance(gr, (Accumulation, Accumulation)):
+        if isinstance(gr, (float, Rate, Accumulation)):
+            acc = standardize_acc(gr=gr)
+        elif isinstance(gr, TieredBal):
             acc = gr
         else:
             raise Exception("Invalid growth rate object provided.")
 
-        self.acc = acc
+        self.gr = acc
 
-    def npv(self):
-        if self.acc is None:
-            raise Exception("Growth rate object not set.")
+    def append(
+            self,
+            amounts: list,
+            times: list
+    ):
 
-        pv = sum([self.acc.discount_func(t=t, fv=fv) for t, fv in zip(self.times, self.amounts)])
+        if len(amounts) != len(times):
+            raise Exception("Amounts and times must be of the same length.")
 
-        return pv
+        self.amounts += amounts
+        self.times += times
 
-    def irr(self, x0: float = .05):
-        times = self.times
-        amounts = self.amounts
+    def group_payments(self) -> dict:
+        times = self.times.copy()
+        amounts = self.amounts.copy()
+
         payments = [[x, y] for x, y in zip(times, amounts)]
         payments.sort()
         payments_grouped = []
@@ -77,6 +78,19 @@ class Payments:
             payments_grouped.append([i, sum(v[1] for v in g)])
 
         payments_dict = {x[0]: x[1] for x in payments_grouped}
+
+        return payments_dict
+
+    def npv(self):
+        if self.gr is None:
+            raise Exception("Growth rate object not set.")
+
+        pv = sum([self.gr.discount_func(t=t, fv=fv) for t, fv in zip(self.times, self.amounts)])
+
+        return pv
+
+    def irr(self, x0: float = .05):
+        payments_dict = self.group_payments()
 
         degree = max(payments_dict, key=int)
 
@@ -94,7 +108,7 @@ class Payments:
             return i_s
         # if times are fractional, use Newton's method:
         else:
-            tau = max(times)
+            tau = max(self.times)
 
             def f(x):
                 return sum([payments_dict[k] * (x ** (tau - k)) for k in payments_dict.keys()])
@@ -104,7 +118,7 @@ class Payments:
 
     def equated_time(self, c: float) -> float:
 
-        acc = self.acc
+        acc = self.gr
 
         num = np.log(self.npv() / c)
 
@@ -114,9 +128,36 @@ class Payments:
 
         return t
 
+    def pt_bal(self, t: float) -> float:
+
+        payments_dict = self.group_payments()
+        times = list(payments_dict.keys())
+        times = [x for x in times if x < t]
+        times.sort()
+        times.append(t)
+        bal = payments_dict[times[0]]
+        for index, time in enumerate(times):
+            if time == t:
+                pass
+
+            else:
+                next_t = times[index + 1]
+                interval = next_t - time
+
+                if isinstance(self.gr, TieredBal):
+                    amt = Amount(gr=self.gr, k=bal)
+                    bal = amt.val(interval)
+                else:
+                    bal = bal * self.gr.val(interval)
+
+                if next_t in payments_dict:
+                    bal = bal + payments_dict[next_t]
+
+        return bal
+
     def eq_val(self, t: float) -> float:
 
-        b = sum([c * self.acc.val(t) / self.acc.val(tk) for c, tk in zip(self.amounts, self.times)])
+        b = sum([c * self.gr.val(t) / self.gr.val(tk) for c, tk in zip(self.amounts, self.times)])
 
         return b
 
