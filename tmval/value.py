@@ -6,10 +6,24 @@ import warnings
 
 from itertools import groupby
 
-from typing import Callable, Union
+from typing import (
+    Callable,
+    Union
+)
 
-from tmval.growth import Accumulation, Amount, compound_solver, standardize_acc, TieredBal
-from tmval.rates import Rate, standardize_rate
+from tmval.growth import (
+    Accumulation,
+    Amount,
+    compound_solver,
+    standardize_acc,
+    TieredBal,
+    TieredTime
+)
+
+from tmval.rates import (
+    Rate,
+    standardize_rate
+)
 
 
 class Payments:
@@ -32,7 +46,13 @@ class Payments:
         self,
         amounts: list,
         times: list,
-        gr: Union[float, Rate, Accumulation, TieredBal] = None
+        gr: Union[
+            float,
+            Rate,
+            Accumulation,
+            TieredBal,
+            TieredTime
+        ] = None
     ):
         if len(amounts) != len(times):
             raise Exception("Amounts and times must be of the same length.")
@@ -46,7 +66,7 @@ class Payments:
     def set_accumulation(self, gr: Union[float, Rate, Accumulation, TieredBal]):
 
         # if float, assume compound annual effective
-        if isinstance(gr, (float, Rate, Accumulation)):
+        if isinstance(gr, (float, Rate, Accumulation, TieredTime)):
             acc = standardize_acc(gr=gr)
         elif isinstance(gr, TieredBal):
             acc = gr
