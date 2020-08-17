@@ -49,6 +49,8 @@ class Amount:
         if self.is_compound:
             self.interest_rate = self.effective_rate(1)
 
+        self.is_level = self.__check_level()
+
     def _extract_func(self):
 
         if isinstance(self._gr, Callable):
@@ -96,6 +98,20 @@ class Amount:
             return True
         else:
             return False
+
+    def __check_level(self):
+        """
+        Checks if the interest rate is the same for up to 100 periods
+        :return:
+        :rtype:
+        """
+        if isinstance(self._gr, (float, Rate)):
+            return True
+        elif isinstance(self._gr, (TieredBal, TieredTime)):
+            return False
+        elif isinstance(self._gr, Callable):
+            rates = [round(self.effective_rate(x + 1), 5) for x in range(100)]
+            return rates[1:] == rates[:-1]
 
     def val(self, t: float) -> float:
         """
@@ -744,7 +760,7 @@ def simple_interval_solver(s, es):
     return 1 / es + 1 - 1 / s
 
 
-def standardize_acc(gr: Union[float, Rate, Accumulation]) -> Accumulation:
+def standardize_acc(gr: Union[float, Rate, Accumulation, TieredTime]) -> Accumulation:
     """
     returns an compound accumulation object
 
@@ -759,7 +775,7 @@ def standardize_acc(gr: Union[float, Rate, Accumulation]) -> Accumulation:
             raise TypeError("Standardization of Accumulation class only valid for compound interest.")
         else:
             pass
-    elif isinstance(gr, (float, Rate)):
+    elif isinstance(gr, (float, Rate, TieredTime)):
         gr = Accumulation(gr)
     else:
         raise TypeError("Invalid type passed to gr.")
