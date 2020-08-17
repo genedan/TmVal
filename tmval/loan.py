@@ -1,23 +1,37 @@
 from math import floor
+from typing import Union
 
-from tmval.annuity import olb_r
+from tmval.annuity import Annuity, olb_r, olb_p
+from tmval.growth import TieredTime
 from tmval.rates import Rate
 
 
 class Loan:
     def __init__(
         self,
-        amt,
         pmt,
         period,
         term,
-        gr: Rate,
+        gr: Union[Rate, float, TieredTime],
+        amt: float = None,
     ):
-        self.amt = amt
         self.pmt = pmt
         self.period = period
         self.term = term
         self.gr = gr
+
+        if amt is None:
+
+            ann = Annuity(
+                period=self.period,
+                term=self.term,
+                gr=self.gr,
+                amount=self.pmt
+            )
+
+            self.amt = ann.pv()
+        else:
+            self.amt = amt
 
     def olb_r(self, t):
 
@@ -27,6 +41,25 @@ class Loan:
             period=self.period,
             gr=self.gr,
             t=t
+        )
+
+        return olb
+
+    def olb_p(
+            self,
+            t: float,
+            r: float = None,
+            missed: list = None
+    ):
+
+        olb = olb_p(
+            q=self.pmt,
+            period=self.period,
+            term=self.term,
+            gr=self.gr,
+            t=t,
+            r=r,
+            missed=missed
         )
 
         return olb
