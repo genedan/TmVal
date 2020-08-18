@@ -434,7 +434,7 @@ class Rate:
                 raise Exception("Must provide compounding frequency for conversions to nominal rates.")
             if interval is not None:
                 raise Exception("Interval only valid for conversions to effective rates.")
-        elif FORMAL_PATTERNS[pattern] in ['Simple Interest']:
+        elif FORMAL_PATTERNS[pattern] in ['Simple Interest', 'Simple Discount']:
             if interval is None:
                 raise Exception("Must provide an interval for conversions to effective rates.")
             if freq is not None:
