@@ -23,7 +23,12 @@ FORMAL_PATTERNS = {
     's': 'Simple Interest',
     'simple interest': 'Simple Interest',
     'simp': 'Simple Interest',
-    'Simple Interest': 'Simple Interest'
+    'Simple Interest': 'Simple Interest',
+
+    'Simple Discount': 'Simple Discount',
+    'sd': 'Simple Discount',
+    'simple discount': 'Simple Discount',
+    'simpdisc': 'Simple Discount'
 }
 
 
