@@ -41,7 +41,7 @@ class Amount:
             gr: Union[Callable, Rate, float],
             k: float
     ):
-        self._gr = gr
+        self.gr = gr
         self.func = self._extract_func()
         self.k = k
         self._validate_func()
@@ -53,10 +53,10 @@ class Amount:
 
     def _extract_func(self):
 
-        if isinstance(self._gr, Callable):
-            return self._gr
-        elif isinstance(self._gr, (float, Rate)):
-            return standardize_rate(self._gr).amt_func
+        if isinstance(self.gr, Callable):
+            return self.gr
+        elif isinstance(self.gr, (float, Rate)):
+            return standardize_rate(self.gr).amt_func
         else:
             raise Exception("Growth object must be a callable or Rate object.")
 
@@ -78,13 +78,13 @@ class Amount:
             raise Exception("Growth function must take a parameter t for time.")
 
     def __is_compound(self):
-        if isinstance(self._gr, float):
+        if isinstance(self.gr, float):
             return True
 
-        elif isinstance(self._gr, Rate) and self._gr.formal_pattern in COMPOUNDS:
+        elif isinstance(self.gr, Rate) and self.gr.formal_pattern in COMPOUNDS:
             return True
 
-        elif isinstance(self._gr, Callable):
+        elif isinstance(self.gr, Callable):
             for i in range(10):
                 try:
                     cond = round(self.val(i) / self.val(i - 1), 5) != round(self.val(i + 1) / self.val(i), 5)
@@ -105,11 +105,11 @@ class Amount:
         :return:
         :rtype:
         """
-        if isinstance(self._gr, (float, Rate)):
+        if isinstance(self.gr, (float, Rate)):
             return True
-        elif isinstance(self._gr, (TieredBal, TieredTime)):
+        elif isinstance(self.gr, (TieredBal, TieredTime)):
             return False
-        elif isinstance(self._gr, Callable):
+        elif isinstance(self.gr, Callable):
             rates = [round(self.effective_rate(x + 1), 5) for x in range(100)]
             return rates[1:] == rates[:-1]
 
@@ -278,24 +278,24 @@ class Accumulation(Amount):
             k=1
         )
 
-        self._gr = gr
+        self.gr = gr
         self.func = self._extract_func()
 
     def _extract_func(self):
 
-        if isinstance(self._gr, Callable):
-            params = signature(self._gr).parameters
+        if isinstance(self.gr, Callable):
+            params = signature(self.gr).parameters
 
             if 'k' in params:
                 def f(t: float) -> float:
-                    return self._gr(t=t, k=1)
+                    return self.gr(t=t, k=1)
             else:
-                f = self._gr
+                f = self.gr
 
             return f
 
-        elif isinstance(self._gr, (float, Rate)):
-            return standardize_rate(self._gr).acc_func
+        elif isinstance(self.gr, (float, Rate)):
+            return standardize_rate(self.gr).acc_func
         else:
             raise Exception("Growth object must be a callable or Rate object.")
 
@@ -385,7 +385,7 @@ def simple_solver(
     :param t: the time
     :type t: float
     :return: the present value, future value, interest rate, or time - whichever is missing.
-    :rtype: float
+    :rtype: float, Rate
     """
     args = [pv, fv, gr, t]
     if args.count(None) > 1:
