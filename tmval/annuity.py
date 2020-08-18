@@ -4,7 +4,7 @@ import numpy as np
 from typing import Callable, Union
 
 from tmval.value import Payments, Rate
-from tmval.growth import Accumulation
+from tmval.growth import Accumulation, TieredTime
 from math import ceil
 
 
@@ -15,7 +15,9 @@ class Annuity(Payments):
         gr: Union[float, Rate, Accumulation, Callable],
         period: float = None,
         term: float = None,
-        amount: Union[float, list] = 1.0,
+        gprog: float = 0.0,
+        aprog: float = 0.0,
+        amount: Union[float, int, list] = 1.0,
         times: list = None,
         imd: str = 'immediate'
     ):
@@ -23,22 +25,43 @@ class Annuity(Payments):
         self.amount = amount
         self.period = period
         self.imd = imd
+        self.gprog = gprog
+        self.aprog = aprog
         imd_ind = 1 if imd == 'immediate' else 0
         self.is_level_pmt = None
 
         if term == np.inf:
 
-            amounts = [np.inf]
-            times = [np.inf]
-            self._ann_perp = 'perpetuity'
-        else:
+            def perp_series(t):
+                start = amount
+                factor = 1 + gprog
+                curr = 0
+                while curr < t:
+                    yield start * factor ** curr
+                    curr += 1
 
-            if isinstance(amount, float) or isinstance(amount, list) and len(amount) == 1:
-                n_payments = term / period
-                n_payments = int(ceil(n_payments))
-                amounts = [amount] * n_payments
-                times = [period * (x + imd_ind) for x in range(n_payments)]
+            def perp_times(t):
+                curr = 0 + 1 if imd == 'immediate' else 0
+                while curr < t:
+                    yield curr + 1
+
+            amounts = perp_series
+            times = perp_times
+            self._ann_perp = 'perpetuity'
+            self.n_payments = np.inf
+
+            if gprog == 0:
                 self.is_level_pmt = True
+            else:
+                self.is_level_pmt = False
+        else:
+            n_payments = term / period
+            n_payments = int(ceil(n_payments))
+            self.n_payments = n_payments
+
+            if isinstance(amount, (int, float)) or (isinstance(amount, list) and len(amount)) == 1:
+                amounts = [self.amount * (1 + self.gprog) ** x + self.aprog * x for x in range(self.n_payments)]
+                times = [period * (x + imd_ind) for x in range(self.n_payments)]
             else:
                 amounts = amount
                 times = times
@@ -50,15 +73,31 @@ class Annuity(Payments):
                 else:
                     self.period = intervals[0]
 
-                if amounts[1:] == amounts[:-1]:
-                    self.is_level_pmt = False
-
                 if min(times) == 0:
                     self.imd = 'due'
                     self.term = max(times) + self.period
                 else:
                     self.imd = 'immediate'
                     self.term = max(times)
+
+            if (isinstance(amount, (int, float)) or (isinstance(amount, list) and
+                len(amount))) == 1 and \
+                    gprog == 0 and \
+                    aprog == 0:
+
+                self.is_level_pmt = True
+
+            elif gprog != 0 or aprog != 0:
+
+                self.is_level_pmt = False
+
+            elif amounts[1:] == amounts[:-1]:
+
+                self.is_level_pmt = True
+
+            else:
+
+                self.is_level_pmt = False
 
             self._ann_perp = 'annuity'
 
@@ -77,7 +116,7 @@ class Annuity(Payments):
     def pv(self):
 
         # if interest rate is level, can use formulas to save time
-        if isinstance(self.gr, Accumulation) and self.gr.is_level and self.is_level_pmt:
+        if isinstance(self.gr, Accumulation) and self.gr.is_level and (self.is_level_pmt or self.gprog != 0):
 
             if self._ann_perp == 'perpetuity':
 
@@ -85,16 +124,56 @@ class Annuity(Payments):
 
             else:
 
-                pv = self.amount * \
-                     (1 - self.gr.discount_func(self.term)) /\
-                     (self.gr.val(self.period) - 1)
+                i = self.gr.val(self.period) - 1
+                g = self.gprog
+
+                if round(i - g, 5) != 0:
+
+                    pv = self.amount * ((1 - ((1 + g) / (1 + i)) ** self.n_payments) / (i - g))
+                else:
+                    pv = self.n_payments * self.amount * (1 + i) ** (-1)
 
                 if self.imd == 'due':
-                    pv = pv * self.gr.val(self.period)
+                    pv = pv * (1 + i)
 
-        # otherwise, use npv function
+        # annuity with arithmetically increasing payments
+        elif self.aprog != 0:
+            i = self.gr.val(self.period) - 1
+            n = self.n_payments
+            q = self.aprog
+            a_n = (1 - (1 + i) ** - n) / i
+            p = self.amount
+
+            pv = p * a_n + q / i * (a_n - n * (1 + i) ** - n)
+
         else:
-            pv = self.npv()
+
+            # perpetuity with geometric payments and tiered growth
+            if self._ann_perp == 'perpetuity' and isinstance(self.gr.gr, TieredTime):
+
+                intervals = list(np.diff(self.gr.gr.tiers))
+                rates_b = self.gr.gr.rates[:-1]
+                r_f = self.gr.gr.rates[-1]
+                t_f = self.gr.gr.tiers[-1]
+
+                pv = 0
+                disc = 1
+                for t, r in zip(intervals, rates_b):
+                    n = t / self.period
+                    i = (1 + r) ** self.period - 1
+                    ratio = (1 + self.gprog) / (1 + i)
+                    pv_t = self.amount * ((1 + i) ** -1) * ((1 - ratio ** n) / (1 - ratio))
+                    pv += pv_t
+                    disc *= (1 + r) ** (-t)
+
+                pv_f = disc * (self.amount * (1 + self.gprog) ** t_f) * ((1 + r_f) ** -1) * (
+                            1 / (1 - ((1 + self.gprog) / (1 + r_f))))
+
+                pv += pv_f
+
+            else:
+                # otherwise, use npv function
+                pv = self.npv()
 
         return pv
 
@@ -107,6 +186,16 @@ class Annuity(Payments):
 
             if self.imd == 'due':
                 sv = sv * self.gr.val(self.period)
+
+        elif self.aprog != 0:
+
+            i = self.gr.val(self.period) - 1
+            n = self.n_payments
+            q = self.aprog
+            p = self.amount
+            s_n = ((1 + i) ** n - 1) / i
+
+            sv = p * s_n + q / i * (s_n - n)
 
         else:
 
