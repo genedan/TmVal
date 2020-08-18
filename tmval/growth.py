@@ -380,8 +380,8 @@ def simple_solver(
     :type pv: float
     :param fv: the future value
     :type fv: float
-    :param s: the interest rate
-    :type s: float
+    :param gr: the interest rate
+    :type gr: float, Rate
     :param t: the time
     :type t: float
     :return: the present value, future value, interest rate, or time - whichever is missing.
@@ -393,9 +393,9 @@ def simple_solver(
 
     if gr is not None:
         if isinstance(gr, float):
-            s = Rate(s=gr)
+            gr = Rate(s=gr)
         elif isinstance(gr, Rate):
-            s = gr.convert_rate(
+            gr = gr.convert_rate(
                 pattern="Simple Interest",
                 interval=1
             )
@@ -403,14 +403,14 @@ def simple_solver(
             raise TypeError("Invalid type passed to s.")
 
     if pv is None:
-        res = fv / (1 + t * s)
+        res = fv / (1 + t * gr)
     elif fv is None:
-        res = pv * (1 + t * s)
-    elif s is None:
+        res = pv * (1 + t * gr)
+    elif gr is None:
         res = (fv / pv - 1) / t
         res = Rate(s=res)
     else:
-        res = (fv / pv - 1) / s
+        res = (fv / pv - 1) / gr
 
     return res
 
