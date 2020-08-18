@@ -989,6 +989,80 @@ def any_from_delta(
     return res
 
 
+def any_from_simp_int(
+        s: float,
+        old_t: float,
+        formal_pattern: str,
+        interval: float
+) -> RateTemplate:
+
+    s_std = s / old_t
+
+    if formal_pattern == "Simple Interest":
+
+        new_s = s_std * interval
+
+        res = RateTemplate(
+            rate=new_s,
+            formal_pattern=formal_pattern,
+            interval=interval
+        )
+
+    elif formal_pattern == "Simple Discount":
+
+        d_std = s_std / (1 + s_std)
+
+        d = d_std * interval
+
+        res = RateTemplate(
+            rate=d,
+            formal_pattern=formal_pattern,
+            interval=interval
+        )
+
+    else:
+        raise Exception("Invalid formal property specified")
+
+    return res
+
+
+def any_from_simp_disc(
+        d: float,
+        old_t: float,
+        formal_pattern: str,
+        interval: float
+) -> RateTemplate:
+
+    d_std = d / old_t
+
+    if formal_pattern == "Simple Interest":
+
+        s_std = d_std / (1 - d_std)
+
+        s = s_std * interval
+
+        res = RateTemplate(
+            rate=s,
+            formal_pattern=formal_pattern,
+            interval=interval
+        )
+
+    elif formal_pattern == "Simple Discount":
+
+        new_d = d_std * interval
+
+        res = RateTemplate(
+            rate=new_d,
+            formal_pattern=formal_pattern,
+            interval=interval
+        )
+
+    else:
+        raise Exception("Invalid formal property specified")
+
+    return res
+
+
 def discount_from_interest(i: float) -> float:
     """
     An interest/discount rate converter. Returns the discount rate, given the interest rate.
