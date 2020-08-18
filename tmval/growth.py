@@ -369,7 +369,7 @@ class Accumulation(Amount):
 def simple_solver(
     pv: float = None,
     fv: float = None,
-    s: Union[float, Rate] = None,
+    gr: Union[float, Rate] = None,
     t: float = None
 ):
     """
@@ -387,9 +387,20 @@ def simple_solver(
     :return: the present value, future value, interest rate, or time - whichever is missing.
     :rtype: float
     """
-    args = [pv, fv, s, t]
+    args = [pv, fv, gr, t]
     if args.count(None) > 1:
         raise Exception("Only one argument can be missing.")
+
+    if gr is not None:
+        if isinstance(gr, float):
+            s = Rate(s=gr)
+        elif isinstance(gr, Rate):
+            s = gr.convert_rate(
+                pattern="Simple Interest",
+                interval=1
+            )
+        else:
+            raise TypeError("Invalid type passed to s.")
 
     if pv is None:
         res = fv / (1 + t * s)
@@ -726,7 +737,7 @@ class SimpleLoan:
             self.discount_amt = discount_amt
             self.discount_rate = discount_amt / principal
 
-        self.amount_available = principal - discount_amt
+        self.amount_available = principal - self.discount_amt
         self.term = term
 
     def __call__(
