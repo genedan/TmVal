@@ -1,3 +1,4 @@
+from collections.abc import Iterable
 import functools
 import itertools
 import numpy as np
@@ -44,8 +45,16 @@ class Payments:
     """
     def __init__(
         self,
-        amounts: list,
-        times: list,
+        amounts: Union[
+            list,
+            Iterable,
+            Callable
+        ],
+        times: Union[
+            list,
+            Iterable,
+            Callable
+        ],
         gr: Union[
             float,
             Rate,
@@ -54,7 +63,7 @@ class Payments:
             TieredTime
         ] = None
     ):
-        if len(amounts) != len(times):
+        if isinstance(amounts, list) and isinstance(times, list) and (len(amounts) != len(times)):
             raise Exception("Amounts and times must be of the same length.")
 
         self.amounts = amounts
@@ -63,7 +72,7 @@ class Payments:
         if gr is not None:
             self.set_accumulation(gr=gr)
 
-    def set_accumulation(self, gr: Union[float, Rate, Accumulation, TieredBal]):
+    def set_accumulation(self, gr: Union[float, Rate, Accumulation, TieredBal, TieredTime]):
 
         # if float, assume compound annual effective
         if isinstance(gr, (float, Rate, Accumulation, TieredTime)):
