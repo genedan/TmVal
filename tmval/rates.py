@@ -10,7 +10,8 @@ from tmval.conversions import (
     any_from_nom_int,
     any_from_nom_disc,
     any_from_delta,
-    RateTemplate
+    any_from_simp_int,
+    any_from_simp_disc
 )
 
 from tmval.constants import (
@@ -39,7 +40,8 @@ class Rate:
             i: float = None,  # convenience argument for effective 1-yr interest rate
             d: float = None,  # convenience argument for effective 1-yr discount rate
             delta: float = None,  # convenience argument for force of interest
-            s: float = None  # convenience argument for simple interest
+            s: float = None,  # convenience argument for simple interest
+            sd: float = None
     ):
 
         # check arguments
@@ -48,7 +50,8 @@ class Rate:
             'i',
             'd',
             'delta',
-            's'
+            's',
+            'sd'
         ]
 
         args = [
@@ -59,14 +62,15 @@ class Rate:
             i,
             d,
             delta,
-            s
+            s,
+            sd
         ]
         arg_not_none = [x for x in args if x is not None]
 
         # if a convenience method is used, make sure they are the only argument supplied
         conveniences = [i for i in convenience_types if i in arg_not_none]
         if len(conveniences) > 1:
-            raise Exception("You may only supply 1 of i, d, s, or delta.")
+            raise Exception("You may only supply 1 of i, d, s, sd, or delta.")
 
         # handle convenience cases
 
@@ -97,6 +101,11 @@ class Rate:
         elif s is not None:
             self.rate = s
             self.pattern = 's'
+            self.interval = 1
+
+        elif sd is not None:
+            self.rate = sd
+            self.pattern = 'sd'
             self.interval = 1
 
         else:
@@ -131,7 +140,11 @@ class Rate:
             's',
             'simp',
             'simple interest',
-            'Simple Interest'
+            'Simple Interest',
+            'Simple Discount',
+            'sd',
+            'simpdisc',
+            'simple discount'
         ]
 
         if self.pattern in effectives:
@@ -477,11 +490,20 @@ class Rate:
                 interval=interval
             )
         elif self.formal_pattern == 'Simple Interest':
-            rate = self.rate / self.interval * interval
 
-            template = RateTemplate(
-                rate=rate,
-                formal_pattern='Simple Interest',
+            template = any_from_simp_int(
+                s=self.rate,
+                old_t=self.interval,
+                formal_pattern=pattern,
+                interval=interval
+            )
+
+        elif self.formal_pattern == 'Simple Discount':
+
+            template = any_from_simp_disc(
+                d=self.rate,
+                old_t=self.interval,
+                formal_pattern=pattern,
                 interval=interval
             )
 
