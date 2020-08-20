@@ -424,6 +424,11 @@ class Rate:
         if FORMAL_PATTERNS[self.pattern] in COMPOUNDS and pattern in SIMPLES:
             raise Exception("Compound rate cannot be converted to simple patterns.")
 
+        if (FORMAL_PATTERNS[self.pattern] in ['Simple Interest'] and pattern in ['Simple Discount']) or \
+                (FORMAL_PATTERNS[self.pattern] in ['Simple Discount'] and pattern in ['Simple Interest']):
+
+            raise Exception("Cannot convert between simple interest and simple discount.")
+
         if FORMAL_PATTERNS[pattern] in ['Effective Interest', 'Effective Discount']:
             if interval is None:
                 raise Exception("Must provide an interval for conversions to effective rates.")
@@ -525,6 +530,10 @@ class Rate:
 
             return k * (1 + self.rate / self.interval * t)
 
+        elif FORMAL_PATTERNS[self.pattern] in ['Simple Discount']:
+
+            return k / (1 - self.rate / self. interval * t)
+
         elif FORMAL_PATTERNS[self.pattern] in [
             'Effective Interest',
             'Effective Discount',
@@ -549,9 +558,14 @@ class Rate:
                 pattern="Effective Interest",
                 interval=1
             )
-        elif self.formal_pattern in SIMPLES:
+        elif self.formal_pattern == "Simple Interest":
             rate = self.convert_rate(
                 pattern="Simple Interest",
+                interval=1
+            )
+        elif self.formal_pattern == "Simple Discount":
+            rate = self.convert_rate(
+                pattern="Simple Discount",
                 interval=1
             )
         else:

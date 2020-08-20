@@ -1008,18 +1008,6 @@ def any_from_simp_int(
             interval=interval
         )
 
-    elif formal_pattern == "Simple Discount":
-
-        d_std = s_std / (1 + s_std)
-
-        d = d_std * interval
-
-        res = RateTemplate(
-            rate=d,
-            formal_pattern=formal_pattern,
-            interval=interval
-        )
-
     else:
         raise Exception("Invalid formal property specified")
 
@@ -1035,19 +1023,7 @@ def any_from_simp_disc(
 
     d_std = d / old_t
 
-    if formal_pattern == "Simple Interest":
-
-        s_std = d_std / (1 - d_std)
-
-        s = s_std * interval
-
-        res = RateTemplate(
-            rate=s,
-            formal_pattern=formal_pattern,
-            interval=interval
-        )
-
-    elif formal_pattern == "Simple Discount":
+    if formal_pattern == "Simple Discount":
 
         new_d = d_std * interval
 
