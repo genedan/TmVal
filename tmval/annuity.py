@@ -4,7 +4,7 @@ import numpy as np
 from typing import Callable, Union
 
 from tmval.value import Payments, Rate
-from tmval.growth import Accumulation, TieredTime
+from tmval.growth import Accumulation, TieredTime, standardize_acc
 from math import ceil
 
 
@@ -19,6 +19,8 @@ class Annuity(Payments):
         aprog: float = 0.0,
         amount: Union[float, int, list] = 1.0,
         times: list = None,
+        reinv: Union[float, Rate, Accumulation, Callable] = None,
+        deferral: float = None,
         imd: str = 'immediate'
     ):
         self.term = term
@@ -29,7 +31,10 @@ class Annuity(Payments):
         self.aprog = aprog
         imd_ind = 1 if imd == 'immediate' else 0
         self.is_level_pmt = None
+        self.reinv = reinv
+        self.deferral = deferral
 
+        # perpetuity
         if term == np.inf:
 
             def perp_series(t):
@@ -117,24 +122,26 @@ class Annuity(Payments):
 
         # if interest rate is level, can use formulas to save time
         if isinstance(self.gr, Accumulation) and self.gr.is_level and (self.is_level_pmt or self.gprog != 0):
+            i = self.gr.val(self.period) - 1
+            g = self.gprog
 
             if self._ann_perp == 'perpetuity':
+                # perpetuity with arithmetically increasing payments
+                if self.aprog != 0:
+                    pv = self.amount / i + self.aprog / (i ** 2)
 
-                pv = self.amount / (self.gr.val(self.period) - 1)
+                else:
+
+                    pv = self.amount / (self.gr.val(self.period) - 1)
 
             else:
-
-                i = self.gr.val(self.period) - 1
-                g = self.gprog
 
                 if round(i - g, 5) != 0:
 
                     pv = self.amount * ((1 - ((1 + g) / (1 + i)) ** self.n_payments) / (i - g))
+
                 else:
                     pv = self.n_payments * self.amount * (1 + i) ** (-1)
-
-                if self.imd == 'due':
-                    pv = pv * (1 + i)
 
         # annuity with arithmetically increasing payments
         elif self.aprog != 0:
@@ -146,46 +153,49 @@ class Annuity(Payments):
 
             pv = p * a_n + q / i * (a_n - n * (1 + i) ** - n)
 
+        # perpetuity with geometric payments and tiered growth
+        elif self._ann_perp == 'perpetuity' and isinstance(self.gr.gr, TieredTime):
+
+            intervals = list(np.diff(self.gr.gr.tiers))
+            rates_b = self.gr.gr.rates[:-1]
+            r_f = self.gr.gr.rates[-1]
+            t_f = self.gr.gr.tiers[-1]
+
+            pv = 0
+            disc = 1
+            for t, r in zip(intervals, rates_b):
+                n = t / self.period
+                i = (1 + r) ** self.period - 1
+                ratio = (1 + self.gprog) / (1 + i)
+                pv_t = self.amount * ((1 + i) ** -1) * ((1 - ratio ** n) / (1 - ratio))
+                pv += pv_t
+                disc *= (1 + r) ** (-t)
+
+            pv_f = disc * (self.amount * (1 + self.gprog) ** t_f) * ((1 + r_f) ** -1) * (
+                        1 / (1 - ((1 + self.gprog) / (1 + r_f))))
+
+            pv += pv_f
+
         else:
+            # otherwise, use npv function
+            pv = self.npv()
+            skip_due = True
 
-            # perpetuity with geometric payments and tiered growth
-            if self._ann_perp == 'perpetuity' and isinstance(self.gr.gr, TieredTime):
+        if self.imd == 'due' and 'skip_due' in locals():
+            i = self.gr.val(self.period) - 1
+            pv = pv * (1 + i)
 
-                intervals = list(np.diff(self.gr.gr.tiers))
-                rates_b = self.gr.gr.rates[:-1]
-                r_f = self.gr.gr.rates[-1]
-                t_f = self.gr.gr.tiers[-1]
-
-                pv = 0
-                disc = 1
-                for t, r in zip(intervals, rates_b):
-                    n = t / self.period
-                    i = (1 + r) ** self.period - 1
-                    ratio = (1 + self.gprog) / (1 + i)
-                    pv_t = self.amount * ((1 + i) ** -1) * ((1 - ratio ** n) / (1 - ratio))
-                    pv += pv_t
-                    disc *= (1 + r) ** (-t)
-
-                pv_f = disc * (self.amount * (1 + self.gprog) ** t_f) * ((1 + r_f) ** -1) * (
-                            1 / (1 - ((1 + self.gprog) / (1 + r_f))))
-
-                pv += pv_f
-
-            else:
-                # otherwise, use npv function
-                pv = self.npv()
+        if self.deferral is not None:
+            pv = pv * self.gr.discount_func(self.deferral)
 
         return pv
 
     def sv(self):
 
-        if isinstance(self.gr, Accumulation) and self.gr.is_level and self.is_level_pmt:
+        if isinstance(self.gr, Accumulation) and self.gr.is_level and self.is_level_pmt and self.reinv == 0:
             sv = self.amount * \
                  ((1 + self.gr.interest_rate) ** self.term - 1) / \
                  (self.gr.val(self.period) - 1)
-
-            if self.imd == 'due':
-                sv = sv * self.gr.val(self.period)
 
         elif self.aprog != 0:
 
@@ -197,9 +207,30 @@ class Annuity(Payments):
 
             sv = p * s_n + q / i * (s_n - n)
 
+        # reinvestment
+        elif self.reinv is not None:
+
+            i = self.gr.val(self.period) - 1
+            n = self.n_payments
+            rn = n - 1
+
+            r = standardize_acc(self.reinv)
+            r = r.val(self.period) - 1
+            dr = r / (1 + r)
+            aprog = self.amount * i
+
+            i_s = aprog * (((((1 + r) ** rn - 1) / dr) - rn) / r)
+
+            k = self.amount * n
+
+            sv = i_s + k
+
         else:
 
             sv = self.eq_val(t=self.term)
+
+        if self.imd == 'due':
+            sv = sv * self.gr.val(self.period)
 
         return sv
 
