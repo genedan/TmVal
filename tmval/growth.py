@@ -90,6 +90,8 @@ class Amount:
                     cond = round(self.val(i) / self.val(i - 1), 5) != round(self.val(i + 1) / self.val(i), 5)
                 except ValueError:
                     return False
+                except ZeroDivisionError:
+                    return False
                 if cond:
                     return False
                 else:
@@ -110,7 +112,10 @@ class Amount:
         elif isinstance(self.gr, (TieredBal, TieredTime)):
             return False
         elif isinstance(self.gr, Callable):
-            rates = [round(self.effective_rate(x + 1), 5) for x in range(100)]
+            try:
+                rates = [round(self.effective_rate(x + 1), 5) for x in range(100)]
+            except ZeroDivisionError:
+                return False
             return rates[1:] == rates[:-1]
 
     def val(self, t: float) -> float:
