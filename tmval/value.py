@@ -63,7 +63,7 @@ class Payments:
             TieredTime
         ] = None
     ):
-        if isinstance(amounts, list) and isinstance(times, list) and (len(amounts) != len(times)):
+        if isinstance(amounts, (list, Iterable)) and isinstance(times, (list, Iterable)) and (len(amounts) != len(times)):
             raise Exception("Amounts and times must be of the same length.")
 
         self.amounts = amounts
