@@ -419,7 +419,7 @@ class Rate:
     ):
 
         if FORMAL_PATTERNS[self.pattern] not in COMPOUNDS and pattern in COMPOUNDS:
-            raise Exception("Simple interest rate cannot be converted to compound patterns.")
+            raise Exception("Simple interest/discount rate cannot be converted to compound patterns.")
 
         if FORMAL_PATTERNS[self.pattern] in COMPOUNDS and pattern in SIMPLES:
             raise Exception("Compound rate cannot be converted to simple patterns.")
