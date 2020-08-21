@@ -181,7 +181,7 @@ class Annuity(Payments):
             pv = self.npv()
             skip_due = True
 
-        if self.imd == 'due' and 'skip_due' in locals():
+        if self.imd == 'due' and 'skip_due' not in locals():
             i = self.gr.val(self.period) - 1
             pv = pv * (1 + i)
 
@@ -192,7 +192,7 @@ class Annuity(Payments):
 
     def sv(self):
 
-        if isinstance(self.gr, Accumulation) and self.gr.is_level and self.is_level_pmt and self.reinv == 0:
+        if isinstance(self.gr, Accumulation) and self.gr.is_level and self.is_level_pmt and self.reinv is None:
             sv = self.amount * \
                  ((1 + self.gr.interest_rate) ** self.term - 1) / \
                  (self.gr.val(self.period) - 1)
@@ -228,12 +228,19 @@ class Annuity(Payments):
         else:
 
             sv = self.eq_val(t=self.term)
+            skip_due = True
 
-        if self.imd == 'due':
+        if self.imd == 'due' and 'skip_due' not in locals():
             sv = sv * self.gr.val(self.period)
 
         return sv
 
+    def fv(self, t):
+        sv = self.sv()
+        pv = self.gr.discount_func(fv=sv, t=self.term)
+        fv = pv * self.gr.val(t)
+
+        return fv
 
 def get_loan_amt(
         down_pmt: float,
