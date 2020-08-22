@@ -75,8 +75,10 @@ class Payments:
     def set_accumulation(self, gr: Union[float, Rate, Accumulation, TieredBal, TieredTime]):
 
         # if float, assume compound annual effective
-        if isinstance(gr, (float, Rate, Accumulation, TieredTime)):
+        if isinstance(gr, (float, Rate, TieredTime)):
             acc = standardize_acc(gr=gr)
+        elif isinstance(gr, Accumulation):
+            acc = standardize_acc(gr=gr) if gr.is_compound else gr
         elif isinstance(gr, TieredBal):
             acc = gr
         else:
