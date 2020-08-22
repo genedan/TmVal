@@ -10,7 +10,7 @@ import numpy as np
 from inspect import signature
 from typing import Callable, Union
 
-from tmval.constants import COMPOUNDS
+from tmval.constants import COMPOUNDS, SIMPLES
 from tmval.rates import Rate, standardize_rate
 
 
@@ -107,8 +107,12 @@ class Amount:
         :return:
         :rtype:
         """
-        if isinstance(self.gr, (float, Rate)):
+        if isinstance(self.gr, float):
             return True
+        elif isinstance(self.gr, Rate) and self.gr.formal_pattern in COMPOUNDS:
+            return True
+        elif isinstance(self.gr, Rate) and self.gr.formal_pattern in SIMPLES:
+            return False
         elif isinstance(self.gr, (TieredBal, TieredTime)):
             return False
         elif isinstance(self.gr, Callable):
@@ -797,3 +801,49 @@ def standardize_acc(gr: Union[float, Rate, Accumulation, TieredTime]) -> Accumul
         raise TypeError("Invalid type passed to gr.")
 
     return gr
+
+
+def tt_iym(table: dict, t: float) -> TieredTime:
+    """
+    Reads an investment year method table and returns a TieredTime object.
+    :param table:
+    :type table:
+    :param t:
+    :type t:
+    :return:
+    :rtype:
+    """
+
+    # move to the right for each row in year t
+    n_col = len(table[t])
+    # move downwards for each row greater than t
+    n_row = max(table.keys()) - t
+    n_tiers = n_col + n_row
+    tiers = [x for x in range(n_tiers)]
+    rates = table[t]
+
+    # get the ultimate rates from the last column in the table
+    index = t
+    for n in range(n_row):
+        index += 1
+        rates.append(table[index][-1])
+
+    tt = TieredTime(tiers=tiers, rates=rates)
+
+    return tt
+
+
+def read_iym(table: dict, t0: float, t: float) -> Rate:
+    duration = t
+    n_col = len(table[t0])
+    row_d = duration - n_col
+
+    if duration <= n_col:
+        rate = table[t0][duration]
+    else:
+        row = row_d + t0
+        rate = table[row][-1]
+
+    rate = Rate(rate)
+
+    return rate
