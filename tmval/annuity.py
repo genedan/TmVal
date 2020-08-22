@@ -5,7 +5,7 @@ from typing import Callable, Union
 
 from tmval.value import Payments, Rate
 from tmval.growth import Accumulation, TieredTime, standardize_acc
-from math import ceil
+from math import ceil, floor
 
 
 class Annuity(Payments):
@@ -15,13 +15,16 @@ class Annuity(Payments):
         gr: Union[float, Rate, Accumulation, Callable],
         period: float = None,
         term: float = None,
+        n: float = None,
         gprog: float = 0.0,
         aprog: float = 0.0,
         amount: Union[float, int, list] = 1.0,
         times: list = None,
         reinv: Union[float, Rate, Accumulation, Callable] = None,
         deferral: float = None,
-        imd: str = 'immediate'
+        imd: str = 'immediate',
+        loan: float = None,
+        drb: str = None
     ):
         self.term = term
         self.amount = amount
@@ -33,9 +36,20 @@ class Annuity(Payments):
         self.is_level_pmt = None
         self.reinv = reinv
         self.deferral = deferral
+        self.loan = loan
+        self.n_payments = n
+        self.drb_pmt = None
+
+        if term is None:
+            if self.n_payments:
+                self.term = self.n_payments * self.period
+            else:
+                r = self.get_r_pmt(gr)
+                r = ceil(r) if drb == 'drop' else floor(r)
+                self.term = r * self.period
 
         # perpetuity
-        if term == np.inf:
+        if self.term == np.inf:
 
             def perp_series(t):
                 start = amount
@@ -60,9 +74,21 @@ class Annuity(Payments):
             else:
                 self.is_level_pmt = False
         else:
-            n_payments = term / period
-            n_payments = int(ceil(n_payments))
-            self.n_payments = n_payments
+            if self.n_payments is None and term is not None:
+                r_payments = self.term / period
+                n_payments = floor(r_payments)
+                self.n_payments = n_payments
+                f = 0
+            elif self.n_payments is None and term is None:
+                r_payments = self.get_r_pmt(gr)
+                n_payments = floor(r_payments)
+                f = r_payments - n_payments
+                self.n_payments = n_payments
+            elif self.get_r_pmt(gr) > self.term:
+                f = self.get_r_pmt(gr) - self.term
+                self.n_payments -= 1
+            else:
+                f = 0
 
             if isinstance(amount, (int, float)) or (isinstance(amount, list) and len(amount)) == 1:
                 amounts = [self.amount * (1 + self.gprog) ** x + self.aprog * x for x in range(self.n_payments)]
@@ -85,10 +111,39 @@ class Annuity(Payments):
                     self.imd = 'immediate'
                     self.term = max(times)
 
+            if 0 < f < 1:
+
+                if drb == "balloon":
+                    self.drb_pmt = self.get_balloon(gr)
+                    amounts[-1] = self.drb_pmt
+                elif drb == "drop":
+                    self.drb_pmt = self.get_drop(gr)
+                    amounts.append(self.drb_pmt)
+                    times.append(self.term)
+                    self.n_payments += 1
+
+                self.is_level_pmt = False
+
+            elif 1 <= f:
+                self.drb_pmt = self.amount + olb_r(
+                    loan=self.loan,
+                    q=self.amount,
+                    period=self.period,
+                    gr=gr,
+                    t=self.term
+                )
+
+                amounts.append(self.drb_pmt)
+                times.append(self.term)
+                self.is_level_pmt = False
+
+            else:
+                pass
+
             if (isinstance(amount, (int, float)) or (isinstance(amount, list) and
                 len(amount))) == 1 and \
                     gprog == 0 and \
-                    aprog == 0:
+                    aprog == 0 and self.drb_pmt is None:
 
                 self.is_level_pmt = True
 
@@ -241,6 +296,30 @@ class Annuity(Payments):
         fv = pv * self.gr.val(t)
 
         return fv
+
+    def get_r_pmt(self, gr):
+        i = standardize_acc(gr).val(self.period) - 1
+        r = - np.log(1 - i * self.loan / self.amount) / np.log(1 + i)
+        return r
+
+    def get_drop(self, gr):
+        r = self.get_r_pmt(gr)
+        n = floor(r)
+        f = r - n
+        i = standardize_acc(gr).val(self.period) - 1
+        drop = (self.amount * ((1 + i) ** f - 1) / i) * (1 + i) ** (1 - f)
+        return drop
+
+    def get_balloon(self, gr):
+        r = self.get_r_pmt(gr)
+        n = floor(r)
+        f = r - n
+        q = self.amount
+        i = standardize_acc(gr).val(self.period) - 1
+
+        balloon = q + q * (((1 + i) ** f - 1) / i) * (1 + i) ** (-f)
+        return balloon
+
 
 def get_loan_amt(
         down_pmt: float,
