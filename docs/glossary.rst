@@ -16,6 +16,15 @@ Glossary
    annual percentage yield (APY)
       The annual effective interest rate.
 
+   annuity
+      A series of payments made at specified intervals for a fixed or contingent period.
+
+   annuity-immediate
+      An annuity in which the payments occur at the end of each payment period.
+
+   basic annuity-immediate
+      An annuity-immediate that pays 1 each period.
+
    compound interest
       A geometric pattern of money growth in which interest earned is reinvested at the rate of interest.
 
