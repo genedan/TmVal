@@ -113,7 +113,7 @@ class Amount:
             return True
         elif isinstance(self.gr, Rate) and self.gr.formal_pattern in SIMPLES:
             return False
-        elif isinstance(self.gr, (TieredBal, TieredTime)):
+        elif isinstance(self.gr, (TieredBal, TieredTime, SimpleLoan)):
             return False
         elif isinstance(self.gr, Callable):
             try:
