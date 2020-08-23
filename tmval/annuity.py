@@ -9,16 +9,65 @@ from math import ceil, floor
 
 
 class Annuity(Payments):
+    """
+    Annuity is TmVal's general class for representing all kinds of annuities. Among the supported types are:
+
+    #. Annuity-immediate
+    #. Annuity-due
+    #. Perpetuity-immediate
+    #. Perpetuity-due
+    #. Deferred annuity
+    #. Annuity with arithmetic progression
+    #. Annuity with geometric progression
+    #. Perpetuity with arithmetic progression
+    #. Perpetuity with geometric progression
+    #. Annuity with reinvested proceeds at a different growth rate
+
+    By tweaking the arguments, you can represent more types of annuities that you might find in actuarial literature.
+
+    The Annuity class comes with methods to solve for the present value, accumulated value, and equation of value at
+    periods other than 0 or end-of-term. You do not have to provide overlapping time-related arguments. For example,
+    if you provide the period and number of payments, the term can be inferred. Likewise, if you provide the term
+    and period, the number of payments can be inferred.
+
+    :param gr: A growth rate object.
+    :type gr: Accumulation, Callable, float, Rate.
+    :param amount: A payment amount, defaults to 1. Can also provide a list for non-level payments.
+    :type amount: float, int, list
+    :param period: The payment period, defaults to 1.
+    :type period: float
+    :param term: The annuity term.
+    :type term: float
+    :param n: The number of payments.
+    :type n: float
+    :param aprog: Arithmetic progression of payments defaults to 0.
+    :type aprog: float
+    :param gprog: Geometric progression of payments, defaults to 0.
+    :type gprog: float
+    :param times: Payment times, usually left blank but can be provided for nontraditional annuities, defaults to None
+    :type times: list
+    :param reinv: A reinvestment rate, if proceeds are reinvested at a rate other than provided to gr.
+    :type reinv: Accumulation, Callable, float, Rate
+    :param deferral: A time period in years to indicate a deferred annuity.
+    :type deferral: float
+    :param imd: Whether the annuity is 'immediate' or 'due', defaults to 'immediate'.
+    :type imd: str
+    :param loan: An amount that allows you to represent an annuity as a loan from which the payments can be inferred, \
+    defaults to None.
+    :type loan: float, optional
+    :param drb: Whether the final loan payment is a 'drop' or 'balloon' payment.
+    :type drb: str, optional
+    """
 
     def __init__(
         self,
         gr: Union[float, Rate, Accumulation, Callable],
-        period: float = None,
+        amount: Union[float, int, list] = 1.0,
+        period: float = 1,
         term: float = None,
         n: float = None,
         gprog: float = 0.0,
         aprog: float = 0.0,
-        amount: Union[float, int, list] = 1.0,
         times: list = None,
         reinv: Union[float, Rate, Accumulation, Callable] = None,
         deferral: float = None,
@@ -43,10 +92,13 @@ class Annuity(Payments):
         if term is None:
             if self.n_payments:
                 self.term = self.n_payments * self.period
+                r = self.n_payments
             else:
                 r = self.get_r_pmt(gr)
                 r = ceil(r) if drb == 'drop' else floor(r)
                 self.term = r * self.period
+        else:
+            r = self.term / self.period
 
         # perpetuity
         if self.term == np.inf:
@@ -84,8 +136,9 @@ class Annuity(Payments):
                 n_payments = floor(r_payments)
                 f = r_payments - n_payments
                 self.n_payments = n_payments
-            elif self.get_r_pmt(gr) > self.term:
-                f = self.get_r_pmt(gr) - self.term
+
+            elif r > self.term:
+                f = r - self.term
                 self.n_payments -= 1
             else:
                 f = 0
@@ -347,17 +400,53 @@ def get_loan_pmt(
         term: float,
         gr: Rate,
         imd: str = 'immediate',
+        gprog: float = 0,
+        aprog: float = 0,
         cents=False
-):
+) -> dict:
+    """
+    Returns the loan payment schedule, given a loan amount, payment period, term, growth rate, and geometric or
+    arithmetic progression of payments. If cents is set to True, uses the Daniel and Vaaler rounding algorithm
+    to round each payment to cents, modifying the final payment such that there is no over/under payment of the
+    loan due to rounding issues.
 
+    :param loan_amt: The loan amount to be repaid.
+    :type loan_amt: float
+    :param period: The payment frequency, per fraction of a year.
+    :type period: float
+    :param term: The term of the loan, in years.
+    :type term: float
+    :param gr: Some kind of growth rate object specifying the interest rate
+    :type gr: Accumulation, Callable, float, Rate
+    :param imd: 'immediate' or 'due'. Whether the payments occur at the end or beginning of each period, defaults to \
+    'immediate'.
+    :type imd: str
+    :param gprog: geometric progression, payments grow at a % of the previous payment per period, defaults to 0.
+    :type gprog: float
+    :param aprog: arithmetic progression, payments grow by a constant amount each period, defaults to 0.
+    :type aprog: float
+    :param cents: Whether you want payments rounded to cents.
+    :type cents: bool
+    :return: a dictionary of payment amounts along with the times of the payments
+    :rtype: dict
+    """
     ann = Annuity(
         period=period,
         term=term,
         gr=gr,
+        gprog=gprog,
+        aprog=aprog,
         imd=imd
     )
 
     pmt = loan_amt / ann.pv()
+    pmts = [pmt * x for x in ann.amounts]
+    times = ann.times
+
+    pmts_dict = {
+        'times': times,
+        'amounts': pmts
+    }
 
     if cents:
 
@@ -370,12 +459,14 @@ def get_loan_pmt(
             period=period,
             term=term,
             gr=gr,
+            gprog=gprog,
+            aprog=aprog,
             imd=imd
         ).pv()
 
         if loan_amt == round(pv, 2):
 
-            return pmt
+            return pmts_dict
 
         else:
 
@@ -388,24 +479,28 @@ def get_loan_pmt(
                 )
             )
 
-            diff = Annuity(
+            d_ann = Annuity(
                 amount=pmt_round2,
                 period=period,
                 term=term,
                 gr=gr,
+                gprog=gprog,
                 imd=imd
-            ).pv() - loan_amt
-
-            last_pmt = pmt_round2 - round(diff * acc.val(t=term), 2)
-
-            Installments = namedtuple(
-                'installments',
-                'amount last'
             )
 
-            return Installments(pmt_round2, last_pmt)
-    else:
-        return pmt
+            diff = d_ann.pv() - loan_amt
+
+            last_pmt = d_ann.amounts[-1] - round(diff * acc.val(t=term), 2)
+
+            pmts = [pmt_round2 * x for x in ann.amounts[:-1]]
+            pmts.append(last_pmt)
+
+            pmts_dict = {
+                'times': times,
+                'amounts': pmts
+            }
+
+    return pmts_dict
 
 
 def get_savings_pmt(
