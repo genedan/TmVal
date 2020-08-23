@@ -29,7 +29,7 @@ Where :math:`K` refers to the initial amount, or :term:`principal`. For example,
 Examples
 ========================
 
-Let's repeat the above examples using the TmVal package. Let's start by importing ``Amount``, which is a class that can be used for compound interest calculations:
+Let's repeat the above examples using the TmVal package. Let's start by importing :class:`.Amount`, which is a class that can be used for compound interest calculations:
 
 .. ipython:: python
 
@@ -52,7 +52,7 @@ Now, let's change the principal to $5:
 
 The output is 5.5125, the same as above.
 
-TmVal also comes with a compound interest solver, ``compound_solver()``, that can be used to solve for missing inputs. For example, what rate of interest would give us $5.5125, if we held $5 for two years?
+TmVal also comes with a compound interest solver, :func:`.compound_solver`, that can be used to solve for missing inputs. For example, what rate of interest would give us $5.5125, if we held $5 for two years?
 
 .. ipython:: python
 

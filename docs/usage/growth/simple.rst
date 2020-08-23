@@ -28,33 +28,33 @@ Where :math:`K` refers to the initial amount, or :term:`principal`. For example,
 Examples
 ========================
 
-Let's repeat the above examples using the TmVal package. Let's start by importing ``SimpleAmt``, which is a class that can be used for simple interest calculations:
+Let's repeat the above examples using the TmVal package. Let's start by importing :class:`.Amount`, and :class:`Rate` which are classes that can be used for simple interest calculations (we'll explain what these classes mean in subsequent sections):
 
+.. ipython:: python
 
-
-   from tmval import SimpleAmt
+   from tmval import Amount, Rate
 
 Let's see how much $1 grows to after 1 year, at an interest rate of 5%:
 
+.. ipython:: python
 
-
-   my_amt = SimpleAmt(k=1, s=.05)
+   my_amt = Amount(k=1, gr=Rate(s=.05))
    print(my_amt.val(1))
 
 
 Now, let's change the principal to $5:
 
+.. ipython:: python
 
-
-   my_amt = SimpleAmt(k=5, s=.05)
+   my_amt = Amount(k=5, gr=Rate(s=.05))
    print(my_amt.val(1))
 
 The output is 5.25, the same as above.
 
-TmVal also comes with a simple interest solver, ``get_simple_amt()`` that can be used to solve for missing inputs. For example, what rate of interest would give us $5.25, if we held $5 for a year?
+TmVal also comes with a simple interest solver, :func:`.simple_solver` that can be used to solve for missing inputs. For example, what rate of interest would give us $5.25, if we held $5 for a year?
 
+.. ipython:: python
 
-
-   from tmval import get_simple_amt
-   my_amt = get_simple_amt(fv=5.25, pv=5, t=1)
-   print(my_amt.interest_rate)
+   from tmval import simple_solver
+   s = simple_solver(fv=5.25, pv=5, t=1)
+   print(s)
