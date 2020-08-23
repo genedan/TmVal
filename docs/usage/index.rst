@@ -8,4 +8,5 @@ This section contains TmVal usage instructions. The order of topics will loosely
    :maxdepth: 2
    
    growth/index
-   annuities
+   value/index
+   annuity/index

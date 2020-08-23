@@ -35,3 +35,4 @@ This section documents standalone functions that do not belong to a class.
    nom_int_from_nom_disc
    eff_disc_from_nom_disc
    nom_disc_from_nom_disc
+   get_loan_pmt

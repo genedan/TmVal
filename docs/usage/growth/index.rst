@@ -19,7 +19,6 @@ We will start by demonstrating some practical applications concerning simple and
    discount
    interest_discount
    presentval
-   payments
    npv
    apy_apr
    interest_conversions

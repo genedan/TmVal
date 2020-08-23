@@ -7,7 +7,8 @@ TmVal is a Python package for time value of money computations. It is intended f
    :maxdepth: 3
    :caption: Contents:
    :titlesonly:
-   
+
+   intro
    quickstart
    usage/index
 
@@ -15,4 +16,6 @@ TmVal is a Python package for time value of money computations. It is intended f
    :maxdepth: 2
 
    api_ref/index
+   notation
    glossary
+   references
