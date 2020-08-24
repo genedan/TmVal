@@ -70,7 +70,7 @@ class Annuity(Payments):
         aprog: float = 0.0,
         times: list = None,
         reinv: Union[float, Rate, Accumulation, Callable] = None,
-        deferral: float = None,
+        deferral: float = 0.0,
         imd: str = 'immediate',
         loan: float = None,
         drb: str = None
@@ -101,7 +101,7 @@ class Annuity(Payments):
             r = self.term / self.period
 
         # perpetuity
-        if self.term == np.inf:
+        if self.term == np.inf or self.n_payments == np.Inf:
 
             def perp_series(t):
                 start = amount
@@ -163,6 +163,9 @@ class Annuity(Payments):
                 else:
                     self.imd = 'immediate'
                     self.term = max(times)
+
+            if deferral > 0:
+                times = [x + deferral for x in times]
 
             if 0 < f < 1:
 
@@ -293,7 +296,7 @@ class Annuity(Payments):
             i = self.gr.val(self.period) - 1
             pv = pv * (1 + i)
 
-        if self.deferral is not None:
+        if self.deferral > 0:
             pv = pv * self.gr.discount_func(self.deferral)
 
         return pv
