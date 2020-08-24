@@ -2,8 +2,10 @@ from collections.abc import Iterable
 import functools
 import itertools
 import numpy as np
+from numpy import ndarray
 from scipy.optimize import newton
 import warnings
+
 
 from itertools import groupby
 
@@ -124,9 +126,10 @@ class Payments:
         payments_dict = self.group_payments()
 
         degree = max(payments_dict, key=int)
+        is_poly = all(isinstance(x, int) for x in payments_dict)
 
         # if times are integral, equation of value is polynomial, might be solved with NumPy roots
-        if isinstance(degree, int):
+        if is_poly:
             coefficients = [(payments_dict[i] if i in payments_dict else 0) for i in range(degree + 1)]
             roots = np.roots(coefficients)
             reals = roots[np.isreal(roots)]
@@ -136,16 +139,19 @@ class Payments:
 
             i_s = [np.real(x) - 1 for x in reals]
 
-            return i_s
         # if times are fractional, use Newton's method:
         else:
-            tau = max(self.times)
-
             def f(x):
-                return sum([payments_dict[k] * (x ** (tau - k)) for k in payments_dict.keys()])
-            i_s = newton(func=f, x0=x0) - 1
-            i_s = Rate(i_s)
-            return i_s
+                return sum([payments_dict[k] * (x ** k) for k in payments_dict.keys()])
+            roots = newton(func=f, x0=x0)
+            if isinstance(roots, ndarray):
+                pass
+            else:
+                roots = np.array(roots)
+            reals = roots[np.isreal(roots)]
+            i_s = [(np.real(x) ** -1) - 1 for x in reals]
+
+        return i_s
 
     def equated_time(self, c: float) -> float:
 
