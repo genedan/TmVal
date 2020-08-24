@@ -21,7 +21,7 @@ Suppose money exhibits a quadratic growth pattern, specified by the amount funct
 
 If we invest :math:`K=5` at time 0, how much does it grow to at time 5?
 
-TmVal's ``Amount`` class allows us to model this behavior. To solve the above problem, simply call the class and supply the growth function and principal. First, define the growth function as a Python function that takes the time and principal as arguments:
+TmVal's :class:`.Amount` class allows us to model this behavior. To solve the above problem, simply call the class and supply the growth function and principal. First, define the growth function as a Python function that takes the time and principal as arguments:
 
 .. ipython:: python
 
@@ -30,7 +30,7 @@ TmVal's ``Amount`` class allows us to model this behavior. To solve the above pr
    def f(t, k):
        return k * (.05 * (t **2) + .05 * t + 1)
 
-Now supply the growth function to the ``Amount`` class, and call :code:`my_amt.val(5)` to get the answer:
+Now supply the growth function to the :class:`.Amount` class, and call :code:`my_amt.val(5)` to get the answer:
 
 .. ipython:: python
 

@@ -18,14 +18,14 @@ The amount and accumulation functions are often related by the following express
 Examples
 ========================
 
-TmVal's ``Accumulation`` class models accumulation functions.
+TmVal's :class:`.Accumulation` class models accumulation functions.
 
 Suppose money exhibits a quadratic growth pattern, specified by the amount function:
 
 .. math::
    a(t) = .05t^2 + .05t + 1
 
-How much does $1 invested at time 0 grow to at time 5? To solve this problem, we import the ``Accumulation class``, supply the growth function in a similar manner as we had done with the ``Amount`` class, except we do not need to supply a value for :math:`K`.
+How much does $1 invested at time 0 grow to at time 5? To solve this problem, we import the :class:`.Accumulation` class, supply the growth function in a similar manner as we had done with the :class:`.Amount` class, except we do not need to supply a value for :math:`K`.
 
 .. ipython:: python
 
@@ -38,7 +38,7 @@ How much does $1 invested at time 0 grow to at time 5? To solve this problem, we
 
     print(my_acc.val(5))
 
-Note that we could have also solved this problem with the ``Amount`` class, by setting :math:`K=1`.
+Note that we could have also solved this problem with the :class:`.Amount` class, by setting :math:`K=1`.
 
 .. ipython:: python
 
@@ -51,7 +51,7 @@ Note that we could have also solved this problem with the ``Amount`` class, by s
 
    print(my_amt.val(5))
 
-If the amount and accumulation functions are proportionally related, we can extract the accumulation function from the ``Amount`` class by calling the ``get_accumulation()`` method, which returns an ``Accumulation`` class derived from the ``Amount`` class:
+If the amount and accumulation functions are proportionally related, we can extract the accumulation function from the :class:`.Amount` class by calling the :meth:`.get_accumulation` method, which returns an :class:`.Accumulation` class derived from the :class:`.Amount` class:
 
 .. ipython:: python
 
