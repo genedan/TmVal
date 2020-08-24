@@ -19,11 +19,24 @@ Glossary
    annuity
       A series of payments made at specified intervals for a fixed or contingent period.
 
+   annuity-due
+
+      An annuity in which the payments occur at the beginning of each payment period.
+
    annuity-immediate
       An annuity in which the payments occur at the end of each payment period.
 
+   basic annuity-due
+      An annuity-due that pays 1 at the beginning of each period.
+
    basic annuity-immediate
-      An annuity-immediate that pays 1 each period.
+      An annuity-immediate that pays 1 at the end of each period.
+
+   basic perpetuity-due
+      A perpetuity-due that pays 1 at the beginning of each period.
+
+   basic perpetuity-immediate
+      A perpetuity-immediate that pays 1 at the end of each period.
 
    compound interest
       A geometric pattern of money growth in which interest earned is reinvested at the rate of interest.
@@ -66,11 +79,20 @@ Glossary
          \sum_{k=0}^n R_k v(t_k)
 
    nominal interest rate
-      the interest rate :math:`i^{(m)} compounded :math:`m` times per year. Money grows at a rate of:
+      The interest rate :math:`i^{(m)} compounded :math:`m` times per year. Money grows at a rate of:
 
       .. math::
 
          \left(1 + \frac{i^{(m)}}{m}\right)^m
+
+   perpetuity
+      An annuity with an infinite number of payments
+
+   perpetuity-due
+      A perpetuity that makes payments at the beginning of each period.
+
+   perpetuity-immediate
+      A perpetuity that makes payments at the end of each period.
 
    principal
       (1) An initial investment of money.
