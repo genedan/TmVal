@@ -10,3 +10,5 @@ This section contains TmVal usage instructions. The order of topics will loosely
    growth/index
    value/index
    annuity/index
+   loan/index
+   pandas/index

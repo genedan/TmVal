@@ -9,3 +9,5 @@ Annuities
 
    immediate
    due
+   perpetuity
+   deferred

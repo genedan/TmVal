@@ -8,7 +8,7 @@ TmVal is a Python package for time value of money computations. It is intended f
    :caption: Contents:
    :titlesonly:
 
-   intro
+   Introducing TmVal <intro>
    quickstart
    usage/index
 

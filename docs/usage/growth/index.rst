@@ -14,12 +14,12 @@ We will start by demonstrating some practical applications concerning simple and
    amount
    accumulation
    interest
+   rate
    reminder
    tiered
    discount
    interest_discount
    presentval
-   npv
    apy_apr
    interest_conversions
    force_of_interest

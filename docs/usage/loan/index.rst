@@ -1,9 +1,10 @@
 ======
-Value
+Loans
 ======
+
 
 .. toctree::
    :maxdepth: 1
 
-   payments
-   npv
+   retrospective
+   prospective
