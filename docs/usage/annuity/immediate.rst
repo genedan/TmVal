@@ -2,7 +2,7 @@
 Annuities-Immediate
 ====================
 
-An :term:`annuity-immediate` is a type of annuity in which the payments occur at the end of each payment period. We define a :term:`basic annuity-immediate` as an annuity immediate in which every payment equals 1.
+An :term:`annuity-immediate` is a type of annuity in which the payments occur at the end of each payment period. We define a :term:`basic annuity-immediate` as an annuity-immediate in which every payment equals 1.
 
 Basic annuities-immediate are convenient because the formulas specifying their present and accumulated values can be reduced to simple, compact algebraic expressions. For example, the present value of a basic annuity-immediate that pays 1 for :math:`n` periods at compound effective interest rate :math:`i` per period is:
 
