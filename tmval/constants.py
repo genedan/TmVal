@@ -44,3 +44,15 @@ SIMPLES = [
     'Simple Interest',
     'Simple Discount'
 ]
+
+NOMINALS = [
+    'Nominal Interest',
+    'Nominal Discount'
+]
+
+EFFECTIVES = [
+    'Effective Interest',
+    'Effective Discount',
+    'Simple Interest',
+    'Simple Discount'
+]
