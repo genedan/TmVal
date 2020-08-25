@@ -5,11 +5,27 @@ annuities to represent by specifying the arguments at initialization.
 from collections import namedtuple
 import decimal
 import numpy as np
-from typing import Callable, Union
 
-from tmval.value import Payments, Rate
-from tmval.growth import Accumulation, TieredTime, standardize_acc
-from math import ceil, floor
+from typing import (
+    Callable,
+    Union
+)
+
+from tmval.value import (
+    Payments,
+    Rate
+)
+
+from tmval.growth import (
+    Accumulation,
+    standardize_acc,
+    TieredTime
+)
+
+from math import (
+    ceil,
+    floor
+)
 
 
 class Annuity(Payments):
@@ -115,6 +131,10 @@ class Annuity(Payments):
             if self.n_payments:
                 self.term = self.n_payments * self.period
                 r = self.n_payments
+            elif times:
+                self.term = max(times)
+                r = len(times)
+                self.n_payments = len(times)
             else:
                 r = self.get_r_pmt(gr)
                 r = ceil(r) if drb == 'drop' else floor(r)
@@ -175,7 +195,7 @@ class Annuity(Payments):
                 intervals = list(np.diff(times))
                 intervals = [round(x, 7) for x in intervals]
                 if intervals[1:] != intervals[:-1]:
-                    raise Exception("Non-level intervals detected, use Payments class instead.")
+                    raise Exception("Non-level intervals detected, use payments class instead.")
                 else:
                     self.period = intervals[0]
 
