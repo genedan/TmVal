@@ -28,25 +28,28 @@ sudo pip3 install tmval*
 
 ### Examples
 
-Suppose we have a nominal discount rate of d<sup>(12)</sup> = .06 compounded monthly. What is the equivalent interest rate compounded quarterly?
+Suppose we have a nominal discount rate of d<sup>(12)</sup> = .06 compounded monthly. What is the equivalent nominal interest rate compounded quarterly?
 
 ```python
-from tmval import convert_rate, NominalDisc
+from tmval import Rate
 
-nom_d = NominalDisc(dm=.06, m=12)
+nom_d = Rate(
+    rate=.06, 
+    pattern="Nominal Discount",
+    freq=12
+)
 
-nom_i = convert_rate(
-    nom_d=nom_d, 
-    intdisc='interest', 
-    effnom='nominal', 
+nom_i = nom_d.convert_rate( 
+    pattern='Nominal Interest', 
     freq=4
 )
 
 print(nom_i)
 
 out:
-Nominal interest rate: 0.06060503776426174
-Compounding Frequency: 4
+Pattern: Nominal Interest
+Rate: 0.06060503776426174
+Compounding Frequency: 4 times per year
 ```
 
 Suppose we have the following tiered investment account with the following interest rate schedule. This means the account pays 1% if the balance is below 10,000. Once it reaches 10,000, it pays 2%, and beyond 20,000, it pays 3%.
@@ -71,4 +74,21 @@ print(my_tiered_bal.get_jump_times(k=5000))
 
 out:
 [69.66071689357483, 104.66350567472134]
+```
+
+Suppose we purchase an annuity-immediate that makes payments of 1,000 each year for a term of five years, with the first payment beginning 5 years from now. If the annual effective interest rate is 5%, how much would the accumulated payments grow to 20 years from now?
+
+```python
+from tmval import Annuity, Rate
+
+ann = Annuity(
+   amount=1000,
+   n=5,
+   gr=Rate(.05),
+   deferral=4
+)
+
+print(ann.eq_val(20))
+out:
+9450.704605312447
 ```
