@@ -2,7 +2,7 @@
 The Rate Class
 ===============
 
-TmVal's :class:`Rate` class is the central class for representing interest rates. Although we have only introduced two types of rates so far, simple and compound interest, we will shortly show that there are many different types of interest rates and ways to convert one rate to another. This introduces several complexities into the theory of interest, which motivated the need to create a special class to make life easier for the user.
+TmVal's :class:`.Rate` class is the central class for representing interest rates. Although we have only introduced two types of rates so far, simple and compound interest, we will shortly show that there are many different types of interest rates and ways to convert one rate to another. This introduces several complexities into the theory of interest, which motivated the need to create a special class to make life easier for the user.
 
 To define a rate, we need to keep a few things in mind. If you are new to interest theory, you may not have encountered all of these concepts yet, but we will revisit them later once we've gone over nominal rates and the force of interest.
 
@@ -26,7 +26,7 @@ Examples
 
 The interest rate is 5% compounded annually. Define this using the rate class.
 
-To do this, we import TmVal's :class:`Rate` class, and then supply the arguments. We set ``rate=.05``, ``pattern="Effective Interest"``, and ``interval=1``
+To do this, we import TmVal's :class:`.Rate` class, and then supply the arguments. We set ``rate=.05``, ``pattern="Effective Interest"``, and ``interval=1``
 
 .. ipython:: python
 
