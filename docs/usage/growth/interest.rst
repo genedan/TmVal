@@ -28,14 +28,14 @@ To examine the effective interest rate for a single time period, the :math:`n`-t
 Examples
 ========================
 
-We can use the ``Amount`` class to make various interest calculations. For example, assume the following amount function:
+We can use the :class:`.Amount` class to make various interest calculations. For example, assume the following amount function:
 
 .. math::
    A_K(t) = K(.02t^2 + .02t + 1)
 
 If we invest $5 at time 0, What is the interest earned during the 5th time period?
 
-First lets set up our ``Amount`` instance:
+First lets set up our :class:`.Amount` instance:
 
 .. ipython:: python
 
@@ -46,7 +46,7 @@ First lets set up our ``Amount`` instance:
 
    my_amt = Amount(gr=f, k=5)
 
-We can use the ``Amount`` class's ``interest_earned()`` method to get the answer:
+We can use the :class:`.Amount` class's :meth:`.interest_earned` method to get the answer:
 
 .. ipython:: python
 
@@ -54,7 +54,7 @@ We can use the ``Amount`` class's ``interest_earned()`` method to get the answer
 
    print(interest)
 
-What is the effective interest rate during the 5th time period? We can use the ``Amount`` class's ``effective_rate()`` method to get the answer:
+What is the effective interest rate during the 5th time period? We can use the :class:`.Amount` class's :meth:`.effective_rate` method to get the answer:
 
 .. ipython:: python
 
@@ -62,7 +62,7 @@ What is the effective interest rate during the 5th time period? We can use the `
 
    print(eff_interest_rate_amt)
 
-We can also use the ``effective_interval()`` method to find the effective rate over a longer interval, say from times 1 to 5:
+We can also use the :meth:`.effective_interval` method to find the effective rate over a longer interval, say from times 1 to 5:
 
 .. ipython:: python
 
@@ -70,7 +70,7 @@ We can also use the ``effective_interval()`` method to find the effective rate o
 
    print(eff_interval_rate_amt)
 
-TmVal's ``Accumulation`` class is a subclass of the ``Amount`` class. This means that many of the methods that can be used from the ``Amount`` class can also be used by the ``Accumulation`` class.
+TmVal's :class:`.Accumulation` class is a subclass of the ``Amount`` class. This means that many of the methods that can be used from the :class:`.Amount` class can also be used by the :class:`.Accumulation` class.
 
 Assuming proportionality, we can define an amount function from an accumulation function and then get the effective interest rate for the 5th interval. It should be the same answer as that achieved from the amount function:
 
