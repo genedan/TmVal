@@ -1,6 +1,6 @@
-========================
+=========
 Discount
-========================
+=========
 
 **Note:** This definition of :term:`discount` may differ from what you are used to in finance. If you typically use the terms **interest rate** and **discount rate** interchangeably, then stick with the interest rate operations in TmVal. If you encounter the term 'discount rate' in TmVal, please be aware that it refers to actuarial discount, discount interest, or interest up front.
 
@@ -31,14 +31,14 @@ The discount rate for the :math:`n`-th time period is defined as:
 Examples
 ==========
 
-Suppose we borrow $1000 to be paid back in 1 year, and we need to pay $100 of discount up front. What is the effective discount on the loan?
+Suppose we borrow 1000 to be paid back in 1 year, and we need to pay 100 of discount up front. What is the effective discount on the loan?
 
 
-To solve this problem, we can use the ``discount_interval()`` method of the ``Amount`` class. TmVal also has a class called ``SimpleLoan`` which is a special case of money growth in which a lump sum is borrowed and paid back with a single payment at a later point in time. These loans are common between people outside the context of banking.
+To solve this problem, we can use the :meth:`.discount_interval` method of the :class:`.Amount` class. TmVal also has a class called :class:`.SimpleLoan` which is a special case of money growth in which a lump sum is borrowed and paid back with a single payment at a later point in time. These loans are common between people outside the context of banking.
 
-The ``SimpleLoan`` is callable, and can be passed to the ``Amount`` class just like a growth function.
+:class`.SimpleLoan` is callable, and can be passed to the :class:`.Amount` class just like a growth function.
 
-To create a simple loan, supply the principal, term, and discount amount to ``SimpleLoan``. Then we can use ``discount_interval()`` to get the discount rate over the interval :math:`[0, 1]`:
+To create a simple loan, supply the principal, term, and discount amount to :class:`.SimpleLoan`. Then we can use :meth:`.discount_interval` to get the discount rate over the interval :math:`[0, 1]`:
 
 .. ipython:: python
 
@@ -50,13 +50,13 @@ To create a simple loan, supply the principal, term, and discount amount to ``Si
 
    print(my_amt.discount_interval(t1=0, t2=1))
 
-Note that since the term is just one period, we can also simply this calculation by using the method ``effective_discount()``:
+Note that since the term is just one period, we can also simply this calculation by using the method :meth:`.effective_discount`:
 
 .. ipython:: python
 
    print(my_amt.effective_discount(n=1))
 
-The ``SimpleLoan`` class also has some attributes that can be called to obtain information about the loan:
+The :class:`.SimpleLoan` class also has some attributes that can be called to obtain information about the loan:
 
 .. ipython:: python
 

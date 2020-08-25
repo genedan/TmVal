@@ -41,9 +41,11 @@ In the age of hand calculations, several other equations have been useful:
 Examples
 =========
 
-TmVal provides built-in functions to convert interest rates to discount rates and vice-versa. These are simple functions, but are very useful as they tend to be embedded in more complex financial instruments.
+TmVal's :class:`.Rate` class provides a built-in method to convert interest rates to discount rates and vice-versa. These are simple functions, but are very useful as they tend to be embedded in more complex financial instruments.
 
-Suppose the interest rate is 5%, what is the discount rate? We can use the function, :func:`.discount_from_interest`:
+Suppose the interest rate is 5%, what is the discount rate?
+
+First, we define a compound effective rate using the :class:`.Rate` class. Then, we use the method :meth:`.convert_rate` to convert the rate to a discount rate:
 
 .. ipython:: python
 
@@ -58,7 +60,7 @@ Suppose the interest rate is 5%, what is the discount rate? We can use the funct
 
    print(d)
 
-Using :func:`.interest_from_discount`, we can convert the discount rate back to an interest rate:
+Again using :meth:`.convert_rate()`, we can convert the discount rate back to an interest rate:
 
 .. ipython:: python
 

@@ -28,7 +28,7 @@ This means that the account pays 1% interest when the balance is less than 10,00
 Examples
 ==========
 
-TmVal's :code:`TieredBal` class offers a way to model this type of account. You simply supply the tiers and rates. Let's do this using the above table:
+TmVal's :class:`.TieredBal` class offers a way to model this type of account. You simply supply the tiers and rates. Let's do this using the above table:
 
 .. ipython:: python
 
@@ -39,7 +39,7 @@ TmVal's :code:`TieredBal` class offers a way to model this type of account. You 
        rates=[.01, .02, .03]
    )
 
-:code:`TieredBal` is a growth pattern that can be supplied to the :code:`Amount` class, which you can then use to access its methods. If we invest 18000 today, to what value does it grow after 10 years?
+:class:`.TieredBal` is a growth pattern that can be supplied to the :class:`.Amount` class, which you can then use to access its methods. If we invest 18,000 today, to what value does it grow after 10 years?
 
 .. ipython:: python
 
@@ -48,7 +48,7 @@ TmVal's :code:`TieredBal` class offers a way to model this type of account. You 
    my_amt = Amount(gr=my_tiered_bal, k=18000)
    print(my_amt.val(10))
 
-You can also use :code:`TieredBal` to find the times at which you would expect the interest rate to jump, given an initial investment. We do this by calling the method :code:`get_jump_times()`. How long will it take to hit 2% and 3% interest?
+You can also use :class:`.TieredBal` to find the times at which you would expect the interest rate to jump, given an initial investment. We do this by calling the method :meth:`.get_jump_times()`. Assuming no future contributions, how long will it take to hit 2% and 3% interest?
 
 .. ipython:: python
 
@@ -56,7 +56,7 @@ You can also use :code:`TieredBal` to find the times at which you would expect t
 
 It will take almost 70 years to reach 2%, and about 105 years to reach 3%. That's a long time!
 
-TmVal also offers the :code:`TieredTime` class, where the interest rate paid varies by the length of time the account is held:
+TmVal also offers the :class:`.TieredTime` class, where the interest rate paid varies by the length of time the account is held:
 
 .. rst-class:: right-align
 .. table::
