@@ -10,7 +10,7 @@ Basic annuities-immediate are convenient because the formulas specifying their p
 
    \ax{\angln i} = v + v^2 + v^3 + \cdots + v^n = \frac{1 - v^n}{i}
 
-The accumulated value at time :math:`n` is :
+The accumulated value at time :math:`n` is:
 
 .. math::
 
