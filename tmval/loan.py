@@ -11,8 +11,8 @@ class Loan:
         self,
         pmt,
         period,
-        term,
         gr: Union[Rate, float, TieredTime],
+        term: float = None,
         amt: float = None,
     ):
         self.pmt = pmt
