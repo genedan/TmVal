@@ -1,3 +1,7 @@
+"""
+Contains the Annuity class, TmVal's main class for all kinds of annuities. The user can choose what type of
+annuities to represent by specifying the arguments at initialization.
+"""
 from collections import namedtuple
 import decimal
 import numpy as np
@@ -61,15 +65,33 @@ class Annuity(Payments):
 
     def __init__(
         self,
-        gr: Union[float, Rate, Accumulation, Callable],
-        amount: Union[float, int, list] = 1.0,
+        gr: Union[
+            Accumulation,
+            Callable,
+            float,
+            Rate
+        ],
+
+        amount: Union[
+            float,
+            int,
+            list
+        ] = 1.0,
+
         period: float = 1,
         term: float = None,
         n: float = None,
         gprog: float = 0.0,
         aprog: float = 0.0,
         times: list = None,
-        reinv: Union[float, Rate, Accumulation, Callable] = None,
+
+        reinv: [
+            Accumulation,
+            Callable,
+            float,
+            Rate
+        ] = None,
+
         deferral: float = 0.0,
         imd: str = 'immediate',
         loan: float = None,
@@ -137,9 +159,9 @@ class Annuity(Payments):
                 f = r_payments - n_payments
                 self.n_payments = n_payments
 
-            elif r > self.term:
-                f = r - self.term
+            elif r > self.n_payments:
                 self.n_payments -= 1
+                f = r - self.n_payments
             else:
                 f = 0
 
@@ -229,7 +251,29 @@ class Annuity(Payments):
         if imd not in ['immediate', 'due']:
             raise ValueError('imd can either be immediate or due.')
 
-    def pv(self):
+    def pv(self) -> float:
+        """
+        Calculates the present value of the annuity. The formula used to calculate the present value will \
+        depend on the type of annuity that gets inferred from the arguments provided to the parent class. Several \
+        classes of annuities come with shortcut formulas which will be used in favor of just the standard npv or \
+        equation of value formulas to improve computation speed:
+
+        #. Annuity-immediate: :math:`\\ax{\\angln i}`
+        #. Annuity-due: :math:`\\ax**{\\angln i}`
+        #. Perpetuity-immediate: :math:`\\ax{\\angl{\\infty} i}`
+        #. Perpetuity-due: :math:`\\ax**{\\angl{\\infty} i}`
+        #. Arithmetically increasing annuity-immediate: :math:`(I_{P, Q} a)_{\\angln i}`
+        #. Arithmetically increasing annuity-due: :math:`(I_{P, Q} \\ax**{})_{\\angln i}`
+        #. Arithmetically increasing perpetuity-immediate: :math:`(I_{P, Q} a)_{\\angl{\\infty} i}`
+        #. Arithmetically increasing perpetuity-due: :math:`(I_{P, Q} a)_{\\angl{\\infty} i}`
+        #. Geometrically increasing annuity-immediate
+        #. Geometrically increasing annuity-due
+        #. Geometrically increasing perpetuity-immediate
+        #. Geometrically increasing perpetuity-due
+
+        :return: The present value of the annuity.
+        :rtype: float
+        """
 
         # if interest rate is level, can use formulas to save time
         if isinstance(self.gr, Accumulation) and self.gr.is_level and (self.is_level_pmt or self.gprog != 0):
@@ -302,6 +346,28 @@ class Annuity(Payments):
         return pv
 
     def sv(self):
+        """
+        Calculates the accumulated value of the annuity. The formula used to calculate the accumulated value will \
+        depend on the type of annuity that gets inferred from the arguments provided to the parent class. Several \
+        classes of annuities come with shortcut formulas which will be used in favor of the equation of value formula \
+        to improve computation speed:
+
+        #. Annuity-immediate: :math:`\\sx{\\angln i}`
+        #. Annuity-due: :math:`\\sx**{\\angln i}`
+        #. Perpetuity-immediate: :math:`\\sx{\\angl{\\infty} i}`
+        #. Perpetuity-due: :math:`\\sx**{\\angl{\\infty} i}`
+        #. Arithmetically increasing annuity-immediate: :math:`(I_{P, Q} s)_{\\angln i}`
+        #. Arithmetically increasing annuity-due: :math:`(I_{P, Q} \\sx**{})_{\\angln i}`
+        #. Arithmetically increasing perpetuity-immediate: :math:`(I_{P, Q} s)_{\\angl{\\infty} i}`
+        #. Arithmetically increasing perpetuity-due: :math:`(I_{P, Q} s)_{\\angl{\\infty} i}`
+        #. Geometrically increasing annuity-immediate
+        #. Geometrically increasing annuity-due
+        #. Geometrically increasing perpetuity-immediate
+        #. Geometrically increasing perpetuity-due
+
+        :return: The accumulated value of the annuity.
+        :rtype: float
+        """
 
         if isinstance(self.gr, Accumulation) and self.gr.is_level and self.is_level_pmt and self.reinv is None:
             sv = self.amount * \
@@ -346,19 +412,42 @@ class Annuity(Payments):
 
         return sv
 
-    def fv(self, t):
-        sv = self.sv()
-        pv = self.gr.discount_func(fv=sv, t=self.term)
-        fv = pv * self.gr.val(t)
+    def get_r_pmt(
+        self,
+        gr: Union[
+            Accumulation,
+            Callable,
+            float,
+            Rate
+        ]
+    ) -> float:
 
-        return fv
+        """
+        When inferring the number of payment periods, returns the number of payment periods as if fractional periods
+        were allowed. This fractional value helps calculate the drop or balloon payments, if needed.
 
-    def get_r_pmt(self, gr):
+        :param gr: A growth rate object.
+        :type gr: Accumulation, Callable, float, or Rate
+        :return: The number of payment periods.
+        :rtype: float
+        """
+
         i = standardize_acc(gr).val(self.period) - 1
         r = - np.log(1 - i * self.loan / self.amount) / np.log(1 + i)
         return r
 
-    def get_drop(self, gr):
+    def get_drop(
+        self,
+        gr
+    ) -> float:
+        """
+        If the number of payment periods does not settle to an integral number, calculates the drop payment.
+
+        :param gr: A growth rate object.
+        :type gr: Accumulation, Callable, float, or Rate
+        :return: The drop payment.
+        :rtype: float
+        """
         r = self.get_r_pmt(gr)
         n = floor(r)
         f = r - n
@@ -366,7 +455,18 @@ class Annuity(Payments):
         drop = (self.amount * ((1 + i) ** f - 1) / i) * (1 + i) ** (1 - f)
         return drop
 
-    def get_balloon(self, gr):
+    def get_balloon(
+        self,
+        gr
+    ) -> float:
+        """
+        If the number of payment periods does not settle to an integral number, calculates the balloon payment.
+
+        :param gr: A growth rate object.
+        :type gr: Accumulation, Callable, float, or Rate
+        :return: The balloon payment.
+        :rtype: float
+        """
         r = self.get_r_pmt(gr)
         n = floor(r)
         f = r - n
@@ -378,12 +478,28 @@ class Annuity(Payments):
 
 
 def get_loan_amt(
-        down_pmt: float,
-        loan_pmt: float,
-        period: float,
-        term: float,
-        gr: Rate
+    down_pmt: float,
+    loan_pmt: float,
+    period: float,
+    term: float,
+    gr: Rate
 ) -> float:
+    """
+    Returns a loan amount, given a set of characteristics that defines an annuity.
+
+    :param down_pmt: A down payment amount, reduces the loan amount.
+    :type down_pmt: float
+    :param loan_pmt: The periodic loan payment amount.
+    :type loan_pmt: float
+    :param period: The payment period, as a fraction of a year.
+    :type period: float
+    :param term: The term of the loan, in years.
+    :type term: float
+    :param gr: A growth rate object
+    :type gr: Rate
+    :return: A loan amount whose present value is equal to the annuity generated from the other arguments.
+    :rtype: float
+    """
 
     ann = Annuity(
         period=period,
@@ -398,14 +514,14 @@ def get_loan_amt(
 
 
 def get_loan_pmt(
-        loan_amt: float,
-        period: float,
-        term: float,
-        gr: Rate,
-        imd: str = 'immediate',
-        gprog: float = 0,
-        aprog: float = 0,
-        cents=False
+    loan_amt: float,
+    period: float,
+    term: float,
+    gr: Rate,
+    imd: str = 'immediate',
+    gprog: float = 0,
+    aprog: float = 0,
+    cents=False
 ) -> dict:
     """
     Returns the loan payment schedule, given a loan amount, payment period, term, growth rate, and geometric or
@@ -507,12 +623,30 @@ def get_loan_pmt(
 
 
 def get_savings_pmt(
-        fv: float,
-        period: float,
-        term: float,
-        gr: Rate,
-        cents=False
-):
+    fv: float,
+    period: float,
+    term: float,
+    gr: Rate,
+    cents=False
+) -> Union[float, tuple]:
+    """
+    Returns the savings payments, made at regular installments specified by period, that grow to the desired
+    future value. When cents is set to True, rounds the payments to the next cent, except for the last payment
+    which is adjusted so that the desired future value is reached without over/under payment.
+
+    :param fv: The desired future value.
+    :type fv: float
+    :param period: The payment period, as a fraction of a year.
+    :type period: float
+    :param term: The amount of time required to reach the desired future value, in years.
+    :type term: float
+    :param gr: A growth rate object.
+    :type gr: Rate
+    :param cents: Whether you want the payments rounded up to the next cent, except the final one.
+    :type cents: bool
+    :return: A payment amount.
+    :rtype: float, or tuple if cents is True
+    """
 
     ann = Annuity(
         period=period,
@@ -563,11 +697,26 @@ def get_savings_pmt(
 
 
 def get_number_of_pmts(
-        pmt: float,
-        fv: float,
-        period: float,
-        gr: Rate
-):
+    pmt: float,
+    fv: float,
+    period: float,
+    gr: Rate
+) -> int:
+    """
+    Given payment information represented by an annuity, calculates the number of payments required to reach a
+    desired future value.
+
+    :param pmt: The payment amount.
+    :type pmt: float
+    :param fv: The desired future value.
+    :type fv: float
+    :param period: The payment period, as a fraction of a year.
+    :type period: float
+    :param gr: A growth rate object.
+    :type gr: Rate
+    :return: The number of payments.
+    :rtype: int
+    """
     i = gr.convert_rate(
         'Effective Interest',
         interval=period
@@ -581,12 +730,28 @@ def get_number_of_pmts(
 
 
 def olb_r(
-        loan: float,
-        q: float,
-        period: float,
-        gr: Union[Accumulation, float, Rate],
-        t
+    loan: float,
+    q: float,
+    period: float,
+    gr: Union[Accumulation, float, Rate],
+    t
 ) -> float:
+    """
+    Calculates the outstanding loan balance using the retrospective method.
+
+    :param loan: The loan amount.
+    :type loan: float
+    :param q: The payment amount.
+    :type q: float
+    :param period: The payment period.
+    :type period: float
+    :param gr: A growth rate object.
+    :type gr: Accumulation, float, or Rate
+    :param t: The valuation time.
+    :type t: float
+    :return: The outstanding loan balance.
+    :rtype: float
+    """
 
     ann = Annuity(
         period=period,
@@ -605,30 +770,30 @@ def olb_p(
     q: float,
     period: float,
     term: float,
-    gr: Union[float, Rate, Accumulation],
+    gr: Union[Accumulation, float, Rate],
     t: float,
     r: float = None,
     missed: list = None
 ) -> float:
     """
-    Outstanding loan balance - prospective method.
+    Calculates the outstanding loan balance using the retrospective method.
 
-    :param q:
-    :type q:
-    :param period:
-    :type period:
-    :param term:
-    :type term:
-    :param gr:
-    :type gr:
-    :param t:
-    :type t:
-    :param r:
-    :type r:
-    :param missed:
-    :type missed:
-    :return:
-    :rtype:
+    :param q: The payment amount.
+    :type q: float
+    :param period: The payment period.
+    :type period: float
+    :param term: The loan term, in years.
+    :type term: float
+    :param gr: A growth rate object.
+    :type gr: Accumulation, float, or Rate.
+    :param t: The valuation time, in years.
+    :type t: float
+    :param r: The final payment amount, if different from the others, defaults to None.
+    :type r: float, optional
+    :param missed: A list of missed payments, for example, 4th and 5th payments would be [4, 5].
+    :type missed: list
+    :return: The outstanding loan balance.
+    :rtype: float
     """
     acc = Accumulation(gr=gr)
 
@@ -660,3 +825,76 @@ def olb_p(
             olb += q * acc.val(t - p)
 
     return olb
+
+
+def get_perpetuity_gr(
+    amount: float,
+    pv: float,
+    period: float,
+    imd: str = 'immediate'
+) -> Rate:
+
+    """
+    Given a payment amount, payment frequency, and present value, returns a compound annual effective interest rate.
+
+    :param amount: The payment amount.
+    :type amount: float
+    :param pv: The present value.
+    :type pv: float
+    :param period: The payment period, as a fraction of a year.
+    :type period: float
+    :param imd: Whether the perpetuity is 'immediate' or 'due'.
+    :type imd: str
+    :return: The annual effective interest rate.
+    :rtype: Rate
+    """
+    i = amount / pv
+
+    if imd == 'immediate':
+        gr = Rate(i, pattern="Effective Interest", interval=period)
+    elif imd == 'due':
+        gr = Rate(i, pattern="Effective Discount", interval=period)
+    else:
+        raise ValueError("Invalid value provided to imd argument, please use 'immediate' or 'due'.")
+
+    gr = gr.convert_rate(pattern="Effective Interest", interval=1)
+    return gr
+
+
+def get_perpetuity_pmt(
+    gr: Rate,
+    pv: float,
+    period: float,
+    imd: str = 'immediate'
+) -> float:
+    """
+    Given an interest rate, present value, and payment period, returns the payment amount of a perpetuity.
+
+    :param gr: A growth rate object.
+    :type gr: Rate
+    :param pv: The present value.
+    :type pv: float
+    :param period: The payment period.
+    :type period: float
+    :param imd: Whether the perpetuity is 'immediate' or 'due'.
+    :type imd: str
+    :return: The payment amount.
+    :rtype: float
+    """
+
+    if imd == 'immediate':
+        i = gr.convert_rate(
+            pattern="Effective Interest",
+            interval=period
+        )
+    elif imd == 'due':
+        i = gr.convert_rate(
+            pattern="Effective Discount",
+            interval=period
+        )
+    else:
+        raise ValueError("Invalid value provided to imd argument, please use 'immediate' or 'due'.")
+
+    amount = i * pv
+
+    return amount
