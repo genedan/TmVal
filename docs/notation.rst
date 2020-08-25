@@ -43,7 +43,7 @@ or, assuming proportionality:
 
    Amount(gr=Rate(s), k).val(t)
 
-.. Compound interest accumulation function:** :math:`a(t) = (1 + i)^t`
+**Compound interest accumulation function:** :math:`a(t) = (1 + i)^t`
 
 .. code-block:: python
 
@@ -67,7 +67,7 @@ or, assuming proportionality:
 
    Amount(gr, k).discount_interval(t1, t2)
 
-**Effective discount rte for the n-th time period:** :math:`d_n = \frac{a(n) - a(n-1)}{a(n)}`
+**Effective discount rate for the n-th time period:** :math:`d_n = \frac{a(n) - a(n-1)}{a(n)}`
 
 .. code-block:: python
 
@@ -84,4 +84,71 @@ or, assuming proportionality:
 .. code-block:: python
 
    Accumulation(gr).future_principal(fv=S, t1, t2)
+
+**Simple discount amount function:** :math:`A_K(t) = \frac{K}{(1-dt)}`
+
+.. code-block:: python
+
+   Amount(gr=Rate(sd), k).val(t)
+
+**Simple discount accumulation function:** :math:`a(t) = \frac{1}{(1-dt)}`
+
+.. code-block:: python
+
+   Accumulation(gr=Rate(sd), k).val(t)
+
+**Nominal interest rate of** :math:`i^{(m)}` **convertible or compounded or payable** :math:`m` **times per year**
+
+.. code-block:: python
+
+   Rate(
+       rate,
+       pattern="Nominal Interest",
+       freq=m)
+
+**Nominal discount rate** :math:`d^{(m)}` **convertible or compounded or payable** :math:`m` **times per year**
+
+.. code-block:: python
+
+    Rate(
+        rate,
+        pattern="Nominal Discount",
+        freq=m)
+
+**Force of interest:** :math:`\delta = \lim_{m \to \infty} i^{(m)} = \ln(1+i)`
+
+.. code-block:: python
+
+   Rate(delta)
+
+**Accumulation function under the force of interest:** :math:`a(t) = e^{\delta t}`
+
+.. code-block:: python
+
+   Accumulation(gr=Rate(delta))
+
+**Time** :math:`\tau` **equation of value:** :math:`\sum_k C_{t_k}\frac{a(\tau)}{a(t_k)} = B\frac{a(\tau)}{a(T)}`
+
+.. code-block:: python
+
+   Payments(amounts, times, gr).eq_val(t)
+
+**Equated time:** :math:`T=\frac{\ln\left(\frac{\sum_{k=1}^n C_{t_k} v^{t_k}}{C}\right)}{\ln v}`
+
+.. code-block:: python
+
+   Payments(amounts, times, gr).equated_time(c=C)
+
+
+**Approximate dollar-weighted yield, k=1/2:** :math:`j \approx \frac{2I}{A + B - I}`
+
+.. code-block:: python
+
+   Payments(amounts, times, gr).dollar_weighted_yield(k_approx=True)
+
+**Annual time-weighted yield rate:** :math:`i_{tw} = (1 + j_{tw})^{\frac{1}{T}} - 1 = \left[\prod_{k=1}^{r+1}(1 + j_k)\right]^{\frac{1}{T}} - 1`
+
+.. code-block:: python
+
+   Payments(amounts, times, gr).time_weighted_yield()
 
