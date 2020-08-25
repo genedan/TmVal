@@ -36,3 +36,10 @@ This section documents standalone functions that do not belong to a class.
    eff_disc_from_nom_disc
    nom_disc_from_nom_disc
    get_loan_pmt
+   get_loan_amt
+   get_savings_pmt
+   get_number_of_pmts
+   olb_r
+   olb_p
+   get_perpetuity_gr
+   get_perpetuity_pmt

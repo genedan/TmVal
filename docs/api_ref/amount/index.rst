@@ -8,7 +8,6 @@ Amount
 
 
 .. toctree::
-   :hidden:
 
    amount_val
    amount_interest_earned

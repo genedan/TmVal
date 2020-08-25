@@ -9,4 +9,9 @@ Annuity
 
 
 .. toctree::
-   :hidden:
+
+   pv
+   sv
+   get_r_pmt
+   get_drop
+   get_balloon

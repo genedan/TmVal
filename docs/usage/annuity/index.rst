@@ -11,3 +11,5 @@ Annuities
    due
    perpetuity
    deferred
+   nonlevel
+   geometric
