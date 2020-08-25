@@ -16,19 +16,71 @@ from tmval.conversions import (
 
 from tmval.constants import (
     COMPOUNDS,
+    EFFECTIVES,
     FORMAL_PATTERNS,
+    NOMINALS,
     SIMPLES
 )
 
 
 class Rate:
     """
-    valid pattern values should be:
-    'i' or 'interest' - effective interest rate
-    'd' or 'discount' - effective discount rate
-    'im' or 'nomint' or APR - nominal interest rate
-    'dm' or 'nomdisc' - nominal discount rate
-    'delta' or 'force' - force of interest
+    The Rate class is TmVal's core class for representing interest rates. The magnitude of the rate is specified
+    via the rate argument.
+
+    The type of interest rate is indicated by providing a value to the pattern argument. Valid patterns are:
+
+    #. Effective Interest
+    #. Effective Discount
+    #. Nominal Interest
+    #. Nominal Discount
+    #. Force of Interest
+    #. Simple Interest
+    #. Simple Discount
+
+    For Effective Interest, Effective Discount, Simple Interest, and Simple Discount, an additional argument called
+    interval is used to denote the effective interval. These rates can be created via shortcut arguments i, d, s, and
+    sd. When a shortcut argument is used, the interval defaults to 1 and is not strictly necessary, unless the interval
+    happens to be different.
+
+    If you just want to initialize an annual Effective Interest rate, you do not need to use the argument i, simply
+    pass a float object to the Rate class, as in gr=Rate(.05) to define a 5% annually compounded effective interest
+    rate.
+
+    For the force of interest, use the shortcut argument delta.
+
+    For Nominal Interest and Nominal Discount, you need to provide the compounding frequency via the freq argument.
+
+    The compound patterns - Effective Interest, Effective Discount, Nominal Interest, Nominal Discount, and Force of
+    Interest can be converted to each other.
+
+    Simple Interest can be converted to another Simple Interest with a different interval. Simple Discount can be
+    converted to another Simple Discount with a different interval. Simple Interest and Simple Discount cannot be
+    converted to each other because they do not correspond to the same accumulation function.
+
+    Compound patterns cannot be converted to simple patterns.
+
+    The Rate class mimics arithmetic types, so you may perform arithmetic operations on rate objects with other
+    arithmetic types.
+
+    :param rate: The magnitude of the rate.
+    :type rate: float
+    :param pattern: The interest rate pattern.
+    :type pattern: str
+    :param freq: The compounding frequency, in times per year.
+    :type freq: float
+    :param interval: The effective interval of the interest rate, in years.
+    :type interval: float
+    :param i: Shortcut argument for Effective Interest.
+    :type i: float
+    :param d: Shortcut argument for Effective Discount.
+    :type d: float
+    :param delta: Shortcut argument for Force of Interest.
+    :type delta: float
+    :param s: Shortcut argument for Simple Interest.
+    :type s: float
+    :param sd: Shortcut argument for Simple Discount.
+    :type sd: float
     """
 
     def __init__(
@@ -81,6 +133,12 @@ class Rate:
             self.pattern = 'i'
             self.interval = 1
 
+        elif rate is not None and pattern in arg_not_none:
+            self.rate = rate
+            self.pattern = pattern
+            self.freq = freq
+            self.interval = interval
+
         elif i is not None:
             self.rate = i
             self.pattern = 'i'
@@ -109,12 +167,15 @@ class Rate:
             self.interval = 1
 
         else:
-            self.rate = rate
-            self.pattern = pattern
-            self.freq = freq
-            self.interval = interval
+            raise ValueError("Invalid arguments specified.")
 
         self.formal_pattern = FORMAL_PATTERNS[self.pattern]
+
+        if self.formal_pattern in NOMINALS and self.freq is None:
+            raise ValueError("Compounding frequency must be provided for nominal rates.")
+
+        if self.formal_pattern in EFFECTIVES and self.interval is None:
+            raise ValueError("For Effective/Simple Interest/Discount, interval must be provided.")
 
     def __repr__(self):
 
@@ -417,7 +478,27 @@ class Rate:
             freq: float = None,
             interval: float = None
     ):
+        """
+        Converts the rate to the desired pattern.
 
+        The compound patterns - Effective Interest, Effective Discount, Nominal Interest, Nominal Discount, and Force of
+        Interest can be converted to each other.
+
+        Simple Interest can be converted to another Simple Interest with a different interval. Simple Discount can be
+        converted to another Simple Discount with a different interval. Simple Interest and Simple Discount cannot be
+        converted to each other because they do not correspond to the same accumulation function.
+
+        Compound patterns cannot be converted to simple patterns.
+
+        :param pattern: The pattern to which you want to convert the rate.
+        :type pattern: str
+        :param freq: The compounding frequency, times per year.
+        :type freq: float
+        :param interval: The effective interval, in years.
+        :type interval: float
+        :return: A rate object.
+        :rtype: Rate
+        """
         if FORMAL_PATTERNS[self.pattern] not in COMPOUNDS and pattern in COMPOUNDS:
             raise Exception("Simple interest/discount rate cannot be converted to compound patterns.")
 
@@ -525,6 +606,17 @@ class Rate:
         return res
 
     def amt_func(self, k, t):
+        """
+        A Callable intended to be used by the Amount class when the parent Rate object is passed to it. This allows
+        an Amount object to be declared by passing a Rate object to it.
+
+        :param k: The principal.
+        :type k: float
+        :param t: The valuation time, in years.
+        :type t: float
+        :return: The value of k at time t.
+        :rtype: float
+        """
 
         if FORMAL_PATTERNS[self.pattern] in ['Simple Interest']:
 
@@ -549,10 +641,41 @@ class Rate:
             return k * ((1 + i) ** t)
 
     def acc_func(self, t):
+        """
+        A Callable intended to be used by the Accumulation class when the parent Rate object is passed to it.
+        This allows an Accumulation object to be declared by passing a Rate object to it.
+
+        :param t: The valuation time, in years.
+        :type t: float
+        :return: The value of 1 invested at time 0, at time t.
+        :rtype: float
+        """
 
         return self.amt_func(k=1, t=t)
 
     def standardize(self):
+        """
+        Used to put rates on a common basis for comparison. The following patterns will be converted to Effective
+        Interest compounded annually:
+
+        #. Effective Interest
+        #. Effective Discount
+        #. Nominal Interest
+        #. Nominal Discount
+        #. Force of Interest
+
+        The following patterns will be converted to Simple Interest effective over a 1-year interval:
+
+        #. Simple Interest
+
+        The following patterns will be converted to Simple Discount effective over a 1-year interval:
+
+        #. Simple Discount
+
+        :return: A standardized Rate object.
+        :rtype: Rate
+        """
+
         if self.formal_pattern in COMPOUNDS:
             rate = self.convert_rate(
                 pattern="Effective Interest",
@@ -574,7 +697,29 @@ class Rate:
         return rate
 
 
-def standardize_rate(gr: Union[float, Rate]):
+def standardize_rate(
+    gr: Union[
+        float,
+        Rate
+    ]
+) -> Rate:
+    """
+    Given a float or Rate object, standardizes it to be simple or compound effective interest with an interval of
+    one year. If a float is given, returns a Rate object representing a compound effective interest rate with an
+    interval of one year.
+
+    If a Rate is given that represents a simple interest or discount rate, returns a simple interest Rate object
+    with an interval of one year.
+
+    If a Rate is given that represents a compound rate (effective interest, nominal interest, effective discount,
+    nominal discount, force of interest), returns a compound effective interest Rate object with an interval of
+    one year.
+
+    :param gr: A growth rate object.
+    :type gr: float, Rate
+    :return: A standardized interest rate.
+    :rtype: Rate
+    """
     if isinstance(gr, float):
         gr = Rate(gr)
     elif isinstance(gr, Rate):
