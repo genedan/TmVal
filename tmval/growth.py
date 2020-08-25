@@ -11,7 +11,7 @@ from inspect import signature
 from typing import Callable, Union
 
 from tmval.constants import COMPOUNDS, SIMPLES
-from tmval.rates import Rate, standardize_rate
+from tmval.rate import Rate, standardize_rate
 
 
 class Amount:

@@ -3,7 +3,7 @@ from typing import Union
 
 from tmval.annuity import Annuity, olb_r, olb_p
 from tmval.growth import TieredTime
-from tmval.rates import Rate
+from tmval.rate import Rate
 
 
 class Loan:

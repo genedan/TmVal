@@ -23,7 +23,7 @@ from tmval.growth import (
     TieredTime
 )
 
-from tmval.rates import (
+from tmval.rate import (
     Rate,
     standardize_rate
 )
@@ -32,7 +32,7 @@ from tmval.rates import (
 class Payments:
     """
     A collection of payments, and corresponding growth object. If no growth object (an interest rate, Rate object, \
-    Accumulation object) is provided, the payments are assumed to be undiscounted. The Payments class serves as the \
+    Accumulation object) is provided, the payments are assumed to be undiscounted. The payments class serves as the \
     backbone for major types of financial instruments, such as annuities and bonds. It provides methods for \
     calculating net present value, internal rate of return (dollar weighted yield), equated time, equated value, \
      and time-weighted yield.
@@ -551,7 +551,7 @@ def dollar_weighted_yield(
     elif k_approx:
         pass
     else:
-        raise Exception("Must supply a Payments object or list of payment times and amounts if not "
+        raise Exception("Must supply a payments object or list of payment times and amounts if not "
                         "using k-approximation.")
 
     if a is None:
