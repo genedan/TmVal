@@ -43,3 +43,4 @@ This section documents standalone functions that do not belong to a class.
    olb_p
    get_perpetuity_gr
    get_perpetuity_pmt
+   standardize_rate

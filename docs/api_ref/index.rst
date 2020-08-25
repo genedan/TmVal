@@ -13,3 +13,5 @@ API Reference
    tieredtime/index
    simpleloan/index
    annuity/index
+   payments/index
+   rate/index

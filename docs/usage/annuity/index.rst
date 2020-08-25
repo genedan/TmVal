@@ -13,3 +13,5 @@ Annuities
    deferred
    nonlevel
    geometric
+   arithmetic
+   yield

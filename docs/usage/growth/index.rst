@@ -23,3 +23,5 @@ We will start by demonstrating some practical applications concerning simple and
    apy_apr
    interest_conversions
    force_of_interest
+   rate_revisit
+   investment_year
