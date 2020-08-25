@@ -41,6 +41,9 @@ Glossary
    compound interest
       A geometric pattern of money growth in which interest earned is reinvested at the rate of interest.
 
+   deferred annuity
+      A type of annuity whose first payment begins more than one payment period later than its present valuation date.
+
    discount
       The amount of money that must be paid up front on a loan.
 
@@ -85,6 +88,9 @@ Glossary
 
          \left(1 + \frac{i^{(m)}}{m}\right)^m
 
+   retrospective method
+      A way of calculating the outstanding loan balance at time :math:`t` by subtracting the accumulated value of the payments to date from the accumulated value of the principal.
+
    perpetuity
       An annuity with an infinite number of payments
 
@@ -97,6 +103,9 @@ Glossary
    principal
       (1) An initial investment of money.
       (2) The original amount of a loan that must be paid back.
+
+   prospective method
+      A method of calculating the outstanding loan balance at a point in time :math:`t` that sums up the remaining payments and discounts them to time :math:`t`.
 
    nominal discount rate
       the discount rate :math:`d^{(m)} compounded :math:`m` times per year. Money grows at a rate of:
