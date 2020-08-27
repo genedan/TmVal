@@ -15,34 +15,19 @@ NPV is useful in situations when you need to evaluate the value of an investment
 Examples
 =========
 
-TmVal's :func:`.npv` function accepts a list of payments, a discount function, and returns the net present value.
-
 Suppose we are considering a potential investment where we must pay 10,000 up front, in exchange for payments of 1000 occurring at time 1, 2000 occurring at time 2, and 9000 occurring at time 3. If the effective interest rate is 10% compounded annually, should we make the investment?
 
 
-   from tmval import create_payments, CompoundAcc, npv
+.. ipython:: python
 
-   my_acc = CompoundAcc(.10)
+      from tmval import Payments
 
-   payments = [-10000, 1000, 2000, 9000]
-   times = [0, 1, 2, 3]
+      pmts = Payments(
+          amounts=[-10000, 1000, 2000, 9000],
+          times=[0, 1, 2, 3],
+          gr=.10
+      )
 
-   my_payments = create_payments(amounts=payments, times=times)
+      print(pmts.npv())
 
-   my_npv = npv(payments=my_payments, discount_func=my_acc.discount_func)
-
-   print(my_npv)
-
-The NPV is negative, so we should not make this investment. Note that we can simplify what we had just done if the payments already have discount factors attached. Since we know the interest rate, it is not necessary to create an :class:`.Accumulation` object for it. For example:
-
-
-
-   payments = [-10000, 1000, 2000, 9000]
-   times = [0, 1, 2, 3]
-
-   my_payments = create_payments(amounts=payments, times=times, interest_rate=.10)
-
-   my_npv = npv(payments=my_payments)
-
-   print(my_npv)
-
+The NPV is negative, so we should not make this investment.
