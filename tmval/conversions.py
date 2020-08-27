@@ -75,7 +75,7 @@ def nom_int_from_eff_int(
     """
     # convert i to yearly effective if it is not already
     if old_t is not None:
-        i = eff_int_from_eff_int(i=i, old_t=old_t, new_t=1)
+        i = eff_int_from_eff_int(i=i, old_t=old_t, new_t=1).rate
 
     im = new_m * ((1 + i) ** (1 / new_m) - 1)
 
