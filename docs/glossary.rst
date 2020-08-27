@@ -26,6 +26,9 @@ Glossary
    annuity-immediate
       An annuity in which the payments occur at the end of each payment period.
 
+   balloon payment
+      An adjustment to the value of the final payment of a loan so that it can occur on the previous integral payment period.
+
    basic annuity-due
       An annuity-due that pays 1 at the beginning of each period.
 
@@ -54,6 +57,9 @@ Glossary
 
          v(t) = \frac{1}{a(t)}
 
+   drop payment
+      An adjustment to the amount of the final payment of a loan so that it can occur on the next integral payment period.
+
    effective rate of interest
       A measurement of money growth equal to the percentage change in the value of an investment between two time periods:
 
@@ -81,12 +87,11 @@ Glossary
 
          \sum_{k=0}^n R_k v(t_k)
 
+   nominal discount rate
+      The discount rate :math:`d^{(m)}` compounded :math:`m` times per year.
+
    nominal interest rate
-      The interest rate :math:`i^{(m)} compounded :math:`m` times per year. Money grows at a rate of:
-
-      .. math::
-
-         \left(1 + \frac{i^{(m)}}{m}\right)^m
+      The interest rate :math:`i^{(m)}` compounded :math:`m` times per year.
 
    retrospective method
       A way of calculating the outstanding loan balance at time :math:`t` by subtracting the accumulated value of the payments to date from the accumulated value of the principal.
@@ -106,13 +111,6 @@ Glossary
 
    prospective method
       A method of calculating the outstanding loan balance at a point in time :math:`t` that sums up the remaining payments and discounts them to time :math:`t`.
-
-   nominal discount rate
-      the discount rate :math:`d^{(m)} compounded :math:`m` times per year. Money grows at a rate of:
-
-      .. math::
-
-         \left(1 - \frac{(m)}{m}\right)^{-p}
 
    present value
       The value today of money to be received in the future.
