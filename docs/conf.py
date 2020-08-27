@@ -39,8 +39,11 @@ extensions = [
     "IPython.sphinxext.ipython_directive",
     "sphinx.ext.autodoc",
     "sphinx.ext.autosummary",
-    "sphinx.ext.linkcode"
+    "sphinx.ext.linkcode",
+    "sphinx.ext.autosectionlabel"
 ]
+
+autosectionlabel_maxdepth=1
 
 def linkcode_resolve(domain, info):
     """
