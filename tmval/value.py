@@ -11,6 +11,8 @@ from itertools import groupby
 
 from typing import (
     Callable,
+    Iterable,
+    Iterator,
     Union
 )
 
@@ -122,7 +124,21 @@ class Payments:
 
         return pv
 
-    def irr(self, x0: float = .05):
+    def irr(
+        self,
+        x0: float = .05
+    ) -> list:
+        """
+        Calculates the internal rate of return, also known as the yield rate or dollar-weighted return. If the \
+        payment amounts and times result in a polynomial equation of value, the yield is solved by calculating the \
+        roots of the polynomial via the NumPy roots function. If the equation of value is not a polynomial, than \
+        Newton's method from the SciPy package is used.
+
+        :param x0: A starting guess when using Newton's method, defaults to .05.
+        :type x0: float
+        :return: A list of real roots, if found.
+        :rtype: list
+        """
         payments_dict = self.group_payments()
 
         degree = max(payments_dict, key=int)
@@ -153,7 +169,23 @@ class Payments:
 
         return i_s
 
-    def equated_time(self, c: float) -> float:
+    def equated_time(
+        self,
+        c: float
+    ) -> float:
+
+        """
+        Method of equated time. Finds :math:`T` so that a single payment of :math:`C = \sum_{k=1}^n C_{t_k}` \
+        at time :math:`T` has the same value at :math:`t = 0` as the sequence of :math:`n` contributions.
+
+        While this method is formally defined to have C equal the sum of the contributions, it actually works when
+        C is not equal to the sum of the contributions.
+
+        :param c: The single payment C.
+        :type c: float
+        :return: The time T.
+        :rtype: float
+        """
 
         acc = self.gr
 
@@ -198,14 +230,54 @@ class Payments:
 
         return b
 
-    def dollar_weighted_yield(
+    def dw_approx(
         self,
         a: float = None,
         b: float = None,
         w_t: float = None,
         k_approx: bool = False,
+        k: float = .5,
         annual: bool = False
     ) -> Rate:
+
+        """
+        Calculates the approximate dollar-weighted yield rate by standardizing the investment time to 1:
+
+        .. math::
+
+           j \\approx \\frac{I}{A + \\sum_{t \\in (0, 1)} C_t(1-t)}
+
+        Where A is the beginning balance, I is interest earned, and the Cs are the contributions. When k_approx is
+        set to true, k is assumed to be a fixed constant within the investment window:
+
+        .. math::
+
+           j \\approx \\frac{I}{A + C(1-k)}
+
+        The default value for k is 1/2, simplifying the above expression to:
+
+           j \\approx \\frac{2I}{A + B - I}
+
+        Where B is the withdrawal balance. When arguments a, b, and w_t (corresponding to A, B, and the \
+        the withdrawal time) are not provided, a is assumed to be the first payment in the parent object, and b is \
+        calculated to be the last.
+
+        :param a: The initial balance.
+        :type a: float
+        :param b: The withdrawal balance.
+        :type b: float
+        :param w_t: The withdrawal time.
+        :type w_t: float
+        :param k_approx: Whether you want to use the k-approximation formula.
+        :type k_approx: bool
+        :param k: The value for k in the k-approximation formula, defaults to .5.
+        :type k: float
+        :param annual: Whether you want the results annualized.
+        :type annual: bool
+        :return: The approximate dollar-weighted yield rate.
+        :rtype: Rate
+        """
+
         if [a, b, w_t].count(None) not in [0, 3]:
             raise Exception("a, b, w_t must all be provided or left none.")
 
@@ -214,7 +286,7 @@ class Payments:
 
         if a is None:
             w_t = times.pop()
-            b = amounts.pop()
+            b = - amounts.pop()
             a = amounts.pop(0)
             times.pop(0)
 
@@ -223,7 +295,7 @@ class Payments:
 
         if k_approx:
 
-            j = (2 * i) / (a + b - i)
+            j = i / (k * a + (1 - k) * b - (1 - k) * i)
 
         else:
             # normalize times
@@ -260,101 +332,6 @@ class Payments:
         )
 
         return jtw
-
-
-class Payment:
-    """
-    A payment at a point in time. Has three attributes, the time of the payment, the payment amount, and the \
-    discount factor, the last of which can be used to calculate the present value of the payment.
-
-    :param time: the payment time.
-    :type time: float
-    :param amount: the payment amount.
-    :type amount: float
-    :param discount_factor: the discount factor.
-    :type discount_factor: float, optional
-    :return: a Payment object
-    :rtype: Payment
-    """
-    def __init__(
-        self,
-        time,
-        amount,
-        discount_factor
-    ):
-        self.time = time
-        self.amount = amount
-        self.discount_factor = discount_factor
-
-
-def create_payments(
-        times: list,
-        amounts: list,
-        discount_factors: list = None,
-        discount_func: Callable = None,
-        interest_rate: float = None,
-        accumulation: Accumulation = None
-) -> list:
-    """
-    Can be used to create a list of :class:`Payment` objects. Each payment attribute, the times, the amounts, and \
-    the discount factors, can be supplied as lists where the same indices are used to match the attributes to the \
-    payment. There are several options for supplying the discount, and supplying discount is optional.
-
-    You can supply a set of discount factors as a list, a discount function, an interest rate, or an \
-    :class:`accumulation` object that has its own discount function. However, you can only supply one of these \
-    discount options.
-
-    :param times: a list of payment times.
-    :type times: list
-    :param amounts: a list of payment amounts.
-    :type amounts: list
-    :param discount_factors: a list of discount factors, defaults to None.
-    :type discount_factors: list, optional
-    :param discount_func: a discount function, defaults to None.
-    :type discount_func: Callable, optional
-    :param interest_rate: an interest rate, defaults to None.
-    :type interest_rate: float, optional
-    :param accumulation: an :class:`Accumulation` object
-    :return: a list of :class:`Payment` objects.
-    :rtype: list
-    """
-
-    if not (len(times) == len(amounts)):
-        raise Exception("Times and amounts must be the same length.")
-
-    if discount_factors:
-        if not (len(times) == len(amounts) == len(discount_factors)):
-            raise Exception("Each argument must be the same length.")
-
-    disc_args = [discount_factors, discount_func, interest_rate, accumulation]
-
-    if disc_args.count(None) < (len(disc_args) - 1):
-        raise Exception("You may supply a list of discount factors, a discount function, "
-                        "an interest rate, an amount object, but only one of these.")
-
-    if discount_func:
-        discount_factors = [discount_func(x) for x in times]
-
-    if interest_rate is not None:
-        discount_factors = [(1 + interest_rate) ** (-x) for x in times]
-
-    if accumulation:
-        discount_factors = [accumulation.discount_func(x) for x in times]
-
-    if (discount_factors is None) and (discount_func is None):
-        discount_factors = [None] * len(amounts)
-
-    payments = []
-
-    for time, amount, discount_factor in zip(times, amounts, discount_factors):
-        payment = Payment(
-            time=time,
-            amount=amount,
-            discount_factor=discount_factor
-        )
-        payments.append(payment)
-
-    return payments
 
 
 def npv(
@@ -489,13 +466,6 @@ def interest_solver(payments: list, fv: float, tfv: float) -> float:
     return i
 
 
-def has_all_discounts(payments: list) -> bool:
-
-    res = all(payment.discount_factor is not None for payment in payments)
-
-    return res
-
-
 def time_solver(amounts: list, gr: Rate) -> list:
 
     coefficients = amounts
@@ -601,13 +571,34 @@ def dollar_weighted_time(a, b, i, j):
 
 
 def time_weighted_yield(
-    balance_times,
+    balance_times: list,
     balance_amounts: list,
     payments: Payments = None,
     payment_times: list = None,
     payment_amounts: list = None,
     annual: bool = False
-) -> float:
+) -> Rate:
+    """
+    Given a list of balances and payments, returns the time-weighted yield. If annual is set to True, returns the
+    rate as an annual rate. Otherwise, the rate is effective over the investment term.
+
+    You may supply a Payments object, or specify the components separately.
+
+    :param balance_times: A list of balance times.
+    :type balance_times: list
+    :param balance_amounts: A list of balance amounts, corresponding to the balance times.
+    :type balance_amounts: list
+    :param payments: A Payments object.
+    :type payments: Payments
+    :param payment_times: A list of payment times.
+    :type payment_times: list
+    :param payment_amounts: A list of payment amounts, corresponding to the payment times.
+    :type payment_amounts: list
+    :param annual: Whether you want the time-weighted yield to be annualized.
+    :type annual: bool, defaults to False
+    :return: The time-weighted yield.
+    :rtype: Rate
+    """
     # group payments by time
 
     if payments:
@@ -655,7 +646,15 @@ def time_weighted_yield(
     return jtw
 
 
-def pairwise(iterable):
+def pairwise(iterable: Iterable) -> Iterator:
+    """
+    Helper function to enable pairwise iteration.
+
+    :param iterable: An iterable object.
+    :type iterable: iterable
+    :return: An iterator.
+    :rtype: Iterator
+    """
     a, b = itertools.tee(iterable)
     next(b, None)
     return zip(a, b)
