@@ -14,4 +14,5 @@ Annuities
    nonlevel
    geometric
    arithmetic
-   yield
+   perp_arith
+   nonintegral

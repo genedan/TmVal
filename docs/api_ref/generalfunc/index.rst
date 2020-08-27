@@ -44,3 +44,9 @@ This section documents standalone functions that do not belong to a class.
    get_perpetuity_gr
    get_perpetuity_pmt
    standardize_rate
+   read_iym
+   tt_iym
+   standardize_acc
+   simple_interval_solver
+   pairwise
+   time_weighted_yield

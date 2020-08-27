@@ -19,3 +19,4 @@ TmVal is a Python package for time value of money computations. It is intended f
    notation
    glossary
    references
+   pdf
