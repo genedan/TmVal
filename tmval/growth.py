@@ -765,32 +765,47 @@ class SimpleLoan:
             return k
 
 
-def simple_interval_solver(s, es):
+def simple_interval_solver(
+    s: float,
+    es: float
+) -> float:
     """
     Finds the interval at which the simple interest rate equals es
 
-    :param s:
-    :type s:
-    :param es:
-    :type es:
-    :return:
-    :rtype:
+    :param s: A simple interest rate.
+    :type s: float
+    :param es: The desired simple interest rate.
+    :type es: float
+    :return: The desired interval.
+    :rtype: float
     """
 
     return 1 / es + 1 - 1 / s
 
 
-def standardize_acc(gr: Union[float, Rate, Accumulation, TieredTime]) -> Accumulation:
-    """
-    returns an compound accumulation object
+def standardize_acc(
+        gr: Union[
+            Accumulation,
+            float,
+            Rate,
+            TieredTime
+        ]
+) -> Accumulation:
 
-    :param gr:
-    :type gr:
-    :return:
-    :rtype:
+    """
+    Returns an compound accumulation object. Usually used to enable more complex classes and functions to accept
+    several different objects to indicate a compound interest growth rate.
+
+    :param gr: A growth rate object.
+    :type gr: Accumulation, float, Rate, or TieredTime
+    :return: an Accumulation object
+    :rtype: Accumulation
     """
 
-    if isinstance(gr, Accumulation):
+    if isinstance(
+        gr,
+        Accumulation
+    ):
         if not gr.is_compound:
             raise TypeError("Standardization of Accumulation class only valid for compound interest.")
         else:
@@ -803,27 +818,40 @@ def standardize_acc(gr: Union[float, Rate, Accumulation, TieredTime]) -> Accumul
     return gr
 
 
-def tt_iym(table: dict, t: float) -> TieredTime:
+def tt_iym(
+    table: dict,
+    t0: float
+) -> TieredTime:
     """
-    Reads an investment year method table and returns a TieredTime object.
-    :param table:
-    :type table:
-    :param t:
-    :type t:
-    :return:
-    :rtype:
+    Reads an investment year method table and returns a TieredTime object. This object can then be passed to
+    an Amount or an Accumulation class to represent a series of interest rates applicable to an investment.
+    A table might look something like this:
+
+    iym_table = {
+    2000: [.06, .065, .0575, .06, .065],
+    2001: [.07, .0625, .06, .07, .0675],
+    2002: [.06, .06, .0725, .07, .0725],
+    2003: [.0775, .08, .08, .0775, .0715]
+    }
+
+    :param table: A table of interest rates.
+    :type table: dict
+    :param t: The year of the initial investment.
+    :type t: float
+    :return: A TieredTime growth rate object.
+    :rtype: TieredTime
     """
 
     # move to the right for each row in year t
-    n_col = len(table[t])
+    n_col = len(table[t0])
     # move downwards for each row greater than t
-    n_row = max(table.keys()) - t
+    n_row = max(table.keys()) - t0
     n_tiers = n_col + n_row
     tiers = [x for x in range(n_tiers)]
-    rates = table[t]
+    rates = table[t0]
 
     # get the ultimate rates from the last column in the table
-    index = t
+    index = t0
     for n in range(n_row):
         index += 1
         rates.append(table[index][-1])
@@ -833,7 +861,31 @@ def tt_iym(table: dict, t: float) -> TieredTime:
     return tt
 
 
-def read_iym(table: dict, t0: float, t: float) -> Rate:
+def read_iym(
+    table: dict,
+    t0: float,
+    t: float
+) -> Rate:
+    """
+    Reads a value from a table of interest rates using the investment year method. A table might look something
+    like this:
+
+    iym_table = {
+    2000: [.06, .065, .0575, .06, .065],
+    2001: [.07, .0625, .06, .07, .0675],
+    2002: [.06, .06, .0725, .07, .0725],
+    2003: [.0775, .08, .08, .0775, .0715]
+    }
+
+    :param table: A table of interest rates as a dictionary, with years as the keys.
+    :type table: dict
+    :param t0: The initial investment time.
+    :type t0: float
+    :param t: The desired lookup time for which the rate applies.
+    :type t: float
+    :return: An interest rate applicable to the desired lookup time.
+    :rtype: Rate
+    """
     duration = t
     n_col = len(table[t0])
     row_d = duration - n_col
