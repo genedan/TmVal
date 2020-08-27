@@ -1,5 +1,5 @@
 ========================
-APY vs APR
+Nominal Interest
 ========================
 
 So far, what we have called the annual effective interest rate is also called the APY, or :term:`annual percentage yield<annual percentage yield (APY)>`. However, in practice, banks often quote what is called the :term:`annual percentage rate (APR)`, which is not the same thing as the APY.
@@ -29,4 +29,52 @@ The nominal and effective interest rates are related by the following equations:
 Examples
 ==========
 
-Rework section - had conversions
+Now that we've introduced the concept of nominal interest, we can demonstrate how to define a nominal interest rate by using TmVal's :class:`.Rate` class by setting the ``pattern`` argument. Nominal interest is one of the valid patterns that you can provide to :class:`.Rate`.
+
+Let's define a nominal interest rate of 6%, compounded twice per year.
+
+.. ipython:: python
+
+   from tmval import Rate
+
+   nom = Rate(
+       rate=.06,
+       pattern="Nominal Interest",
+       freq=2
+   )
+
+   print(nom)
+
+We can also demonstrate some more interesting rate conversions than we had previously. What annual effective interest rate is equivalent to a nominal interest rate of 6%, compounded twice per year?
+
+.. ipython:: python
+
+   i = nom.convert_rate(
+       pattern="Effective Interest",
+       interval=1
+       )
+
+   print(i)
+
+Let's do the reverse to confirm that it's working:
+
+.. ipython:: python
+
+   nom2 = i.convert_rate(
+       pattern="Nominal Interest",
+       freq=2
+   )
+
+   print(nom2)
+
+There are some shortcut aliases that you can provide to the ``pattern`` argument to shorten the amount of typing you need to do. One of them is 'apr,' if you are more comfortable using calling a nominal interest rate the annual percentage rate:
+
+.. ipython:: python
+
+   nom3 = Rate(
+       rate=.06,
+       pattern='apr',
+       freq=2
+   )
+
+   print(nom3)

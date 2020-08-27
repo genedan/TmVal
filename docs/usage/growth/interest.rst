@@ -70,7 +70,7 @@ We can also use the :meth:`.effective_interval` method to find the effective rat
 
    print(eff_interval_rate_amt)
 
-TmVal's :class:`.Accumulation` class is a subclass of the ``Amount`` class. This means that many of the methods that can be used from the :class:`.Amount` class can also be used by the :class:`.Accumulation` class.
+TmVal's :class:`.Accumulation` class is a subclass of the :class:`.Amount` class. This means that many of the methods that can be used from the :class:`.Amount` class can also be used by the :class:`.Accumulation` class.
 
 Assuming proportionality, we can define an amount function from an accumulation function and then get the effective interest rate for the 5th interval. It should be the same answer as that achieved from the amount function:
 

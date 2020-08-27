@@ -17,9 +17,9 @@ Where :math:`a(t)` is the accumulation function. This makes sense because if we 
 Example
 =========
 
-Since TmVal's :class:`.Accumulation` class comes with an :term:`accumulation function`, it also comes with a discount function. By extension, the :class:`CompoundAcc` should also come with one.
+Suppose we will receive 5,000 at time 5. If the effective interest rate is 5%, how much is it worth today?
 
-Suppose we will receive 5000 at time 5. If the effective interest rate is 5%, how much is it worth today?
+Since TmVal's :class:`.Accumulation` class comes with an :term:`accumulation function`, it also comes with a discount function. We can find the present value of 5,000 by passing it to the :meth:`.discount_func` method, along with the time indicating how far back we would like to discount the value.
 
 .. ipython:: python
 
@@ -31,7 +31,7 @@ Suppose we will receive 5000 at time 5. If the effective interest rate is 5%, ho
 
    print(pv)
 
-One neat thing TmVal can do is that if you want to find out how much you need to invest in the future to get a desired amount at an even later point in time. For example, if you wanted to make sure you had 10,000 at :math:`t_2 = 10`, how much do you need to invest at :math:`t_1 = 5` when the effective interest rate is 5%?
+One neat thing TmVal can do is that it can find out how much you need to invest in the future to get a desired amount at an even later point in time. For example, if you wanted to make sure you had 10,000 at :math:`t_2 = 10`, how much do you need to invest at :math:`t_1 = 5` when the effective interest rate is 5%?
 
 .. ipython:: python
 
@@ -43,4 +43,4 @@ One neat thing TmVal can do is that if you want to find out how much you need to
 
    print(future_principal)
 
-You need to invest 7835.26 5 years from now, to get 10,000 10 years from now.
+You need to invest 7,835.26 5 years from now, to get 10,000 10 years from now.

@@ -13,7 +13,7 @@ Examples
 
 TmVal can handle force of interest problems by supplying a continually compounded interest rate to the :class:`.Amount` or :class:`.Accumulation` classes.
 
-Suppose we have the force of interest :math:`\delta = .05`. What is the value at time 5 of 5000 invested at time 0?
+Suppose we have the force of interest :math:`\delta = .05`. What is the value at time 5 of 5,000 invested at time 0?
 
 .. ipython:: python
 
@@ -23,7 +23,7 @@ Suppose we have the force of interest :math:`\delta = .05`. What is the value at
 
    print(my_amt.val(5))
 
-Suppose instead, we have 5000 at time 5. What is the present value if the force of interest remains at 5%?
+Suppose instead, we have 5,000 at time 5. What is the present value if the force of interest remains at 5%?
 
 .. ipython:: python
 
