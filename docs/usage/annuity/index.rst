@@ -16,3 +16,4 @@ Annuities
    arithmetic
    perp_arith
    nonintegral
+   general_acc
