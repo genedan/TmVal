@@ -1,77 +1,45 @@
-=========
-Payments
-=========
+===================
+The Payments Class
+===================
 
-TmVal offers a :class:`.Payment` class, which is exactly what you think it is, a transfer of money from one person to another. Since we don't really care who is getting what at the moment, a :class:`.Payment` in TmVal is simply a collection of a payment amount, a time of payment, and a discount rate, with the discount rate being optional to model undiscounted payments.
+TmVal offers a :class:`.Payments` class, which is exactly what you think it is, a collection of transfers of money from one entity to another. Since we don't really care who is getting what at the moment, a :class:`.Payments` object in TmVal is simply a collection of payment amounts, payment times, and a growth rate object.
 
-While simple, payments constitute a core data type in TmVal, they are used, along with the fundamentals of interest theory that we have developed so far, to construct more complex financial instruments and transactions.
+The growth rate object can be a float, in which case we assume compound effective interest. You can also provide a :class:`.Rate` object for other interest patterns, including compound effective interest. It can also be an Accumulation object, which gives you an option if the growth pattern you want to model is more complex.
+
+While simple, :class:`.Payments` constitutes a core data type in TmVal. It is used, along with the fundamentals of interest theory that we have developed so far, to construct more complex financial instruments and transactions, such as :class:`annuities<.Annuity>` and :class:`loans<.Loan>`.
 
 Examples
 ========
 
-To construct a payment, simply call the :class:`.Payment` class and supply a payment amount, a payment time, and optionally, a discount factor.
+Suppose we have payments of 1,000, 2,000, and 3,000 that occur at times 1, 2, and 3, respectively. If we have 5% compound interest, construct a :class:`.Payments` object and explore its contents.
 
-For example, we can declare a :class:.`Payment` that has a payment amount of 1000, occurs at time t=5, and has a discount factor of .8.
+To declare a :class:`.Payments` class, pass the payment amounts, times, and interest rate to the arguments ``amounts``, ``times``, and ``gr``, respectively. Let's use ``dir`` to see what attributes and methods we can explore.
 
+.. ipython:: python
 
-..
-   from tmval import Payment
+   from tmval import Payments
 
-   my_payment = Payment(amount=1000, time=5, discount_factor=.8)
+   pmts = Payments(amounts=[1000, 2000, 3000], times=[1, 2, 3], gr=.05)
 
-We can also retrieve the payment information by calling its members:
+   dir(pmts)
 
+First, we notice the amounts and times we provided to the object. We also see some methods such as :meth:`.npv()`, :meth:`.eq_val`, :meth:`.irr()`, :meth:`.dollar_weighted_yield`, and :meth:`.time_weighted_yield`, which we'll explore in the subsequent sections.
 
-..
-   print(my_payment.amount)
-   print(my_payment.time)
-   print(my_payment.discount_factor)
+Note that we can also supply an :class:`.Accumulation` or :class:`.Rate` object to the argument ``gr``. The following declarations are equivalent to the previous one:
 
-We can also construct payments more quickly by using the :func:`.create_payments` function. You can do so by supplying a list of payment amounts, a list of payment times, and a list of discount factors:
+.. ipython:: python
 
+   from tmval import Accumulation, Rate
 
+   pmts = Payments(amounts=[1000, 2000, 3000], times=[1, 2, 3], gr=Accumulation(.05))
 
-..
-   from tmval import create_payments
+   pmts = Payments(amounts=[1000, 2000, 3000], times=[1, 2, 3], gr=Rate(.05))
 
-   my_payments = create_payments(
-     amounts = [1000, 2000, 3000],
-     times = [1, 2, 3],
-     discount_factors = [.8, .9, .95]
-   )
+This might seem superficial at first glance, but its usefulness becomes apparent if we have something more complicated than compound interest, such as :math:`a(t) = x^5 + 3x^4 + 2x + 4`
 
-There are many ways to supply discounting to :func:`.create_payments`. In addition to supplying a list of discount rates, you can also supply a discount function:
+.. ipython:: python
 
+   def f(t):
+       return t ** 5 + 3 * t ** 4 + 2 * t + 4
 
-..
-   from tmval import CompoundAcc
-
-   my_acc = CompoundAcc(i=.05)
-
-   my_func = my_acc.discount_func
-
-   more_payments = create_payments(
-     amounts = [1000, 2000, 3000],
-     times = [1, 2, 3],
-     discount_func=my_func
-   )
-
-Or, you can simply supply the :class:`.Accumulation` object directly:
-
-
-..
-   even_more_payments = create_payments(
-     amounts = [1000, 2000, 3000],
-     times = [1, 2, 3],
-     discount_func=my_func
-   )
-
-Furthermore, if interest is compounded, then you can just supply the interest rate:
-
-
-..
-   yet_even_more_payments = create_payments(
-     amounts = [1000, 2000, 3000],
-     times = [1, 2, 3],
-     interest_rate=.05
-   )
+   pmts = Payments(amounts=[1000, 2000, 3000], times=[1, 2, 3], gr=Accumulation(gr=f))
