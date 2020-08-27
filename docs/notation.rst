@@ -152,3 +152,327 @@ or, assuming proportionality:
 
    Payments(amounts, times, gr).time_weighted_yield()
 
+**Present value of basic annuity-immediate:** :math:`\ax{\angln i}`
+
+.. code-block:: python
+
+   Annuity(gr=i, n).pv()
+
+**Accumulated value of basic annuity-immediate:** :math:`\sx{\angln i}`
+
+.. code-block:: python
+
+   Annuity(gr=i, n).sv()
+
+**Loan payment, level:** :math:`Q=\frac{L}{\ax{\angln i}}`
+
+.. code-block:: python
+
+   get_loan_pmt(
+       loan_amt=L,
+       period,
+       term,
+       gr=Rate(i))
+
+**Savings payment to obtain accumulated balance:** :math:`Q=\frac{B}{\sx{\angln i}}`
+
+.. code-block:: python
+
+   get_savings_pmt(
+       fv=B,
+       period,
+       term,
+       gr=Rate(i)
+   )
+
+**Present value of basic annuity-due:** :math:`\ax**{\angln i}`
+
+.. code-block:: python
+
+   Annuity(
+       gr=i,
+       n=n,
+       imd='due'
+   ).pv()
+
+**Accumulated value of basic annuity-due:** :math:`\sx**{\angln i}`
+
+.. code-block:: python
+
+   Annuity(
+       gr=i,
+       n=n,
+       imd='due'
+   ).sv()
+
+**Present value of basic perpetuity-immediate:** :math:`\ax{\angl{\infty} i}`
+
+.. code-block:: python
+
+   Annuity(
+       gr=i,
+       term=np.Inf,
+   ).pv()
+
+**Present value of basic perpetuity-due:** :math:`\ax**{\angl{\infty} i}`
+
+.. code-block:: python
+
+   Annuity(
+       gr=i,
+       term=np.Inf,
+       imd='due'
+   ).sv()
+
+**Present value of deferred annuity-immediate:** :math:`\ax[w|n]{}`
+
+.. code-block:: python
+
+   Annuity(
+       gr,
+       n=n,
+       deferral=w
+   ).pv()
+
+**Present value of deferred annuity-due:** :math:`\ax**[w|n]{}`
+
+.. code-block:: python
+
+   Annuity(
+       gr,
+       n=n,
+       deferral=w,
+       imd='due'
+   ).pv()
+
+**Outstanding loan balance, retrospective method:** :math:`\text{OLB}_k = La(k) - Q\sx{\angl{k}}`
+
+.. code-block:: python
+
+   Loan(
+       amt=L,
+       pmt=Q,
+       gr,
+       period,
+       term
+   ).olb_r()
+
+**Outstanding loan balance, prospective method (adjusted final payment):** :math:`\text{OLB}_k = Q\ax{\angl{n-k-1} i} + R(1 + i)^{-(n-k)}`
+
+.. code-block:: python
+
+   Loan(
+       amt=L,
+       pmt=Q,
+       gr,
+       period,
+       term
+   ).olb_p(t, r)
+
+**Outstanding loan balance, prospective method (equal payments):** :math:`\text{OLB}_k = Q\ax{\angl{n-k} i}`
+
+.. code-block:: python
+
+   Loan(
+       amt=L,
+       pmt=Q,
+       gr,
+       period,
+       term
+   ).olb_p(t)
+
+**Present value of an annuity-immediate with geometrically increasing payments:** :math:`P\left(\frac{1-\left(\frac{1+g}{1 + i}\right)^n}{i-g}\right)`
+
+.. code-block:: python
+
+    Annuity(
+        amount=P,
+        n=n,
+        gr=Rate(i),
+        grog=g
+    ).pv()
+
+**Present value of annuity-immediate with arithmetically increasing payments:** :math:`(I_{P, Q} a){\angln i}`
+
+.. code-block:: python
+
+   Annuity(
+       amount=P,
+       n=n,
+       gr=Rate(i)
+       aprog=Q
+   ).pv()
+
+**Accumulated value of annuity-immediate with arithmetically increasing payments:** :math:`(I_{P, Q} s){\angln i}`
+
+.. code-block:: python
+
+   Annuity(
+       amount=P,
+       n=n,
+       gr=Rate(i)
+       aprog=Q
+   ).sv()
+
+**Present value of annuity-immediate with arithmetically decreasing payments:** :math:`(Da){\angln i}`
+
+.. code-block:: python
+
+    Annuity(
+       amount=n,
+       n=n,
+       gr=Rate(i)
+       aprog=-1
+   ).pv()
+
+**Accumulated value of annuity-immediate with arithmetically decreasing payments:** :math:`(Ds){\angln i}`
+
+.. code-block:: python
+
+    Annuity(
+       amount=n,
+       n=n,
+       gr=Rate(i)
+       aprog=-1
+   ).sv()
+
+**Present value of annuity-due with arithmetically increasing payments:** :math:`(I_{P, Q} \ax**{}){\angln i}`
+
+.. code-block:: python
+
+   Annuity(
+       amount=P,
+       n=n,
+       gr=Rate(i)
+       aprog=Q,
+       imd='due'
+   ).pv()
+
+**Accumulated value of annuity-due with arithmetically increasing payments:** :math:`(I_{P, Q} \sx**{}){\angln i}`
+
+.. code-block:: python
+
+   Annuity(
+       amount=P,
+       n=n,
+       gr=Rate(i)
+       aprog=Q,
+       imd='due'
+   ).sv()
+
+**Present value of annuity-due with arithmetically decreasing payments:** :math:`(D\ax**{}){\angln i}`
+
+.. code-block:: python
+
+    Annuity(
+       amount=n,
+       n=n,
+       gr=Rate(i)
+       aprog=-1,
+       imd='due'
+   ).pv()
+
+**Accumulated value of annuity-due with arithmetically decreasing payments:** :math:`(D\sx**{}){\angln i}`
+
+.. code-block:: python
+
+    Annuity(
+       amount=n,
+       n=n,
+       gr=Rate(i),
+       aprog=-1,
+       imd='due'
+   ).sv()
+
+**Present value of perpetuity-immediate with arithmetically increasing payments:** :math:`(I_{P, Q} a){\angl{\infty} i}`
+
+.. code-block:: python
+
+    Annuity(
+       amount=P,
+       term=np.Inf,
+       gr=Rate(i),
+       aprog=Q
+   ).pv()
+
+**Present value of perpetuity-due with arithmetically increasing payments:** :math:`(I_{P, Q} \ax**{}){\angl{\infty} i}`
+
+.. code-block:: python
+
+    Annuity(
+       amount=P,
+       term=np.Inf,
+       gr=Rate(i)
+       aprog=Q,
+       imd='due'
+   ).pv()
+
+**Present value of annuity-immediate with payments more frequent than each interest period:** :math:`\ax{\angln i}[(m)]`
+
+.. code-block:: python
+
+   Annuity(
+       amount=1/m,
+       term=n,
+       gr=Rate(i),
+       period=1/m
+   ).pv()
+
+
+**Accumulated value of annuity-immediate with payments more frequent than each interest period:** :math:`\sx{\angln i}[(m)]`
+
+.. code-block:: python
+
+   Annuity(
+       amount=1/m,
+       term=n,
+       gr=Rate(i),
+       period=1/m
+   ).sv()
+
+**Present value of annuity-due with payments more frequent than each interest period:** :math:`\ax**{\angln i}[(m)]`
+
+.. code-block:: python
+
+   Annuity(
+       amount=1/m,
+       term=n,
+       gr=Rate(i),
+       period=1/m,
+       imd='due'
+   ).pv()
+
+**Accumulated value of annuity-due with payments more frequent than each interest period:** :math:`\sx**{\angln i}[(m)]`
+
+.. code-block:: python
+
+   Annuity(
+       amount=1/m,
+       term=n,
+       gr=Rate(i),
+       period=1/m,
+       imd='due'
+   ).sv()
+
+**Present value of perpetuity-immediate with payments more frequent than each interest period:** :math:`\ax{\angl{\infty} i}[(m)]`
+
+.. code-block:: python
+
+   Annuity(
+       amount=1/m,
+       term=np.Inf,
+       gr=Rate(i),
+       period=1/m
+   ).pv()
+
+**Present value of perpetuity-due with payments more frequent than each interest period:** :math:`\sx**{\angl{\infty} i}[(m)]`
+
+.. code-block:: python
+
+   Annuity(
+       amount=1/m,
+       term=np.Inf,
+       gr=Rate(i),
+       period=1/m,
+       imd='due'
+   ).pv()
