@@ -184,6 +184,7 @@ class Rate:
             'discount',
             'i',
             'd',
+            'apy',
             'APY',
             'Effective Interest',
             'Effective Discount'
@@ -192,6 +193,7 @@ class Rate:
         nominals = [
             'nomint',
             'nomdisc',
+            'apr',
             'APR',
             'Nominal Interest',
             'Nominal Discount'
