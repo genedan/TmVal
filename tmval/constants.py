@@ -2,6 +2,7 @@ FORMAL_PATTERNS = {
     'interest': 'Effective Interest',
     'i': 'Effective Interest',
     'APY': 'Effective Interest',
+    'apy': 'Effective Interest',
     'Effective Interest': 'Effective Interest',
 
     'd': 'Effective Discount',
@@ -10,6 +11,7 @@ FORMAL_PATTERNS = {
     'nomint': 'Nominal Interest',
     'nominal interest': 'Nominal Interest',
     'APR': 'Nominal Interest',
+    'apr': 'Nominal Interest',
     'Nominal Interest': 'Nominal Interest',
 
     'nomdisc': 'Nominal Discount',
