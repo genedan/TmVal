@@ -31,26 +31,57 @@ In addition to the concept of :term:`nominal interest<nominal interest rate>`, t
 
    \left(1 + \frac{i^{n}}{n}\right)^n = 1 + i = (1-d)^{-1} = \left(1 - \frac{d^{(p)}}{p}\right)^{-p}
 
-It would cumbersome to have to use over a dozen different functions to convert one rate to another. The good news is that TmVal offers a general conversion formula called :func:`.convert_rate` that can be used to convert any type of rate into any other type of rate.
+It would cumbersome to have to use over a dozen different functions to convert one rate to another. Fortunately, the method :meth:`.convert_rate` of the :class:`.Rate` class allows us to convert between any of these rates. Now, you can see why it's useful to have interest rates represent by a custom data type, rather than a float object.
 
-This function can take a lot of arguments, but some guidelines to keep in mind are:
+To a convert a rate from one pattern to another, take the following steps:
 
-#. Supply a type of rate (i=, d=, nom_i=, nom_d=)
-#. Supply a desired result, intdisc=, with valid values, 'interest' or 'discount'
-#. Specify a desired result, effnom=, with valid values, 'effective' or 'nominal'
-#. If 'nominal,' specify a compounding frequency, freq=
-#. If 'effective,' specify a unit of time, interval=, which defaults to 1, which means annually effective.
+#. Supply a desired pattern to convert to ('Effective Interest', 'Effective Discount, 'Nominal Interest', 'Nominal Discount')
+#. If the desired pattern is nominal, supply a compounding frequency
+#. If the desired pattern is an effective interest or discount rate, supply a desired interval
+
 
 Examples
 =========
 
 Suppose we have a nominal discount rate of :math:`d^{(12)} = .06` compounded monthly. What is the equivalent nominal interest rate compounded quarterly?
 
+.. ipython:: python
 
+   from tmval import Rate
+
+   nom_d = Rate(
+       rate=.06,
+       pattern="Nominal Discount",
+       freq=12
+   )
+
+   print(nom_d)
+
+   nom_i = nom_d.convert_rate(
+       pattern="Nominal Interest",
+       freq=4
+   )
+
+   print(nom_i)
 
 Now, let's convert it to an annual effective interest rate:
 
+.. ipython:: python
 
+   i = nom_i.convert_rate(
+       pattern="Effective Interest",
+       interval=1
+   )
 
+   print(i)
 
 Now, let's convert it back to a nominal discount rate compounded monthly:
+
+.. ipython:: python
+
+   nom_d2 = i.convert_rate(
+       pattern="Nominal Discount",
+       freq=12
+   )
+
+   print(nom_d2)
