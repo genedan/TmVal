@@ -57,6 +57,9 @@ Glossary
 
          v(t) = \frac{1}{a(t)}
 
+   dollar-weighted yield rate
+      See :term:`yield rate`
+
    drop payment
       An adjustment to the amount of the final payment of a loan so that it can occur on the next integral payment period.
 
@@ -79,6 +82,9 @@ Glossary
       .. math::
 
          A_K(t_2) - A_K(t_1).
+
+   internal rate of return
+      See :term:`yield rate`
 
    net present value (NPV)
       The sum of the present value of a stream of returns:
@@ -117,5 +123,8 @@ Glossary
 
    simple interest
       A linear pattern of money growth in which interest earned is a fixed amount per time period.
+
+   yield rate
+      The rate that solves the time :math:`\tau` equation of value.
 
 
