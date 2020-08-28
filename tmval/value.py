@@ -126,7 +126,7 @@ class Payments:
 
     def irr(
         self,
-        x0: float = .05
+        x0: float = 1.05
     ) -> list:
         """
         Calculates the internal rate of return, also known as the yield rate or dollar-weighted return. If the \
@@ -134,7 +134,7 @@ class Payments:
         roots of the polynomial via the NumPy roots function. If the equation of value is not a polynomial, than \
         Newton's method from the SciPy package is used.
 
-        :param x0: A starting guess when using Newton's method, defaults to .05.
+        :param x0: A starting guess when using Newton's method, defaults to 1.05.
         :type x0: float
         :return: A list of real roots, if found.
         :rtype: list
