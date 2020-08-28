@@ -116,7 +116,8 @@ html_theme = 'sphinx_rtd_theme'
 html_theme_options = {
     'collapse_navigation': False,
     'navigation_depth': 3,
-    'titles_only': True
+    'titles_only': True,
+    'sticky_navigation': True
 }
 
 
