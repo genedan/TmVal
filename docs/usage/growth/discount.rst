@@ -36,7 +36,7 @@ Suppose we borrow 1000 to be paid back in 1 year, and we need to pay 100 of disc
 
 To solve this problem, we can use the :meth:`.discount_interval` method of the :class:`.Amount` class. TmVal also has a class called :class:`.SimpleLoan` which is a special case of money growth in which a lump sum is borrowed and paid back with a single payment at a later point in time. These loans are common between people outside the context of banking.
 
-:class`.SimpleLoan` is callable, and can be passed to the :class:`.Amount` class just like a growth function.
+:class:`.SimpleLoan` is callable, and can be passed to the :class:`.Amount` class just like a growth function.
 
 To create a simple loan, supply the principal, term, and discount amount to :class:`.SimpleLoan`. Then we can use :meth:`.discount_interval` to get the discount rate over the interval :math:`[0, 1]`:
 

@@ -8,7 +8,9 @@ Introducing TmVal
 .. meta::
    :description: a Python Package for mathematical interest theory and time value of money computations
    :keywords: financial mathematics, interest theory, annuities, bonds, python, package
-   :image property=og\:image: _images/tmval.png
+   :image property=og\:image: _static/tmval_logo.png
+
+
 
 `TmVal <https://github.com/genedan/tmval>`_ is a Python library for mathematical interest theory, annuity, and bond calculations. This package arose from the need to have more powerful computational finance tools for another project of mine, `Miniature Economic Insurance Simulator (MIES) <https://github.com/genedan/MIES/>`_. What began as a simple submodule of MIES quickly spun off into its own repository as its complexity grew and as its potential viability in commercial applications became more apparent.
 
@@ -237,6 +239,55 @@ To more complex ones, such as the accumulated value of an arithmetically increas
 
 Amortization
 =============
+
+TmVal's :class:`.Loan` class has methods for obtaining information that we might want about loans, such as amortization schedules and outstanding loan balances.
+
+The output for several TmVal's classes are intended to be compatible with `Pandas <https://pandas.pydata.org>`_, a popular data analysis library. The output for :class`.Loan` class's :meth:`.amortization` method is one such example.
+
+For example, suppose we were to obtain a 2-year loan of 50,000, to be paid back with monthly payments made at the end of each month. If the interest rate were 4% convertible monthly, what is the amortization schedule?
+
+.. ipython:: python
+
+   import pandas as pd
+   from tmval import Loan, Rate
+
+   gr = Rate(
+       rate=.04,
+       pattern="Nominal Interest",
+       freq=4)
+
+   my_loan = Loan(
+       amt=50000,
+       period=1/12,
+       term=2,
+       gr=gr,
+       cents=True
+   )
+
+   amort = pd.DataFrame(my_loan.amortization())
+
+   print(amort)
+
+Using the :class:`.Loan` class's :meth:`.olb_r` method, we can calculate the outstanding loan balance at any time, such as after 1 year, using the :ref:`retrospective method <Outstanding Loan Balance - Retrospective Method>`:
+
+.. math::
+
+   \text{OLB}_k = La(k) - Q\sx{\angl{k}}
+
+.. ipython:: python
+
+   print(my_loan.olb_r(t=1))
+
+Now, what if we choose to overpay during the first two months, with payments of 3,000 each, and then returning to normal payments? What is the outstanding loan balance after 1 year?
+
+.. ipython:: python
+
+   pmts = Payments(
+       amounts=[3000] * 2 + [2170.06] * 10,
+       times=[(x + 1) / 12 for x in range(12)]
+   )
+
+   print(my_loan.olb_r(t=1, payments=pmts))
 
 Development Status
 ===================
