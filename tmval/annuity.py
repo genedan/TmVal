@@ -98,7 +98,7 @@ class Annuity(Payments):
         term: float = None,
         n: float = None,
         gprog: float = 0.0,
-        aprog: float = 0.0,
+        aprog: Union[float, int, tuple] = 0.0,
         times: list = None,
 
         reinv: [
@@ -118,7 +118,16 @@ class Annuity(Payments):
         self.period = period
         self.imd = imd
         self.gprog = gprog
-        self.aprog = aprog
+
+        if isinstance(aprog, (float, int)):
+            self.aprog = aprog
+            self.mprog = 0
+        elif isinstance(aprog, tuple):
+            self.aprog = aprog[0]
+            self.mprog = aprog[1] * period
+        else:
+            raise ValueError("Invalid value provided to aprog.")
+
         imd_ind = 1 if imd == 'immediate' else 0
         self.is_level_pmt = None
         self.reinv = reinv
@@ -135,12 +144,19 @@ class Annuity(Payments):
                 self.term = max(times)
                 r = len(times)
                 self.n_payments = len(times)
+            elif period == 0:
+                dt = standardize_acc(gr).interest_rate.convert_rate(pattern="Force of Interest")
+                r = np.Inf
+                self.term = np.log(1 - loan / amount * dt) / (- dt)
             else:
                 r = self.get_r_pmt(gr)
                 r = ceil(r) if drb == 'drop' else floor(r)
                 self.term = r * self.period
         else:
-            r = self.term / self.period
+            if self.period == 0:
+                r = np.Inf
+            else:
+                r = self.term / self.period
 
         # perpetuity
         if self.term == np.inf or self.n_payments == np.Inf:
@@ -167,6 +183,13 @@ class Annuity(Payments):
                 self.is_level_pmt = True
             else:
                 self.is_level_pmt = False
+        # continuously paying
+        elif self.period == 0:
+            amounts = []
+            times = []
+            self.n_payments = np.inf
+            self._ann_perp = 'annuity'
+            self.is_level_pmt = True
         else:
             if self.n_payments is None and term is not None:
                 r_payments = self.term / period
@@ -186,7 +209,8 @@ class Annuity(Payments):
                 f = 0
 
             if isinstance(amount, (int, float)) or (isinstance(amount, list) and len(amount)) == 1:
-                amounts = [self.amount * (1 + self.gprog) ** x + self.aprog * x for x in range(self.n_payments)]
+                amounts = [self.amount * (1 + self.gprog) ** x +
+                           self.aprog * floor(x * self.mprog) for x in range(self.n_payments)]
                 times = [period * (x + imd_ind) for x in range(self.n_payments)]
             else:
                 amounts = amount
@@ -315,18 +339,26 @@ class Annuity(Payments):
 
                     pv = self.amount * ((1 - ((1 + g) / (1 + i)) ** self.n_payments) / (i - g))
 
+                # Continuously paying annuity
+                elif self.period == 0:
+                    pv = self.abar_angln()
+
                 else:
                     pv = self.n_payments * self.amount * (1 + i) ** (-1)
 
         # annuity with arithmetically increasing payments
-        elif self.aprog != 0:
-            i = self.gr.val(self.period) - 1
-            n = self.n_payments
-            q = self.aprog
-            a_n = (1 - (1 + i) ** - n) / i
-            p = self.amount
+        elif self.aprog != 0 and self.mprog == 0:
 
-            pv = p * a_n + q / i * (a_n - n * (1 + i) ** - n)
+            if self.period == 0:
+                pv = self.ibar_abar_angln()
+            else:
+                i = self.gr.val(self.period) - 1
+                n = self.n_payments
+                q = self.aprog
+                a_n = (1 - (1 + i) ** - n) / i
+                p = self.amount
+
+                pv = p * a_n + q / i * (a_n - n * (1 + i) ** - n)
 
         # perpetuity with geometric payments and tiered growth
         elif self._ann_perp == 'perpetuity' and isinstance(self.gr.gr, TieredTime):
@@ -390,19 +422,27 @@ class Annuity(Payments):
         """
 
         if isinstance(self.gr, Accumulation) and self.gr.is_level and self.is_level_pmt and self.reinv is None:
-            sv = self.amount * \
-                 ((1 + self.gr.interest_rate) ** self.term - 1) / \
-                 (self.gr.val(self.period) - 1)
 
-        elif self.aprog != 0:
+            if self.period == 0:
+                sv = self.sbar_angln()
 
-            i = self.gr.val(self.period) - 1
-            n = self.n_payments
-            q = self.aprog
-            p = self.amount
-            s_n = ((1 + i) ** n - 1) / i
+            else:
+                sv = self.amount * \
+                     ((1 + self.gr.interest_rate) ** self.term - 1) / \
+                     (self.gr.val(self.period) - 1)
 
-            sv = p * s_n + q / i * (s_n - n)
+        elif self.aprog != 0 and self.mprog == 0:
+
+            if self.period == 0:
+                sv = self.ibar_sbar_angln()
+            else:
+                i = self.gr.val(self.period) - 1
+                n = self.n_payments
+                q = self.aprog
+                p = self.amount
+                s_n = ((1 + i) ** n - 1) / i
+
+                sv = p * s_n + q / i * (s_n - n)
 
         # reinvestment
         elif self.reinv is not None:
@@ -431,6 +471,24 @@ class Annuity(Payments):
             sv = sv * self.gr.val(self.period)
 
         return sv
+
+    def sbar_angln(self):
+        delta = self.get_delta()
+        return (np.exp(delta * self.term) - 1) / delta
+
+    def abar_angln(self):
+        delta = self.get_delta()
+        return self.amount * (1 - np.exp(-delta * self.term)) / delta
+
+    def ibar_abar_angln(self):
+        delta = self.get_delta()
+        abar = self.abar_angln()
+        return (abar - self.term * np.exp(-delta * self.term)) / delta
+
+    def ibar_sbar_angln(self):
+        delta = self.get_delta()
+        sbar = self.sbar_angln()
+        return (sbar - self.term) / delta
 
     def get_r_pmt(
         self,
@@ -496,6 +554,9 @@ class Annuity(Payments):
         balloon = q + q * (((1 + i) ** f - 1) / i) * (1 + i) ** (-f)
         return balloon
 
+    def get_delta(self):
+        return self.gr.interest_rate.convert_rate(pattern="Force of Interest")
+
 
 def get_loan_amt(
     down_pmt: float,
@@ -537,10 +598,10 @@ def get_loan_pmt(
     loan_amt: float,
     period: float,
     term: float,
-    gr: Rate,
+    gr: Union[float, Rate],
     imd: str = 'immediate',
-    gprog: float = 0,
-    aprog: float = 0,
+    gprog: float = 0.0,
+    aprog: float = 0.0,
     cents=False
 ) -> dict:
     """
