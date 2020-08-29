@@ -3,14 +3,35 @@
 
 Time Value of Money
 
-### Introduction
+## Introduction
 [Documentation](https://genedan.com/tmval/docs) | [Development Blog](https://genedan.com) | [PyPI](https://pypi.org/project/tmval/)
 
-TmVal is a package that provides tools for the valuation of various financial instruments (annutities, bonds).
+TmVal is a package that provides tools for the valuation of various financial instruments (annuities, bonds).
 
 It can be used to study for Actuarial Exam FM, and (hopefully) used on the job for projects where time value of money is relevant.
 
-### Installation
+## Feature Highlights
+
+-   TmVal supports growth patterns that are more complex than compound
+    interest. In addition to supporting simple, compound, and nominal
+    interest, TmVal handles growth patterns that may be of theoretical
+    interest to actuaries, such as continuously compounded rates (Force
+    of Interest), polynomial growth, and arbitrary amount and
+    accumulation functions.
+    
+-   TmVal provides equations of value computations for core financial
+instruments in actuarial science, such as annuities, loans, and
+arbitrary cash flow streams. As development is still in the alpha
+stage, the types of investments TmVal supports is rapidly expanding.
+I expect the package to soon offer classes for bonds, stocks, and
+options.
+    
+-   TmVal's classes are intended to correspond closely to symbols used
+in actuarial notation. Well-known symbols encountered by actuaries are supported. Refer to the
+[Notation guide](https://genedan.com/tmval/docs/notation.html) in this documentation
+to see the available symbols.
+
+## Installation
 
 ```
 pip install tmval
@@ -26,69 +47,64 @@ cd dist
 sudo pip3 install tmval*
 ```
 
-### Examples
+### Amount and Accumulation Functions
 
-Suppose we have a nominal discount rate of d<sup>(12)</sup> = .06 compounded monthly. What is the equivalent nominal interest rate compounded quarterly?
+TmVal supports the core growth functions of mathematical interest
+theory, the [amount](https://genedan.com/tmval/docs/usage/growth/amount.html) and [accumulation](https://genedan.com/tmval/docs/usage/growth/ccumulation.html) functions, implemented via the
+[Amount](https://genedan.com/tmval/docs/api_ref/amount/index.html) and
+[Accumulation](https://genedan.com/tmval/docs/api_ref/amount/index.html) classes. These classes support all sorts of growth patterns, from simple and compound interest to more complex cases such as tiered investment accounts and polynomial growth.
 
-```python
-from tmval import Rate
-
-nom_d = Rate(
-    rate=.06, 
-    pattern="Nominal Discount",
-    freq=12
-)
-
-nom_i = nom_d.convert_rate( 
-    pattern='Nominal Interest', 
-    freq=4
-)
-
-print(nom_i)
-
-out:
-Pattern: Nominal Interest
-Rate: 0.06060503776426174
-Compounding Frequency: 4 times per year
-```
-
-Suppose we have the following tiered investment account with the following interest rate schedule. This means the account pays 1% if the balance is below 10,000. Once it reaches 10,000, it pays 2%, and beyond 20,000, it pays 3%.
+For instance, suppose we have the tiered investment account with
+annually compounded interest rates:
 
 Required Minimum Balance | Interest Rate 
 -------------------------|----------------
 0|1%
 10,000|2%
 20,000| 3%
- 
-If we invested 5,000 today and made no further contributions, at what times would we expect to reach 2% and 3% interest?
+
+If we invest 18,000 today, to what value does it grow after 10 years?
 
 ```python
-from tmval import Amount, TieredBal
+from tmval import Accumulation
 
-my_tiered_bal = TieredBal(
-    tiers=[0, 10000, 20000],
-    rates=[.01, .02, .03]
-)
+def f(t):
 
-print(my_tiered_bal.get_jump_times(k=5000))
+    return .05 * (t **2) + .05 * t + 1
 
-out:
+
+
+my_acc = Accumulation(gr=f)
+
+print(my_acc.val(5))
+2.5
+```
+
+If we were to invest 5000 today, how long would it take to reach 2% and
+3% interest, assuming no future contributions?
+
+```python
+print(tb.get_jump_times(k=5000))
 [69.66071689357483, 104.66350567472134]
 ```
+It will take almost 70 years to reach 2%, and about 105 years to reach
+3%. That\'s a long time!
 
-Suppose we purchase an annuity-immediate that makes payments of 1,000 each year for a term of five years, with the first payment beginning 5 years from now. If the annual effective interest rate is 5%, how much would the accumulated payments grow to 20 years from now?
+### Interest Rate Conversions
 
-```python
-from tmval import Annuity, Rate
+Interest rates are represented by a core data type in TmVal, the
+[Rate](file:///home/ubuntu/TmVal/docs/_build/html/api_ref/rate/index.html) class. This custom data type offers a convenient way to perform computations with a variety of interest rate patterns as well as conversions between them. The main patterns supported by the [Rate](file:///home/ubuntu/TmVal/docs/_build/html/api_ref/rate/index.html) class
+are:
 
-ann = Annuity(
-   amount=1000,
-   n=5,
-   gr=Rate(.05),
-   deferral=4
-)
+1.  Effective Interest
+2.  Effective Discount
+3.  Nominal Interest
+4.  Nominal Discount
+5.  Force of Interest
+6.  Simple Interest
+7.  Simple Discount
 
-print(ann.eq_val(20))
-out:
-9450.704605312447
-```
+The relationships between compound interest rates can be represented
+with the following expression:
+
+![interest conversion](https://github.com/genedan/TmVal/blob/master/docs/readme_gh/interest_conversion.svg)
