@@ -10,6 +10,22 @@ TmVal is a package that provides tools for the valuation of various financial in
 
 It can be used to study for Actuarial Exam FM, and (hopefully) used on the job for projects where time value of money is relevant.
 
+## Installation
+
+```
+pip install tmval
+```
+
+or
+
+```
+git clone https://github.com/genedan/TmVal
+cd TmVal
+python3 -m setup sdist bdist_wheel
+cd dist
+sudo pip3 install tmval*
+```
+
 ## Feature Highlights
 
 -   TmVal supports growth patterns that are more complex than compound
@@ -28,24 +44,8 @@ options.
     
 -   TmVal's classes are intended to correspond closely to symbols used
 in actuarial notation. Well-known symbols encountered by actuaries are supported. Refer to the
-[Notation guide](https://genedan.com/tmval/docs/notation.html) in this documentation
+[Notation Guide](https://genedan.com/tmval/docs/notation.html) in this documentation
 to see the available symbols.
-
-## Installation
-
-```
-pip install tmval
-```
-
-or
-
-```
-git clone https://github.com/genedan/TmVal
-cd TmVal
-python3 -m setup sdist bdist_wheel
-cd dist
-sudo pip3 install tmval*
-```
 
 ### Amount and Accumulation Functions
 
@@ -226,8 +226,7 @@ Rate: 0.0477248077273309
 Unit of time: 1 year
 ```
 
-Annuities
-=========
+### Annuities
 
 Annuities are one of the core financial instruments underlying life
 insurance products. TmVal provides support for many kinds of annuities
@@ -250,7 +249,7 @@ via its [Annuity](https://genedan.com/tmval/docs/api_ref/annuity/index.html#tmva
 14. Continuously-paying annuity
 
 ... and many more. To see what other symbols are supported, consult the
-[Notation guide](https://genedan.com/tmval/docs/notation.html).
+[Notation Guide](https://genedan.com/tmval/docs/notation.html).
 
 Unlike other packages, which tend to use functions to represent the
 different types of annuities, TmVal represents annuities as a class,
@@ -286,7 +285,7 @@ print(ann.sv())
 30113.389687500014
 ```
 
-###Amortization
+### Amortization
 
 
 TmVal's Loan class has methods for
