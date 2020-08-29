@@ -107,4 +107,6 @@ are:
 The relationships between compound interest rates can be represented
 with the following expression:
 
-![interest conversion](https://github.com/genedan/TmVal/blob/master/docs/readme_gh/interest_conversion.svg)
+<p align="center">
+<img src=https://github.com/genedan/TmVal/blob/master/docs/readme_gh/interest_conversion.svg" />
+</p>
