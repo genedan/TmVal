@@ -242,7 +242,7 @@ Amortization
 
 TmVal's :class:`.Loan` class has methods for obtaining information that we might want about loans, such as amortization schedules and outstanding loan balances.
 
-The output for several TmVal's classes are intended to be compatible with `Pandas <https://pandas.pydata.org>`_, a popular data analysis library. The output for :class`.Loan` class's :meth:`.amortization` method is one such example.
+The output for several TmVal's classes are intended to be compatible with `Pandas <https://pandas.pydata.org>`_, a popular data analysis library. The output for :class:`.Loan` class's :meth:`.amortization` method is one such example.
 
 For example, suppose we were to obtain a 2-year loan of 50,000, to be paid back with monthly payments made at the end of each month. If the interest rate were 4% convertible monthly, what is the amortization schedule?
 
