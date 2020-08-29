@@ -4,14 +4,6 @@ TmVal Documentation
 TmVal is a Python package for time value of money computations. It is intended for commercial use, open source development, and as a tool for actuarial students studying for the Financial Mathematics exam.
 
 .. toctree::
-   :caption: Development
-   :hidden:
-
-    GitHub <https://github.com/genedan/tmval/>
-    Development Blog <https://genedan.com/>
-    PyPI <https://pypi.org/project/tmval/>
-
-.. toctree::
    :maxdepth: 3
    :caption: Contents
    :titlesonly:
@@ -28,3 +20,11 @@ TmVal is a Python package for time value of money computations. It is intended f
    glossary
    references
    pdf
+
+.. toctree::
+   :caption: Development
+   :hidden:
+
+    GitHub <https://github.com/genedan/tmval/>
+    Development Blog <https://genedan.com/>
+    PyPI <https://pypi.org/project/tmval/>
