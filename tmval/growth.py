@@ -8,6 +8,7 @@ import datetime as dt
 import numpy as np
 
 from inspect import signature
+from scipy.misc import derivative
 from typing import Callable, Union
 
 from tmval.constants import COMPOUNDS, SIMPLES
@@ -51,7 +52,7 @@ class Amount:
 
         self.is_level = self.__check_level()
 
-    def _extract_func(self):
+    def _extract_func(self) -> Callable:
 
         if isinstance(self.gr, Callable):
             return self.gr
@@ -118,7 +119,7 @@ class Amount:
         elif isinstance(self.gr, Callable):
             try:
                 rates = [round(self.effective_rate(x + 1), 5) for x in range(100)]
-            except ZeroDivisionError:
+            except (ZeroDivisionError, OverflowError):
                 return False
             return rates[1:] == rates[:-1]
 
@@ -373,6 +374,16 @@ class Accumulation(Amount):
         future_principal = fv * self.discount_func(t2) * self.val(t1)
 
         return future_principal
+
+    def delta_t(self, t):
+        if self.is_compound:
+            delta_t = self.interest_rate.convert_rate(pattern="Force of Interest")
+        else:
+            # PyCharm seems gives a warning expecting type function, even when the argument is callable
+            # noinspection PyTypeChecker
+            delta_t = derivative(func=self.func, x0=t, dx=1e-6) / self.func(t)
+
+        return delta_t
 
 
 def simple_solver(
@@ -836,8 +847,8 @@ def tt_iym(
 
     :param table: A table of interest rates.
     :type table: dict
-    :param t: The year of the initial investment.
-    :type t: float
+    :param t0: The year of the initial investment.
+    :type t0: float
     :return: A TieredTime growth rate object.
     :rtype: TieredTime
     """
