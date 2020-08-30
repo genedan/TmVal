@@ -261,7 +261,7 @@ done with an annuity. My aim is to allow the
 class for or be embedded in more complex insurance products.
 
 We can perform simple calculations, such as finding the present value of
-a basic annuity-due with a five year term and a compound interest rate of 5%:
+a basic annuity-immediate with a five year term and a compound interest rate of 5%:
 
 ```python
 from tmval import Annuity
@@ -271,7 +271,7 @@ print(Annuity(gr=.05, n=5).pv())
 ```
 
 To more complex ones, such as the accumulated value of an arithmetically
-increasing annuity with a starting payment of 5,000, and subsequent payments of 100 over a 5-year term, at 5% compound interest:
+increasing annuity-due with a starting payment of 5,000, and subsequent payments of 100 over a 5-year term, at 5% compound interest:
 ```python
 ann = Annuity(
     amount=5000,
@@ -300,7 +300,7 @@ example.
 
 For example, suppose we were to obtain a 2-year loan of 50,000, to be
 paid back with monthly payments made at the end of each month. If the
-interest rate were 4% convertible monthly, what is the amortization
+interest rate were 4% convertible quarterly, what is the amortization
 schedule?
 
 ```python

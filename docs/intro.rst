@@ -14,7 +14,7 @@ Introducing TmVal
 
 `TmVal <https://github.com/genedan/tmval>`_ is a Python library for mathematical interest theory, annuity, and bond calculations. This package arose from the need to have more powerful computational finance tools for another project of mine, `Miniature Economic Insurance Simulator (MIES) <https://github.com/genedan/MIES/>`_. What began as a simple submodule of MIES quickly spun off into its own repository as its complexity grew and as its potential viability in commercial applications became more apparent.
 
-This article begins by highlighting the advantages TmVal has over existing time value of money packages, and then proceeds by demonstrating how TmVal can be used to solve problems found in actuarial science. Feel free to visit the project repository and examine its source code at https://github.com/genedan/tmval.
+This article begins by highlighting the advantages TmVal has over existing time value of money packages, and then proceeds to demonstrate how TmVal can be used to solve problems found in actuarial science. Feel free to visit the project repository and examine its source code at https://github.com/genedan/tmval.
 
 Feature Highlights
 ===================
@@ -64,7 +64,7 @@ If we invest 18,000 today, to what value does it grow after 10 years?
    amt = Amount(gr=tb, k=18000)
    print(amt.val(10))
 
-If we were to invest 5000 today, how long would it take to reach 2% and 3% interest, assuming no future contributions?
+If we were to invest 5,000 today, how long would it take to reach 2% and 3% interest, assuming no future contributions?
 
 .. ipython:: python
 
@@ -155,7 +155,7 @@ For example, we can solve for the internal rate of return of an investment of 10
       times=[0, 1, 2]
   )
 
-  # internal rate of return
+  # internal rate of return - two roots
   print(pmts.irr())
 
 We can also use the :class:`.Payments` class to find the time-weighted yield:
@@ -203,7 +203,7 @@ Annuities are one of the core financial instruments underlying life insurance pr
 #. Arithmetically increasing annuity-immediate: :math:`(I_{P, Q} a)_{\angln i}`
 #. Arithmetically increasing annuity-due: :math:`(I_{P, Q} \ax**{})_{\angln i}`
 #. Arithmetically increasing perpetuity-immediate: :math:`(I_{P, Q} a)_{\angl{\infty} i}`
-#. Arithmetically increasing perpetuity-due: :math:`(I_{P, Q} a)_{\angl{\infty} i}`
+#. Arithmetically increasing perpetuity-due: :math:`(I_{P, Q} \ax**{})_{\angl{\infty} i}`
 #. Geometrically increasing annuity-immediate
 #. Geometrically increasing annuity-due
 #. Geometrically increasing perpetuity-immediate
@@ -215,7 +215,7 @@ Annuities are one of the core financial instruments underlying life insurance pr
 
 Unlike other packages, which tend to use functions to represent the different types of annuities, TmVal represents annuities as a class, which gives it access to several methods that can be performed on the annuity, such as equations of value. So rather than simply returning a float value via a function, TmVal expands the manipulations that can be done with an annuity. My aim is to allow the :class:`.Annuity` class to serve as a base class for or be embedded in more complex insurance products.
 
-We can perform simple calculations, such as finding the present value of a basic annuity-due, :math:`\ax{\angl{5} 5\%}`:
+We can perform simple calculations, such as finding the present value of a basic annuity-immediate, :math:`\ax{\angl{5} 5\%}`:
 
 .. ipython:: python
 
@@ -223,7 +223,7 @@ We can perform simple calculations, such as finding the present value of a basic
 
    print(Annuity(gr=.05, n=5).pv())
 
-To more complex ones, such as the accumulated value of an arithmetically increasing annuity, :math:`(I_{5000, 100}\sx**{})_{{\angl{5} 5\%}}`:
+To more complex ones, such as the accumulated value of an arithmetically increasing annuity-due, :math:`(I_{5000, 100}\sx**{})_{{\angl{5} 5\%}}`:
 
 .. ipython:: python
 
@@ -244,7 +244,7 @@ TmVal's :class:`.Loan` class has methods for obtaining information that we might
 
 The output for several TmVal's classes are intended to be compatible with `Pandas <https://pandas.pydata.org>`_, a popular data analysis library. The output for the :class:`.Loan` class's :meth:`.amortization` method is one such example.
 
-For example, suppose we were to obtain a 2-year loan of 50,000, to be paid back with monthly payments made at the end of each month. If the interest rate were 4% convertible monthly, what is the amortization schedule?
+For example, suppose we were to obtain a 2-year loan of 50,000, to be paid back with monthly payments made at the end of each month. If the interest rate were 4% convertible quarterly, what is the amortization schedule?
 
 .. ipython:: python
 
