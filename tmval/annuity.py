@@ -5,6 +5,7 @@ annuities to represent by specifying the arguments at initialization.
 from collections import namedtuple
 import decimal
 import numpy as np
+from scipy.integrate import quad
 
 from typing import (
     Callable,
@@ -91,7 +92,8 @@ class Annuity(Payments):
         amount: Union[
             float,
             int,
-            list
+            list,
+            Callable
         ] = 1.0,
 
         period: float = 1,
@@ -121,7 +123,7 @@ class Annuity(Payments):
 
         if isinstance(aprog, (float, int)):
             self.aprog = aprog
-            self.mprog = 0
+            self.mprog = 1
         elif isinstance(aprog, tuple):
             self.aprog = aprog[0]
             self.mprog = aprog[1] * period
@@ -139,7 +141,10 @@ class Annuity(Payments):
         if term is None:
             if self.n_payments:
                 self.term = self.n_payments * self.period
-                r = self.n_payments
+                if loan is None:
+                    r = self.n_payments
+                else:
+                    r = max(self.get_r_pmt(gr), self.n_payments)
             elif times:
                 self.term = max(times)
                 r = len(times)
@@ -157,7 +162,6 @@ class Annuity(Payments):
                 r = np.Inf
             else:
                 r = self.term / self.period
-
         # perpetuity
         if self.term == np.inf or self.n_payments == np.Inf:
 
@@ -189,7 +193,16 @@ class Annuity(Payments):
             times = []
             self.n_payments = np.inf
             self._ann_perp = 'annuity'
-            self.is_level_pmt = True
+
+            if isinstance(amount, Callable):
+                if round(amount(0) * self.term, 3) == round(quad(amount, 0, self.term)[0], 3):
+                    Warning("Level continuously paying annuity detected. It's better to supply a constant to the "
+                            "amount argument to speed up computation.")
+                    self.is_level_pmt = True
+                else:
+                    self.is_level_pmt = False
+            else:
+                self.is_level_pmt = True
         else:
             if self.n_payments is None and term is not None:
                 r_payments = self.term / period
@@ -232,7 +245,6 @@ class Annuity(Payments):
 
             if deferral > 0:
                 times = [x + deferral for x in times]
-
             if 0 < f < 1:
 
                 if drb == "balloon":
@@ -319,8 +331,13 @@ class Annuity(Payments):
         :rtype: float
         """
 
+        if isinstance(self.amount, Callable):
+            def f(x):
+                return self.amount(x) * self.gr.discount_func(x)
+            pv = quad(f, 0, self.term)[0]
+
         # if interest rate is level, can use formulas to save time
-        if isinstance(self.gr, Accumulation) and self.gr.is_level and (self.is_level_pmt or self.gprog != 0):
+        elif isinstance(self.gr, Accumulation) and self.gr.is_level and (self.is_level_pmt or self.gprog != 0):
             i = self.gr.val(self.period) - 1
             g = self.gprog
 
@@ -421,7 +438,11 @@ class Annuity(Payments):
         :rtype: float
         """
 
-        if isinstance(self.gr, Accumulation) and self.gr.is_level and self.is_level_pmt and self.reinv is None:
+        # continuously paying annuity
+        if isinstance(self.amount, Callable):
+            sv = self.pv() * self.gr.val(self.term)
+
+        elif isinstance(self.gr, Accumulation) and self.gr.is_level and self.is_level_pmt and self.reinv is None:
 
             if self.period == 0:
                 sv = self.sbar_angln()
