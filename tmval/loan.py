@@ -1,8 +1,8 @@
-from math import floor
+from math import ceil, floor
 from typing import Union
 
 from tmval.annuity import Annuity, olb_r, olb_p, get_loan_pmt
-from tmval.growth import Amount, standardize_acc, TieredTime
+from tmval.growth import Amount, TieredTime, standardize_acc
 from tmval.value import Payments
 from tmval.rate import Rate
 
@@ -15,13 +15,17 @@ class Loan:
         period: float = None,
         term: float = None,
         amt: float = None,
-        cents: bool = False
+        cents: bool = False,
+        sfr: Union[float, Rate, TieredTime] = None,
+        sfd: float = None
     ):
         self.pmt = pmt
         self.period = period
         self.term = term
-        self.gr = gr
+        self.gr = standardize_acc(gr)
         self.cents = cents
+        self.sfr = sfr
+        self.sfd = sfd
 
         if amt is None:
 
@@ -42,18 +46,25 @@ class Loan:
 
     def get_payments(self):
 
-        pmts_dict = get_loan_pmt(
-            loan_amt=self.amt,
-            period=self.period,
-            term=self.term,
-            gr=self.gr,
-            cents=self.cents
-        )
+        if self.sfr:
+            n_payments = ceil(self.term / self.period)
+            amt = self.gr.effective_rate(self.period) * self.amt
+            pmts = Payments(amounts=[amt] * n_payments, times=[(x + 1) * self.period for x in range(n_payments)])
 
-        pmts = Payments(
-            amounts=pmts_dict['amounts'],
-            times=pmts_dict['times']
-        )
+        else:
+
+            pmts_dict = get_loan_pmt(
+                loan_amt=self.amt,
+                period=self.period,
+                term=self.term,
+                gr=self.gr.gr,
+                cents=self.cents
+            )
+
+            pmts = Payments(
+                amounts=pmts_dict['amounts'],
+                times=pmts_dict['times']
+            )
 
         return pmts
 
@@ -96,7 +107,7 @@ class Loan:
         return olb
 
     def amortize_payments(self, payments: Payments) -> dict:
-        amt = Amount(gr=self.gr, k=self.amt)
+        amt = Amount(gr=self.gr.gr, k=self.amt)
 
         res = {
             'time': [],
@@ -134,17 +145,28 @@ class Loan:
 
         return res
 
-    def principal_paid(self, t):
-        return self.amt - self.olb_r(t)
+    def principal_paid(self,  t2: float, t1: float = 0):
 
-    def total_payments(self, t):
-        return floor(t / self.period) * self.pmt
+        if self.sfr:
+            return 0
+        else:
+            return self.olb_r(t1) - self.olb_r(t2)
 
-    def interest_paid(self, t):
-        return self.total_payments(t) - self.principal_paid(t)
+    def total_payments(self, t2: float, t1: float = 0):
+        return round((t2 - t1) / self.period, 1) * self.pmt
+
+    def interest_paid(self, t2: float, t1: float = 0, frac: bool = False):
+        interest_paid = self.total_payments(t1=t1, t2=t2) - self.principal_paid(t1=t1, t2=t2)
+
+        if frac:
+            total_interest = self.interest_paid(t2=self.term)
+            res = interest_paid / total_interest
+            return res
+        else:
+            return interest_paid
 
     def principal_val(self, t):
-        amt = Amount(gr=self.gr, k=self.amt)
+        amt = Amount(gr=self.gr.gr, k=self.amt)
         return amt.val(t)
 
     def amortization(self):
@@ -156,3 +178,19 @@ class Loan:
                 res[k] = [round(x, 2) if isinstance(x, float) else x for x in v]
 
         return res
+
+    def sf_final(self):
+
+        if self.sfr is None:
+            raise Exception("sf_final only applicable to sinking fund loans.")
+
+        sv = Annuity(
+            amount=self.sfd,
+            gr=self.sfr,
+            period=self.period,
+            term=self.term - self.period
+        ).eq_val(self.term)
+
+        final_pmt = self.amt - sv
+
+        return final_pmt
