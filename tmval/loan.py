@@ -81,7 +81,7 @@ class Loan:
                 loan=self.amt,
                 q=self.pmt,
                 period=self.period,
-                gr=self.gr,
+                gr=self.gr.gr,
                 t=t
             )
 
@@ -98,7 +98,7 @@ class Loan:
             q=self.pmt,
             period=self.period,
             term=self.term,
-            gr=self.gr,
+            gr=self.gr.gr,
             t=t,
             r=r,
             missed=missed
