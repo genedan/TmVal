@@ -192,13 +192,13 @@ class Amount:
 
     def effective_rate(
             self,
-            n: int
+            n: Union[float, int]
     ) -> Rate:
         """
         Calculates the effective interest rate for the n-th time period.
 
         :param n: the n-th time period.
-        :type n: int
+        :type n: float, int
         :return: the effective interest rate for the n-th timer period.
         :rtype: float
         """
