@@ -286,7 +286,7 @@ def nom_disc_from_eff_disc(
     # convert d to yearly effective if it is not already
 
     if old_t is not None:
-        d = eff_disc_from_eff_disc(d=d, old_t=old_t, new_t=1)
+        d = eff_disc_from_eff_disc(d=d, old_t=old_t, new_t=1).rate
 
     dm = new_m * (1 - (1 - d) ** (1 / new_m))
 
