@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="tmval",
-    version="0.0.7",
+    version="0.0.8",
     author="Gene Dan",
     author_email="genedan@gmail.com",
     description="Time Value of Money",
