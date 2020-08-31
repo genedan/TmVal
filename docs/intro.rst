@@ -3,10 +3,10 @@ Introducing TmVal
 ==================
 
 .. title::
-   Introducing TmVal - a Python Package for financial mathematics and interest theory
+   Introducing TmVal - a Python package for mathematical interest theory and time value of money computations
 
 .. meta::
-   :description: a Python Package for mathematical interest theory and time value of money computations
+   :description: a Python package for mathematical interest theory and time value of money computations
    :keywords: financial mathematics, interest theory, annuities, bonds, python, package
    :image property=og\:image: _static/tmval_logo.png
 
@@ -19,7 +19,7 @@ This article begins by highlighting the advantages TmVal has over existing time 
 Feature Highlights
 ===================
 
-- TmVal supports growth patterns that are more complex than compound interest. In addition to supporting simple, compound, and nominal interest, TmVal handles growth patterns that may be of theoretical interest to actuaries, such as continuously compounded rates (Force of Interest), polynomial growth, and arbitrary amount and accumulation functions.
+- TmVal supports growth patterns that are more complex than compound interest. In addition to supporting simple, compound, and nominal interest, TmVal handles growth patterns that may be of theoretical interest to actuaries, such as continuously compounded rates (:ref:`force of interest <Force of Interest>`), polynomial growth, and arbitrary amount and accumulation functions.
 
 ..
 
@@ -213,7 +213,7 @@ Annuities are one of the core financial instruments underlying life insurance pr
 
 ... and many more. To see what other symbols are supported, consult the :ref:`Notation Guide`.
 
-Unlike other packages, which tend to use functions to represent the different types of annuities, TmVal represents annuities as a class, which gives it access to several methods that can be performed on the annuity, such as equations of value. So rather than simply returning a float value via a function, TmVal expands the manipulations that can be done with an annuity. My aim is to allow the :class:`.Annuity` class to serve as a base class for or be embedded in more complex insurance products.
+Unlike other packages, which tend to use functions to represent the different types of annuities, TmVal represents annuities as a class, which gives it access to several methods that can be performed on the annuity, such as equations of value. So rather than simply returning a float value via a function, TmVal expands the manipulations that can be done with an annuity. My aim is to allow the :class:`.Annuity` class to serve as a base class for, or to be embedded into more complex insurance products.
 
 We can perform simple calculations, such as finding the present value of a basic annuity-immediate, :math:`\ax{\angl{5} 5\%}`:
 
@@ -223,7 +223,7 @@ We can perform simple calculations, such as finding the present value of a basic
 
    print(Annuity(gr=.05, n=5).pv())
 
-To more complex ones, such as the accumulated value of an arithmetically increasing annuity-due, :math:`(I_{5000, 100}\sx**{})_{{\angl{5} 5\%}}`:
+to more complex ones, such as the accumulated value of an arithmetically increasing annuity-due... :math:`(I_{5000, 100}\sx**{})_{{\angl{5} 5\%}}`:
 
 .. ipython:: python
 
@@ -236,6 +236,26 @@ To more complex ones, such as the accumulated value of an arithmetically increas
    )
 
    print(ann.sv())
+
+...or even the present value of continuously paying annuities with continually varying payments, such as this one at a simple discount rate of .036:
+
+.. math::
+
+   (\bar{I}\ax*{})_{\angln d_s=.036} = \int_0^5 tv(t)dt
+
+.. ipython:: python
+
+   def f(t):
+       return t
+
+   ann = Annuity(
+       amount=f,
+       period=0,
+       term=5,
+       gr=Rate(sd=.036)
+   )
+
+   print(ann.pv())
 
 Amortization
 =============

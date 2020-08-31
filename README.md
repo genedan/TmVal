@@ -171,7 +171,7 @@ For more details, see [The Rate Class, Revisited](https://genedan.com/tmval/docs
 
 ### Equations of Value
 
-TmVal can solve for the time $\tau$ equation of value for common
+TmVal can solve for the time τ equation of value for common
 financial instruments such as annuities and loans, as well as for
 arbitrary cash flows. This is done via the [Payments](https://genedan.com/tmval/docs/api_ref/payments/index.html) class:
 
