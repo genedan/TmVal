@@ -17,8 +17,9 @@ sys.path.insert(0, os.path.abspath('..'))
 
 # -- Project information -----------------------------------------------------
 
-project = 'TmVal'
+project = 'TmVal Documentation'
 copyright = '2020, Gene Dan, FCAS, MAAA, CSPA'
+release = 'v0.0.8'
 author = 'Gene Dan, FCAS, MAAA, CSPA'
 
 
