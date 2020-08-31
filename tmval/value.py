@@ -1,11 +1,10 @@
-from collections.abc import Iterable
 import functools
 import itertools
 import numpy as np
-from numpy import ndarray
-from scipy.optimize import newton
 import warnings
 
+from numpy import ndarray
+from scipy.optimize import newton
 
 from itertools import groupby
 
@@ -40,9 +39,9 @@ class Payments:
      and time-weighted yield.
 
     :param amounts: a list of payment amounts.
-    :type amounts: list
+    :type amounts: list, Iterable, Callable
     :param times: a list of payment times.
-    :type times: list
+    :type times: list, Iterable, Callable
     :param gr: a growth rate object, can be supplied as a float, a Rate object, or an Accumulation object.
     :type gr: float, Rate, or Accumulation
 
@@ -67,7 +66,10 @@ class Payments:
             TieredTime
         ] = None
     ):
-        if isinstance(amounts, (list, Iterable)) and isinstance(times, (list, Iterable)) and (len(amounts) != len(times)):
+        if isinstance(amounts, (list, Iterable)) \
+                and isinstance(times, (list, Iterable)) \
+                and (len(amounts) != len(times)):
+
             raise Exception("Amounts and times must be of the same length.")
 
         self.amounts = amounts
@@ -223,6 +225,8 @@ class Payments:
                     bal = bal + payments_dict[next_t]
 
         return bal
+
+        # return bal
 
     def eq_val(self, t: float) -> float:
 
@@ -430,22 +434,24 @@ def npv_solver(
     return res
 
 
-def payment_solver(payments: list, t: float, gr: Union[float, Rate, Accumulation]) -> float:
-    gr = standardize_acc(gr)
+def payment_solver(payments: Payments, t: float) -> float:
+    # gr = standardize_acc(gr)
 
-    all_other_pv = - npv(payments=payments, gr=gr)
+    # all_other_pv = - npv(payments=payments, gr=gr)
 
-    p = compound_solver(pv=all_other_pv, t=t, gr=gr.interest_rate)
+    all_other_pv = -payments.npv()
+
+    p = compound_solver(pv=all_other_pv, t=t, gr=payments.gr.interest_rate)
 
     return p
 
 
-def interest_solver(payments: list, fv: float, tfv: float) -> float:
+def interest_solver(payments: Payments, fv: float, tfv: float) -> float:
 
-    coefficients = [payment.amount for payment in payments]
+    coefficients = [payment for payment in payments.amounts]
 
     # latest payment time in payments
-    max_t = max([payment.time for payment in payments])
+    max_t = max([payment for payment in payments.times])
 
     # if gap between fv time and max_t, fill in with zeroes
     zero_to_add = tfv - max_t
