@@ -245,6 +245,7 @@ class Annuity(Payments):
 
             if deferral > 0:
                 times = [x + deferral for x in times]
+
             if 0 < f < 1:
 
                 if drb == "balloon":
@@ -485,10 +486,15 @@ class Annuity(Payments):
 
         else:
 
-            sv = self.eq_val(t=self.term)
-            skip_due = True
+            sv = self.eq_val(t=self.term + self.deferral)
 
-        if self.imd == 'due' and 'skip_due' not in locals():
+            return sv
+
+        if self.deferral != 0:
+
+            sv = sv * self.gr.val(self.deferral)
+
+        if self.imd == 'due':
             sv = sv * self.gr.val(self.period)
 
         return sv
