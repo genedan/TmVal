@@ -390,7 +390,8 @@ def simple_solver(
     pv: float = None,
     fv: float = None,
     gr: Union[float, Rate] = None,
-    t: float = None
+    t: float = None,
+    rate_res="Simple Interest",
 ):
     """
     Simple interest solver for when one variable is missing - returns missing value. You need to supply
@@ -404,6 +405,8 @@ def simple_solver(
     :type gr: float, Rate
     :param t: the time
     :type t: float
+    :param rate_res: if solving for a rate, whether you want simple discount or interest
+    :type rate_res: str
     :return: the present value, future value, interest rate, or time - whichever is missing.
     :rtype: float, Rate
     """
@@ -415,20 +418,31 @@ def simple_solver(
         if isinstance(gr, float):
             gr = Rate(s=gr)
         elif isinstance(gr, Rate):
-            gr = gr.convert_rate(
-                pattern="Simple Interest",
-                interval=1
-            )
+            gr = gr.standardize()
         else:
             raise TypeError("Invalid type passed to s.")
 
     if pv is None:
         res = fv / (1 + t * gr)
+
     elif fv is None:
-        res = pv * (1 + t * gr)
+
+        if gr.pattern == "Simple Interest":
+            res = pv * (1 + t * gr)
+        elif gr.pattern == "Simple Discount":
+            res = pv / (1 - t * gr)
+        else:
+            raise ValueError("Invalid interest rate pattern passed to argument gr.")
+
     elif gr is None:
-        res = (fv / pv - 1) / t
-        res = Rate(s=res)
+        if rate_res == "Simple Interest":
+            res = (fv / pv - 1) / t
+            res = Rate(s=res)
+        elif rate_res == "Simple Discount":
+            res = (1 - pv / fv) / t
+            res = Rate(sd=res)
+        else:
+            raise ValueError("Invalid value passed to rate_res.")
     else:
         res = (fv / pv - 1) / gr
 
