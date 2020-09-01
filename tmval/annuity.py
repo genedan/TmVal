@@ -662,12 +662,27 @@ def get_loan_pmt(
         term=term,
         gr=gr,
         gprog=gprog,
-        aprog=aprog,
         imd=imd
     )
 
-    pmt = loan_amt / ann.pv()
-    pmts = [pmt * x for x in ann.amounts]
+    if aprog >= 0:
+        i = ann.gr.effective_interval(t2=ann.period)
+        n = ann.n_payments
+        v = ann.gr.discount_func(period)
+        pmt = (loan_amt - (aprog / i) * (ann.pv() - n * v ** n)) / (ann.pv())
+        iann = Annuity(
+            amount=pmt,
+            period=period,
+            term=term,
+            gr=gr,
+            aprog=aprog,
+            imd=imd
+        )
+        pmts = iann.amounts
+    else:
+        pmt = loan_amt / ann.pv()
+        pmts = [pmt * x for x in ann.amounts]
+
     times = ann.times
 
     pmts_dict = {
@@ -687,7 +702,6 @@ def get_loan_pmt(
             term=term,
             gr=gr,
             gprog=gprog,
-            aprog=aprog,
             imd=imd
         ).pv()
 
@@ -712,14 +726,15 @@ def get_loan_pmt(
                 term=term,
                 gr=gr,
                 gprog=gprog,
+                aprog=aprog,
                 imd=imd
             )
 
             diff = d_ann.pv() - loan_amt
 
-            last_pmt = d_ann.amounts[-1] - round(diff * acc.val(t=term), 2)
+            last_pmt = round(d_ann.amounts[-1] - round(diff * acc.val(t=term), 2),2)
 
-            pmts = [pmt_round2 * x for x in ann.amounts[:-1]]
+            pmts = [round(x, 2) for x in d_ann.amounts[:-1]]
             pmts.append(last_pmt)
 
             pmts_dict = {
