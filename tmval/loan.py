@@ -1,4 +1,4 @@
-from math import ceil
+from math import ceil, floor
 from typing import Union
 
 from tmval.annuity import Annuity, olb_r, olb_p, get_loan_pmt
@@ -10,25 +10,35 @@ from tmval.rate import Rate
 class Loan:
     def __init__(
         self,
-        gr: Union[Rate, float, TieredTime],
-        pmt: float = None,
+        gr: Union[Rate, float, TieredTime] = None,
+        pmt: Union[float, int, Payments] = None,
         period: float = None,
         term: float = None,
         amt: float = None,
         cents: bool = False,
         sfr: Union[float, Rate, TieredTime] = None,
-        sfd: float = None
+        sfd: float = None,
+        sf_split: float = 1.0,
+        sfh_gr: Union[float, Rate, TieredTime] = None,
+        pp: float = None
     ):
         self.pmt = pmt
         self.period = period
         self.term = term
-        self.gr = standardize_acc(gr)
+        if gr is not None:
+            self.gr = standardize_acc(gr)
+        else:
+            self.gr = None
         self.cents = cents
         if sfr:
             self.sfr = standardize_acc(sfr)
         else:
             self.sfr = None
         self.sfd = sfd
+        self.sf_split = sf_split
+        self.pp = pp
+        self.sfh_gr = standardize_acc(sfh_gr)
+        self.pmt_is_level = None
 
         if amt is None:
             if sfr is None:
@@ -38,8 +48,8 @@ class Loan:
                     gr=self.gr,
                     amount=self.pmt
                 ).pv()
-            else:
-                a_n = Annuity(
+            elif sfr and sf_split == 1:
+                ann_snk = Annuity(
                     period=self.period,
                     term=self.term,
                     gr=self.sfr,
@@ -48,10 +58,9 @@ class Loan:
 
                 sf_i = self.gr.effective_interval(t2=self.period)
                 sf_j = self.sfr.effective_interval(t2=self.period)
-                print(a_n)
-                print(sf_i)
-                print(sf_j)
-                ann = self.pmt * (a_n / (((sf_i - sf_j) * a_n) + 1))
+                ann = self.pmt * (ann_snk / (((sf_i - sf_j) * ann_snk) + 1))
+            else:
+                ann = self.hybrid_principal()
 
             self.amt = ann
         else:
@@ -61,20 +70,40 @@ class Loan:
             if period and term:
                 self.pmt_sched = self.get_payments()
                 self.pmt = self.pmt_sched.amounts[0]
+            elif pp:
+                self.pmt_sched = self.get_payments()
+                self.pmt = self.pmt_sched.amounts[0]
 
-        if pmt and period and term:
+        if pmt and isinstance(pmt, (float, int)) and period and term:
             n_payments = ceil(term / period)
             self.pmt_sched = Payments(
                 times=[(x + 1) * period for x in range(n_payments)],
-                amounts=[pmt for x in range(n_payments)]
+                amounts=[pmt for pmt in range(n_payments)]
             )
+            self.pmt_is_level = True
+
+        if isinstance(pmt, Payments):
+            self.pmt_sched = pmt
+            if pmt.amounts[1:] == pmt.amounts[:-1]:
+                self.pmt_is_level = True
+            else:
+                self.pmt_is_level = False
+
+        if sfr is not None and sfd is None and pmt is not None:
+            sv = Annuity(
+                gr=self.sfr,
+                period=self.period,
+                term=self.term
+            ).sv()
+
+            self.sfd = self.amt / sv
 
     def get_payments(self):
-        interest_due = self.gr.effective_rate(self.period) * self.amt
-        n_payments = ceil(self.term / self.period)
 
         if self.sfr:
             if self.sfd is not None:
+                interest_due = self.gr.effective_rate(self.period) * self.amt
+                n_payments = ceil(self.term / self.period)
 
                 final_pmt = self.sf_final()
                 pmts = Payments(
@@ -83,7 +112,8 @@ class Loan:
                 )
 
             else:
-
+                interest_due = self.gr.effective_rate(self.period) * self.amt
+                n_payments = ceil(self.term / self.period)
                 sv_ann = Annuity(
                     gr=self.sfr.effective_rate(self.period),
                     period=self.period,
@@ -95,6 +125,9 @@ class Loan:
                     amounts=[amt] * n_payments,
                     times=[(x + 1) * self.period for x in range(n_payments)]
                 )
+
+        elif self.pp is not None:
+            pmts = self.fixed_principal()
 
         else:
 
@@ -312,3 +345,71 @@ class Loan:
         res = self.sink_payments(payments=self.pmt_sched)
 
         return res
+
+    def rc_yield(self):
+        n_payments = ceil(self.term / self.period)
+        if self.pmt_is_level:
+            extra = [self.pmt - self.sfd] * n_payments
+        else:
+            extra = []
+            for amount in self.pmt_sched.amounts:
+                extra_i = amount - self.sfd
+                extra += [extra_i]
+
+        sv = Annuity(
+            amount=self.sfd,
+            gr=self.sfr,
+            term=self.term,
+            period=self.period
+        ).sv()
+
+        pmts = Payments(
+            amounts=[-self.amt] + extra + [sv],
+            times=[0.0] + [(x + 1) * self.period for x in range(n_payments)] + [self.term],
+            gr=self.sfr
+        )
+
+        return pmts.irr()
+
+    def fixed_principal(self) -> Payments:
+        # so far, last payment just gets adjusted
+        n_payments = ceil(self.amt / self.pp)
+
+        bal = self.amt
+        times = [(x + 1) * self.period for x in range(n_payments)]
+        amounts = []
+        for x in range(n_payments):
+            interest_due = bal * self.gr.effective_interval(t2=self.period)
+            if bal >= self.pp:
+                pmt = self.pp + interest_due
+            else:
+                pmt = bal + interest_due
+            amounts += [pmt]
+            bal -= self.pp
+
+        pmts = Payments(
+            times=times,
+            amounts=amounts
+        )
+
+        return pmts
+
+    def hybrid_principal(self):
+        ann_am = Annuity(
+            term=self.term,
+            gr=self.gr,
+            period=self.period
+        )
+
+        ann_sf = Annuity(
+            term=self.term,
+            gr=self.sfr,
+            period=self.period
+        )
+
+        if self.sfh_gr:
+            sfh = self.sfh_gr.effective_interval(t2=self.period)
+        else:
+            sfh = self.gr.effective_interval(t2=self.period)
+
+        return self.pmt / (sfh * self.sf_split + self.sf_split / ann_sf.sv() + (1 - self.sf_split) / ann_am.pv())
