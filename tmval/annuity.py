@@ -625,7 +625,7 @@ def get_loan_pmt(
     loan_amt: float,
     period: float,
     term: float,
-    gr: Union[float, Rate],
+    gr: Union[float, Rate, TieredTime],
     imd: str = 'immediate',
     gprog: float = 0.0,
     aprog: float = 0.0,
@@ -1021,3 +1021,19 @@ def get_perpetuity_pmt(
     amount = i * pv
 
     return amount
+
+
+def n_solver(
+        gr,
+        amount,
+        pv=None,
+        sv=None,
+        period=None,
+):
+    if sv:
+        acc = standardize_acc(gr)
+        i = acc.effective_rate(period)
+
+        n = np.log(1 + sv / amount * i) / np.log(1 + i)
+
+    return n
