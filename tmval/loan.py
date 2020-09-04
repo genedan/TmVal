@@ -1,4 +1,4 @@
-from math import ceil, floor
+from math import ceil
 from typing import Union
 
 from tmval.annuity import Annuity, olb_r, olb_p, get_loan_pmt
@@ -95,8 +95,6 @@ class Loan:
             )
             self.pmt_is_level = True
 
-
-
         if sfr is not None and sfd is None and pmt is not None:
             sv = Annuity(
                 gr=self.sfr,
@@ -115,7 +113,7 @@ class Loan:
 
                 final_pmt = self.sf_final()
                 pmts = Payments(
-                    amounts=[self.sfd + interest_due for x in range(n_payments - 1)] + [final_pmt],
+                    amounts=[self.sfd + interest_due] * (n_payments - 1) + [final_pmt],
                     times=[(x + 1) * self.period for x in range(n_payments)]
                 )
 
@@ -453,7 +451,7 @@ class Loan:
             ).sv()
 
             gr = Rate(
-                rate=1 / ann - 1 /snn,
+                rate=1 / ann - 1 / snn,
                 pattern="Effective Interest",
                 interval=self.period
             )
