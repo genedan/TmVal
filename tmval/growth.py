@@ -8,7 +8,9 @@ import datetime as dt
 import numpy as np
 
 from inspect import signature
+from numpy import ndarray
 from scipy.misc import derivative
+from scipy.optimize import newton
 from typing import Callable, Union
 
 from tmval.constants import COMPOUNDS, SIMPLES
@@ -384,6 +386,21 @@ class Accumulation(Amount):
             delta_t = derivative(func=self.func, x0=t, dx=1e-6) / self.func(t)
 
         return delta_t
+
+    def solve_t(self, pv, fv, x0=10):
+
+        def f(t0):
+            return self.val(t0) - fv / pv
+
+        roots = newton(func=f, x0=x0)
+        if isinstance(roots, ndarray):
+            pass
+        else:
+            roots = np.array(roots)
+        reals = roots[np.isreal(roots)]
+        res = round(reals[0])
+
+        return res
 
 
 def simple_solver(
