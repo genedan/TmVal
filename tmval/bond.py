@@ -15,64 +15,63 @@ class Bond(Payments):
 
     def __init__(
         self,
-        face,
-        term,
+        face: float = None,
+        term: float = None,
         red: float = None,
         gr: Union[float, Rate] = None,
         cgr: Rate = None,
         alpha: Union[float, list] = None,
         cfreq: Union[float, list] = None,
-        price: float = None
+        price: float = None,
+        pd: float = None,
+        k: float = None,
+        fr: float = None
     ):
-
-        cgr_dict = parse_cgr(alpha=alpha, cfreq=cfreq, cgr=cgr)
-        self.cgr = cgr_dict['cgr']
-        self.alpha = cgr_dict['alpha']
-        self.cfreq = cgr_dict['cfreq']
-
-        self.fr_is_level = isinstance(self.alpha, (float, int))
 
         self.face = face
         self.term = term
-        self.fr = self.get_coupon_amt()
-        print(self.fr)
 
-        if not self.fr_is_level:
-            self.coupon_intervals = self.get_coupon_intervals()
+        if [cgr, alpha].count(None) == 2:
+            c_args = None
+        else:
+            c_args = len([cgr, alpha])
 
-        self.n_coupons = self.get_n_coupons()
+        if c_args:
 
-        args = [gr, red, price]
+            cgr_dict = parse_cgr(alpha=alpha, cfreq=cfreq, cgr=cgr)
+            self.cgr = cgr_dict['cgr']
+            self.alpha = cgr_dict['alpha']
+            self.cfreq = cgr_dict['cfreq']
+
+            self.fr_is_level = isinstance(self.alpha, (float, int))
+
+            self.fr = self.get_coupon_amt()
+
+            if not self.fr_is_level:
+                self.coupon_intervals = self.get_coupon_intervals()
+        else:
+            self.fr = fr
+            self.cfreq = cfreq
+
+        args = [gr, red, price, term, c_args]
+
         n_missing = args.count(None)
 
         if n_missing == 1:
-            if price is None:
 
+            if price is None:
+                self.n_coupons = self.get_n_coupons()
                 self.red = red
                 self.gr = standardize_acc(gr)
                 self.coupons = self.get_coupons()
-                print(self.coupons.amounts)
-                print(self.coupons.times)
-
-                amounts = self.coupons.amounts + [self.red]
-                times = self.coupons.times + [self.term]
-
-                Payments.__init__(
-                    self,
-                    amounts=amounts,
-                    times=times,
-                    gr=self.gr
-                )
-
-                self.price = self.npv()
 
             elif gr is None:
-
+                self.n_coupons = self.get_n_coupons()
                 self.red = red
                 self.price = price
 
                 amounts = [-price] + [self.fr] * self.n_coupons + [red]
-                times = [0] + self.get_coupon_times() + [term]
+                times = [0.0] + self.get_coupon_times() + [term]
 
                 pmts = Payments(
                     amounts=amounts,
@@ -84,35 +83,75 @@ class Bond(Payments):
 
                 self.coupons = self.get_coupons()
 
-                amounts = self.coupons.amounts + [self.red]
-                times = self.coupons.times + [self.term]
-
-                Payments.__init__(
-                    self,
-                    amounts=amounts,
-                    times=times,
-                    gr=self.gr
-                )
-
             else:
-
+                self.n_coupons = self.get_n_coupons()
                 self.red = red
                 self.gr = standardize_acc(gr)
                 self.price = price
                 self.coupons = self.get_coupons()
                 self.red = self.get_redemption()
 
-                amounts = self.coupons.amounts + [self.red]
-                times = self.coupons.times + [self.term]
+        elif n_missing == 2:
+            if price is None and red is None:
+                if pd is not None:
+                    self.n_coupons = self.get_n_coupons()
+                    self.gr = standardize_acc(gr)
+                    self.coupons = self.get_coupons()
 
-                Payments.__init__(
-                    self,
-                    amounts=amounts,
-                    times=times,
-                    gr=self.gr
-                )
+                    self.red = (self.coupons.pv() - pd) / (1 - self.gr.discount_func(t=self.term))
+
+                    self.price = self.red + pd
+
+                else:
+                    raise Exception("Unable to evaluate bond. Too many missing arguments.")
+
+            if price is None and term is None:
+                if k is not None:
+                    self.gr = standardize_acc(gr)
+                    self.red = red
+                    self.g = self.fr / self.red
+
+                    self.price = self.makeham(k=k)
+                    self.term = self.gr.solve_t(pv=k, fv=self.red)
+                    self.coupons = self.get_coupons()
+                else:
+                    raise Exception("Unable to evaluate bond. Too many missing arguments.")
+
+            if price is None and c_args is None:
+                if fr is not None:
+                    self.gr = standardize_acc(gr)
+                    self.red = red
+                    self.price = self.base_amount()
+                    self.fr_is_level = True
+                    self.fr = fr
+                    self.n_coupons = self.get_n_coupons()
+                    self.coupons = self.get_coupons()
+                else:
+                    raise Exception("Unable to evaluate bond. Too many missing arguments.")
+
+        amounts = self.coupons.amounts + [self.red]
+        times = self.coupons.times + [self.term]
+
+        Payments.__init__(
+            self,
+            amounts=amounts,
+            times=times,
+            gr=self.gr
+        )
+
+        if price is None:
+            self.price = self.npv()
+        else:
+            pass
 
         self.append(amounts=[-self.price], times=[0])
+
+        if self.fr_is_level:
+            self.j = self.gr.val(1/self.cfreq)
+            self.base = self.fr / (self.j - 1)
+
+        self.premium = self.price - self.red
+        self.discount = self.red - self.price
 
     def get_coupon_times(self) -> list:
         times = [(x + 1) * 1 / self.cfreq for x in range(self.n_coupons)]
@@ -162,7 +201,6 @@ class Bond(Payments):
             times = []
             amounts = []
             base = 0
-            print(self.coupon_intervals)
             for a, c, t in zip(self.fr, self.cfreq, self.coupon_intervals):
 
                 n_pmt = t * c
@@ -190,11 +228,23 @@ class Bond(Payments):
 
         return times
 
+    def makeham(self, k):
+        j = self.gr.val(1/self.cfreq)
+        p = self.g / j * (self.red - k + k)
+        return p
+
+    def base_amount(self):
+        j = self.gr.val(1 / self.cfreq)
+        g = self.fr / j
+        p = (self.red - g) * self.gr.discount_func(self.term) + g
+        return p
+
 
 def parse_cgr(
     alpha: Union[float, list] = None,
     cfreq: Union[float, list] = None,
-    cgr: Union[Rate, TieredTime] = None
+    cgr: Union[Rate, TieredTime] = None,
+    fr: float = None
 ) -> dict:
 
     if alpha is not None and cfreq is not None:
@@ -244,9 +294,6 @@ def parse_cgr(
     if isinstance(gr, Rate):
         alphas = gr.rate
         cfreqs = gr.freq
-    # elif isinstance(gr, list):
-    #     alphas = [(x[0].rate, x[1]) for x in gr]
-    #     cfreqs = [(x[0].freq, x[1]) for x in gr]
     elif isinstance(gr, TieredTime):
         alphas = [(x.rate, y) for x, y in zip(gr.rates, gr.tiers)]
         cfreqs = [x.freq for x in gr.rates]
