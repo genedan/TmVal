@@ -3,10 +3,11 @@ This file contains the Bond class, which is TmVal's class for representing bonds
 """
 import numpy as np
 
+from math import floor
 from typing import Union
 
 from tmval.annuity import Annuity
-from tmval.growth import standardize_acc, TieredTime
+from tmval.growth import Accumulation, standardize_acc, TieredTime
 from tmval.rate import Rate
 from tmval.value import Payments
 
@@ -147,8 +148,9 @@ class Bond(Payments):
         self.append(amounts=[-self.price], times=[0])
 
         if self.fr_is_level:
-            self.j = self.gr.val(1/self.cfreq)
-            self.base = self.fr / (self.j - 1)
+            self.j = self.gr.val(1/self.cfreq) - 1
+            self.base = self.fr / self.j
+            self.g = self.fr / self.red
 
         self.premium = self.price - self.red
         self.discount = self.red - self.price
@@ -239,6 +241,45 @@ class Bond(Payments):
         p = (self.red - g) * self.gr.discount_func(self.term) + g
         return p
 
+    def balance(self, t):
+        n = self.n_coupons
+        t0 = floor(t * self.cfreq)
+        g = self.g
+        c = self.red
+        j = self.j
+
+        ann = Annuity(
+            gr=j,
+            n=n - t0,
+        )
+
+        bt = c * (g - j) * ann.pv() + c
+
+        return bt
+
+    def am_prem(self, t):
+        j = self.j
+        c = self.red
+        g = self.g
+
+        last_coupon = max([x for x in self.coupons.times if x <= t])
+
+        ti = self.coupons.times.index(last_coupon)
+        t0 = self.coupons.times[ti - 1]
+
+        pt = c * (g - j) * self.gr.discount_func(self.term - t0)
+        return pt
+
+    def acc_disc(self, t):
+        pt = self.am_prem(t)
+        ad = - pt
+        return ad
+
+    def am_interest(self, t):
+        pt = self.am_prem(t)
+        it = self.fr - pt
+        return it
+
 
 def parse_cgr(
     alpha: Union[float, list] = None,
@@ -307,3 +348,20 @@ def parse_cgr(
     }
 
     return res
+
+
+# def bsolve_g_from_am_prem(
+#         am: float,
+#         gr,
+#         alpha,
+#         cfreq,
+#         term,
+#         t
+# ):
+#     n = term * cfreq
+#     cgr_dict = parse_cgr(alpha=alpha, cfreq=cfreq)
+#     cgr = cgr_dict['cgr']
+#     j = cgr.rate / cgr.freq
+#
+#     acc = Accumulation(gr=j)
+
