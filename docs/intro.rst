@@ -7,7 +7,7 @@ Introducing TmVal
 
 .. meta::
    :description: a Python package for mathematical interest theory and time value of money computations
-   :keywords: financial mathematics, interest theory, annuities, bonds, python, package
+   :keywords: financial mathematics, interest theory, annuities, time value of money, bonds, python, package
    :image property=og\:image: _static/tmval_logo.png
 
 

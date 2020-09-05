@@ -2,6 +2,10 @@
 Amount Functions
 ========================
 
+.. meta::
+   :description: An amount function specifies how money grows for an arbitrary growth pattern.
+   :keywords: amount function, interest, financial mathematics, python, package, simple interest, compound interest, money growth.
+
 Although we have introduced the familiar cases of simple and compound interest, not all growth patterns are linear or geometric. Sometimes a growth pattern might be geometric, cubic, or some arbitrary user-defined pattern.
 
 To accommodate these new patterns, we can define an :term:`amount function`, which specifies how money grows for an arbitrary growth pattern:
