@@ -2,6 +2,10 @@
 Force of Interest
 ========================
 
+.. meta::
+   :description: Force of interest, a continuously compounding interest rate.
+   :keywords: force of interest, continuously compounding, python, package, calculus, delta
+
 It can be shown that as the compounding frequency approaches infinity, the nominal interest and discount rates approach a value :math:`\delta` called the :term:`force of interest`:
 
 .. math::

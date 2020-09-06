@@ -2,6 +2,9 @@
 Discount
 =========
 
+.. meta::
+   :keywords: discount rate, interest up front, simple loan, python, package, interest theory
+
 **Note:** This definition of :term:`discount` may differ from what you are used to in finance. If you typically use the terms **interest rate** and **discount rate** interchangeably, then stick with the interest rate operations in TmVal. If you encounter the term 'discount rate' in TmVal, please be aware that it refers to actuarial discount, discount interest, or interest up front.
 
 For loans, sometimes, interest is paid up front. For example, if you were to take out a loan for $1000 to be repaid in 1 year, the lender may ask you to pay $100 immediately for use of the remaining $900. This value of $100 is known as the :term:`discount` on the loan.

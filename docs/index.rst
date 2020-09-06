@@ -1,6 +1,10 @@
 TmVal Documentation
 ===================
 
+.. meta::
+   :description: TmVal is a Python package for time value of money computations. It is intended for commercial use, open source development, and as a tool for actuarial students studying for the Financial Mathematics exam.
+   :keywords: interest theory, financial mathematics, actuarial, python, package, FM/2, exam FM, annuity, bond, stock, option, interest rate, amortization
+
 TmVal is a Python package for time value of money computations. It is intended for commercial use, open source development, and as a tool for actuarial students studying for the Financial Mathematics exam.
 
 .. toctree::
