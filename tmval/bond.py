@@ -7,7 +7,7 @@ from math import floor
 from typing import Union
 
 from tmval.annuity import Annuity
-from tmval.growth import Accumulation, standardize_acc, TieredTime
+from tmval.growth import standardize_acc, TieredTime
 from tmval.rate import Rate
 from tmval.value import Payments
 
@@ -248,12 +248,17 @@ class Bond(Payments):
         c = self.red
         j = self.j
 
-        ann = Annuity(
-            gr=j,
-            n=n - t0,
-        )
+        if t < self.term:
+            ann = Annuity(
+                gr=j,
+                n=n - t0,
+            )
 
-        bt = c * (g - j) * ann.pv() + c
+            bt = c * (g - j) * ann.pv() + c
+        elif t == self.term:
+            bt = self.red
+        else:
+            bt = 0
 
         return bt
 
@@ -265,7 +270,8 @@ class Bond(Payments):
         last_coupon = max([x for x in self.coupons.times if x <= t])
 
         ti = self.coupons.times.index(last_coupon)
-        t0 = self.coupons.times[ti - 1]
+
+        t0 = self.coupons.times[ti - 1] if ti > 0 else 0
 
         pt = c * (g - j) * self.gr.discount_func(self.term - t0)
         return pt
@@ -279,6 +285,36 @@ class Bond(Payments):
         pt = self.am_prem(t)
         it = self.fr - pt
         return it
+
+    def amortization(self):
+        res = {
+            'time': [],
+            'coupon_payment': [],
+            'interest': [],
+            'premium': [],
+            'balance': []
+        }
+
+        res['time'] += [0]
+        res['coupon_payment'] += [None]
+        res['interest'] += [None]
+        res['premium'] += [None]
+        res['balance'] += [self.price]
+
+        for t, c in zip(self.coupons.times, self.coupons.amounts):
+            print(t)
+            res['time'] += [t]
+            res['coupon_payment'] += [c]
+            res['interest'] += [self.am_interest(t)]
+            res['premium'] += [self.am_prem(t)]
+            res['balance'] += [self.balance(t)]
+
+        return res
+
+    def dirty(self, t):
+        floor_t = floor(t)
+        dt = self.balance(t) * (1 + self.gr.effective_interval(t1=floor_t, t2=t))
+        return dt
 
 
 def parse_cgr(
