@@ -311,11 +311,79 @@ class Bond(Payments):
 
         return res
 
-    def dirty(self, t):
-        floor_t = floor(t)
-        dt = self.balance(t) * (1 + self.gr.effective_interval(t1=floor_t, t2=t))
+    def dirty(self, t, prac=False):
+
+        t0 = max([x for x in self.coupons.times if x <= t])
+
+        # get next coupon time
+        ti = self.coupons.times.index(t0)
+
+        t1 = self.coupons.times[ti + 1]
+
+        f = (t - t0) / (t1 - t0)
+
+        if not prac:
+
+            dt = self.balance(t) * (1 + self.gr.effective_interval(t1=t0, t2=t))
+
+        else:
+
+            dt = self.balance(t) * (1 + self.j * f)
+
         return dt
 
+    def clean(self, t, prac=False):
+        t0 = max([x for x in self.coupons.times if x <= t])
+
+        # get next coupon time
+        ti = self.coupons.times.index(t0)
+
+        t1 = self.coupons.times[ti + 1]
+
+        # get next coupon amount
+
+        cg = self.coupons.amounts[ti + 1]
+
+        f = (t - t0) / (t1 - t0)
+
+        if not prac:
+            dt = self.dirty(t=t)
+            ct = dt - cg * ((1 + self.j) ** f - 1) / self.j
+        else:
+            dt = self.dirty(t=t, prac=True)
+            ct = dt - f * cg
+
+        return ct
+
+    def yield_s(self, t, sale):
+        t0 = max([x for x in self.coupons.times if x <= t])
+        ti = self.coupons.times.index(t0)
+
+        amounts = self.coupons.amounts[:(ti + 1)]
+        times = self.coupons.times[:(ti + 1)]
+
+        amounts += [-self.price] + [sale]
+        times += [0] + [t]
+
+        pmts = Payments(amounts=amounts, times=times)
+
+        return pmts.irr()
+
+    def yield_j(self, t, sale):
+        t0 = max([x for x in self.coupons.times if x <= t])
+        ti = self.coupons.times.index(t0)
+
+        amounts = self.coupons.amounts[(ti + 1):]
+        times = self.coupons.times[(ti + 1):]
+        times = [x - t for x in times]
+        red_t = self.term - t
+
+        amounts += [-sale] + [self.red]
+        times += [0] + [red_t]
+
+        pmts = Payments(amounts=amounts, times=times)
+
+        return pmts.irr()
 
 def parse_cgr(
     alpha: Union[float, list] = None,
