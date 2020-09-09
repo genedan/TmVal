@@ -311,7 +311,7 @@ class Bond(Payments):
 
         return res
 
-    def dirty(self, t, prac=False):
+    def dirty(self, t, prac=False, j: Union[float, Rate] = None):
 
         t0 = max([x for x in self.coupons.times if x <= t])
 
@@ -322,9 +322,32 @@ class Bond(Payments):
 
         f = (t - t0) / (t1 - t0)
 
+        if j is None:
+            j_factor = (1 + self.gr.effective_interval(t1=t0, t2=t))
+            balance = self.balance(t)
+        else:
+            jgr = standardize_acc(j)
+            j_factor = (1 + jgr.effective_interval(t1=t0, t2=t))
+
+            amounts = self.coupons.amounts[(ti + 1):]
+            times = self.coupons.times[(ti + 1):]
+            times = [x - t0 for x in times]
+            red_t = self.term - t0
+
+            amounts += [self.red]
+            times += [red_t]
+
+            pmts = Payments(
+                amounts=amounts,
+                times=times,
+                gr=jgr
+            )
+
+            balance = pmts.npv()
+            print(balance)
         if not prac:
 
-            dt = self.balance(t) * (1 + self.gr.effective_interval(t1=t0, t2=t))
+            dt = balance * j_factor
 
         else:
 
@@ -332,7 +355,7 @@ class Bond(Payments):
 
         return dt
 
-    def clean(self, t, prac=False):
+    def clean(self, t, j=None, prac=False):
         t0 = max([x for x in self.coupons.times if x <= t])
 
         # get next coupon time
@@ -346,14 +369,46 @@ class Bond(Payments):
 
         f = (t - t0) / (t1 - t0)
 
+        if j is None:
+            j = self.gr
+
+        else:
+            pass
+
+        jgr = standardize_acc(j)
+        j0 = jgr.effective_interval(t1=t0, t2=t1)
+
         if not prac:
-            dt = self.dirty(t=t)
-            ct = dt - cg * ((1 + self.j) ** f - 1) / self.j
+            dt = self.dirty(t=t, j=j)
+            ct = dt - cg * ((1 + j0) ** f - 1) / j0
         else:
             dt = self.dirty(t=t, prac=True)
             ct = dt - f * cg
 
         return ct
+
+    def accrued_interest(self, t, j=None, prac=False):
+        # get the next coupon
+
+        t0 = max([x for x in self.coupons.times if x <= t])
+        ti = self.coupons.times.index(t0)
+        t1 = self.coupons.times[ti + 1]
+
+        cg = self.coupons.amounts[ti + 1]
+
+        f = (t - t0) / (t1 - t0)
+
+        if prac:
+            at = f * cg
+
+        else:
+            if j is None:
+                raise ValueError("Missing argument j.")
+            j = standardize_acc(j)
+            j = j.effective_interval(t1=t0, t2=t1)
+            at = cg * (((1 + j) ** f) - 1) / j
+
+        return at
 
     def yield_s(self, t, sale):
         t0 = max([x for x in self.coupons.times if x <= t])
@@ -384,6 +439,10 @@ class Bond(Payments):
         pmts = Payments(amounts=amounts, times=times)
 
         return pmts.irr()
+
+    def sale_prem(self, t, j):
+        prem = self.clean(t=t, j=j) - self.red
+        return prem
 
 def parse_cgr(
     alpha: Union[float, list] = None,
