@@ -2,6 +2,10 @@
 Growth
 ============
 
+.. meta::
+   :description: chapter for growth functions and interest rates
+   :keywords: accumulation, amount, interest, compound, simple, rates, python, package
+
 Growth refers to the change in value of money over time. TmVal provides tools to measure this growth, including the familiar cases of simple and compound interest, as well as more complex ones.
 
 We will start by demonstrating some practical applications concerning simple and compound interest, and then gradually move on to more generalized growth patterns such as amount and accumulation functions.
