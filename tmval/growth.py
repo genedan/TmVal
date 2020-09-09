@@ -941,3 +941,31 @@ def read_iym(
     rate = Rate(rate)
 
     return rate
+
+
+def invsec(amt1: Amount, amt2: Amount, x0=range(100), precision=5) -> list:
+    """
+    Finds the point(s) at which two accumulation functions intersect.
+
+    :param amt1:
+    :type amt1:
+    :param amt2:
+    :type amt2:
+    :param x0:
+    :type x0:
+    :param precision:
+    :type precision:
+    :return:
+    :rtype:
+    """
+    def f(t):
+        return amt1.val(t) - amt2.val(t)
+
+    sol = newton(f, x0=x0)
+
+    sol = [round(x, precision) for x in sol]
+
+    res = list(set(sol))
+
+    return res
+
