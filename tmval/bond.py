@@ -106,7 +106,7 @@ class Bond(Payments):
                 else:
                     raise Exception("Unable to evaluate bond. Too many missing arguments.")
 
-            if price is None and term is None:
+            elif price is None and term is None:
                 if k is not None:
                     self.gr = standardize_acc(gr)
                     self.red = red
@@ -118,7 +118,7 @@ class Bond(Payments):
                 else:
                     raise Exception("Unable to evaluate bond. Too many missing arguments.")
 
-            if price is None and c_args is None:
+            elif price is None and c_args is None:
                 if fr is not None:
                     self.gr = standardize_acc(gr)
                     self.red = red
@@ -129,6 +129,12 @@ class Bond(Payments):
                     self.coupons = self.get_coupons()
                 else:
                     raise Exception("Unable to evaluate bond. Too many missing arguments.")
+
+            else:
+                raise Exception("Unable to evaluate bond. Too many missing arguments.")
+
+        else:
+            raise Exception("Unable to evaluate bond. Too many missing arguments.")
 
         amounts = self.coupons.amounts + [self.red]
         times = self.coupons.times + [self.term]
@@ -302,7 +308,7 @@ class Bond(Payments):
         res['balance'] += [self.price]
 
         for t, c in zip(self.coupons.times, self.coupons.amounts):
-            print(t)
+
             res['time'] += [t]
             res['coupon_payment'] += [c]
             res['interest'] += [self.am_interest(t)]
@@ -344,7 +350,7 @@ class Bond(Payments):
             )
 
             balance = pmts.npv()
-            print(balance)
+
         if not prac:
 
             dt = balance * j_factor
@@ -403,7 +409,7 @@ class Bond(Payments):
 
         else:
             if j is None:
-                raise ValueError("Missing argument j.")
+                j = self.gr
             j = standardize_acc(j)
             j = j.effective_interval(t1=t0, t2=t1)
             at = cg * (((1 + j) ** f) - 1) / j
@@ -443,6 +449,82 @@ class Bond(Payments):
     def sale_prem(self, t, j):
         prem = self.clean(t=t, j=j) - self.red
         return prem
+
+    def last_coupon_amt(self, t):
+        t0 = self.last_coupon_t(t=t)
+        ti = self.coupons.times.index(t0)
+        coupon = self.coupons.amounts[ti]
+        return coupon
+
+    def next_coupon_amt(self, t):
+        t0 = self.last_coupon_t(t=t)
+        ti = self.coupons.times.index(t0)
+        coupon = self.coupons.amounts[ti + 1]
+        return coupon
+
+    def last_coupon_t(self, t):
+        return max([x for x in self.coupons.times if x <= t])
+
+    def next_coupon_t(self, t):
+        t0 = self.last_coupon_t(t=t)
+        ti = self.coupons.times.index(t0)
+        t1 = self.coupons.times[ti + 1]
+
+        return t1
+
+    def coupon_bound_t(self, t) -> tuple:
+        t0 = self.last_coupon_t(t=t)
+        t1 = self.next_coupon_t(t=t)
+
+        return t0, t1
+
+    def coupon_f(self, t):
+        t0, t1 = self.coupon_bound_t(t=t)
+
+        f = (t - t0) / (t1 - t0)
+
+        return f
+
+    def adj_principal(self, t, j=None, prac=False):
+        t1 = self.next_coupon_t(t=t)
+        f = self.coupon_f(t=t)
+
+        if prac:
+            pt = self.am_prem(t=t1)
+            adj_p = f * pt
+        else:
+            t0 = self.last_coupon_t(t=t)
+
+            if j is None:
+                j = self.j
+            else:
+                jgr = standardize_acc(j)
+                j = jgr.effective_interval(t1=t0, t2=t1)
+
+            sv = ((1 + j) ** f - 1) / j
+
+            c = self.red
+            g = self.g
+            n = self.term
+
+            adj_p = sv * c * (g - j) * (1 + j) ** (- (n - t0))
+
+        return adj_p
+
+    def interest_on_accrued(self, t, j=None, prac=False):
+
+        if prac:
+            adj_p = self.adj_principal(t=t, prac=True)
+            at = self.accrued_interest(t=t, prac=True)
+
+        else:
+            adj_p = self.adj_principal(t=t, j=j)
+            at = self.accrued_interest(t=t, j=j)
+
+        it = at - adj_p
+
+        return it
+
 
 def parse_cgr(
     alpha: Union[float, list] = None,
