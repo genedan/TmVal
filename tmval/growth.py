@@ -11,7 +11,7 @@ from inspect import signature
 from numpy import ndarray
 from scipy.misc import derivative
 from scipy.optimize import newton
-from typing import Callable, Union
+from typing import Callable, Iterable, Union
 
 from tmval.constants import COMPOUNDS, SIMPLES
 from tmval.rate import Rate, standardize_rate
@@ -267,6 +267,30 @@ class Amount:
 
         accumulation = Accumulation(gr=acc_func)
         return accumulation
+
+    def solve_t(self, fv, pv=None, x0=range(100), precision=5):
+
+        if pv is None:
+            t0 = 0
+        else:
+            def f0(t):
+                return pv - self.val(t)
+            rs = newton(f0, x0=x0)
+            if isinstance(rs, Iterable):
+                t0 = list(set([round(x, precision) for x in rs]))[0]
+            else:
+                t0 = rs
+
+        def f1(t):
+            return fv - self.val(t)
+
+        rs = newton(f1, x0=x0)
+        if isinstance(rs, Iterable):
+            t1 = list(set([round(x, precision) for x in rs]))[0]
+        else:
+            t1 = rs
+
+        return t1 - t0
 
 
 class Accumulation(Amount):
