@@ -2,6 +2,9 @@
 Interest-Discount Relationships
 ===============================
 
+.. meta::
+   :keywords: interest rate conversion, simple interest, simple discount, nominal interest, nominal discount, effective interest, effective discount, compound interest, compound discount, force of interest, conversions, python, package
+
 The relationship between interest rates and discount rates can be expressed with a variety of equations. One thing to keep in mind is that if we borrow a dollar at time :math:`t_1` a discount rate of :math:`d`, we will receive :math:`(1-d)` dollars today.
 
 If we were to hold invest that dollar for a year at the interest rate :math:`i`, it would grow to:
