@@ -732,7 +732,7 @@ def get_loan_pmt(
 
             diff = d_ann.pv() - loan_amt
 
-            last_pmt = round(d_ann.amounts[-1] - round(diff * acc.val(t=term), 2),2)
+            last_pmt = round(d_ann.amounts[-1] - round(diff * acc.val(t=term), 2), 2)
 
             pmts = [round(x, 2) for x in d_ann.amounts[:-1]]
             pmts.append(last_pmt)
@@ -749,7 +749,7 @@ def get_savings_pmt(
     fv: float,
     period: float,
     term: float,
-    gr: Rate,
+    gr: Union[float, Rate],
     cents=False
 ) -> Union[float, tuple]:
     """
@@ -1026,7 +1026,6 @@ def get_perpetuity_pmt(
 def n_solver(
         gr,
         amount,
-        pv=None,
         sv=None,
         period=None,
 ):
@@ -1035,5 +1034,7 @@ def n_solver(
         i = acc.effective_rate(period)
 
         n = np.log(1 + sv / amount * i) / np.log(1 + i)
+    else:
+        n = None
 
     return n
