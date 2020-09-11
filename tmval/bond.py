@@ -34,6 +34,7 @@ class Bond(Payments):
 
         if [cgr, alpha].count(None) == 2:
             c_args = None
+            self.alpha = None
         else:
             c_args = len([cgr, alpha])
 
@@ -50,9 +51,15 @@ class Bond(Payments):
 
             if not self.fr_is_level:
                 self.coupon_intervals = self.get_coupon_intervals()
+
         else:
             self.fr = fr
             self.cfreq = cfreq
+
+        if term is not None:
+            self.is_term_floor = self.term_floor()
+        else:
+            pass
 
         args = [gr, red, price, term, c_args]
 
@@ -71,7 +78,18 @@ class Bond(Payments):
                 self.red = red
                 self.price = price
 
-                amounts = [-price] + [self.fr] * self.n_coupons + [red]
+                if self.fr_is_level:
+                    amounts = [-price] + [self.fr] * self.n_coupons + [red]
+                else:
+                    amounts = [-price]
+                    cis = self.get_coupon_intervals()
+
+                    for afr, cf, ci in zip(self.fr, self.cfreq, cis):
+                        n = cf * ci
+                        amounts += [afr[0]] * n
+                    amounts += [red]
+
+                print(amounts)
                 times = [0.0] + self.get_coupon_times() + [term]
 
                 pmts = Payments(
@@ -115,6 +133,7 @@ class Bond(Payments):
                     self.price = self.makeham(k=k)
                     self.term = self.gr.solve_t(pv=k, fv=self.red)
                     self.coupons = self.get_coupons()
+                    self.is_term_floor = self.term_floor()
                 else:
                     raise Exception("Unable to evaluate bond. Too many missing arguments.")
 
@@ -127,6 +146,7 @@ class Bond(Payments):
                     self.fr = fr
                     self.n_coupons = self.get_n_coupons()
                     self.coupons = self.get_coupons()
+                    self.alpha = None
                 else:
                     raise Exception("Unable to evaluate bond. Too many missing arguments.")
 
@@ -147,22 +167,43 @@ class Bond(Payments):
         )
 
         if price is None:
-            self.price = self.npv()
+            if self.is_term_floor:
+                self.price = self.npv()
+            else:
+                if self.n_coupons == 1:
+
+                    j = self.gr.val(1 / self.cfreq) - 1
+                    f = 1 - self.term / (1 / self.cfreq)
+                    print((1 + (1 - f) * j))
+                    self.price = (self.red + self.fr) / (1 + (1 - f) * j) - f * self.fr
+                else:
+                    self.price = self.clean(t=0)
         else:
             pass
 
         self.append(amounts=[-self.price], times=[0])
 
         if self.fr_is_level:
-            self.j = self.gr.val(1/self.cfreq) - 1
+            self.j = self.gr.val(1 / self.cfreq) - 1
             self.base = self.fr / self.j
             self.g = self.fr / self.red
 
         self.premium = self.price - self.red
         self.discount = self.red - self.price
 
+        self.k = self.gr.discount_func(t=self.term, fv=self.red)
+
     def get_coupon_times(self) -> list:
-        times = [(x + 1) * 1 / self.cfreq for x in range(self.n_coupons)]
+
+        if self.fr_is_level:
+            times = [(x + 1) * 1 / self.cfreq for x in range(self.n_coupons)]
+        else:
+            times = []
+            coupon_intervals = self.get_coupon_intervals()
+            for t, cf, a in zip(coupon_intervals, self.cfreq, self.alpha):
+                at = a[1]
+                n = t * cf
+                times += [(x + 1) * 1 / cf + at for x in range(n)]
 
         return times
 
@@ -186,7 +227,13 @@ class Bond(Payments):
             self
     ):
         if self.fr_is_level:
-            n_coupons = self.term * self.cfreq
+            # if term is evenly divisible by period, assume bond purchased at beginning of period
+            if round(self.term % (1 / self.cfreq), 5) == 0:
+                n_coupons = self.term * self.cfreq
+
+            # else, assume
+            else:
+                n_coupons = 1 + floor(self.term * self.cfreq)
         else:
             n_coupons = 0
             for t, c in zip(self.coupon_intervals, self.cfreq):
@@ -198,17 +245,31 @@ class Bond(Payments):
 
         if self.fr_is_level:
 
-            coupons = Annuity(
-                gr=self.gr,
-                amount=self.fr,
-                period=1/self.cfreq,
-                term=self.term
-            )
+            if round(self.term % (1 / self.cfreq), 5) == 0:
+
+                coupons = Annuity(
+                    gr=self.gr,
+                    amount=self.fr,
+                    period=1 / self.cfreq,
+                    term=self.term
+                )
+
+            else:
+                period = 1 / self.cfreq
+                f = self.term - ((self.n_coupons - 1) * period)
+                coupons = Annuity(
+                    gr=self.gr,
+                    amount=self.fr,
+                    n=self.n_coupons,
+                    imd='due',
+                    deferral=f
+                )
 
         else:
             times = []
             amounts = []
             base = 0
+
             for a, c, t in zip(self.fr, self.cfreq, self.coupon_intervals):
 
                 n_pmt = t * c
@@ -319,12 +380,27 @@ class Bond(Payments):
 
     def dirty(self, t, prac=False, j: Union[float, Rate] = None):
 
-        t0 = max([x for x in self.coupons.times if x <= t])
+        if t == 0:
+            t0 = 0
 
-        # get next coupon time
-        ti = self.coupons.times.index(t0)
+            ti = -1
 
-        t1 = self.coupons.times[ti + 1]
+            t1 = self.coupons.times[0]
+
+            cg = self.coupons.amounts[0]
+
+        else:
+
+            t0 = max([x for x in self.coupons.times if x <= t])
+
+            # get next coupon time
+            ti = self.coupons.times.index(t0)
+
+            t1 = self.coupons.times[ti + 1]
+
+            # get next coupon amount
+
+            cg = self.coupons.amounts[ti + 1]
 
         f = (t - t0) / (t1 - t0)
 
@@ -362,16 +438,25 @@ class Bond(Payments):
         return dt
 
     def clean(self, t, j=None, prac=False):
-        t0 = max([x for x in self.coupons.times if x <= t])
+        if t == 0:
+            t0 = 0
 
-        # get next coupon time
-        ti = self.coupons.times.index(t0)
+            t1 = self.coupons.times[0]
 
-        t1 = self.coupons.times[ti + 1]
+            cg = self.coupons.amounts[0]
 
-        # get next coupon amount
+        else:
 
-        cg = self.coupons.amounts[ti + 1]
+            t0 = max([x for x in self.coupons.times if x <= t])
+
+            # get next coupon time
+            ti = self.coupons.times.index(t0)
+
+            t1 = self.coupons.times[ti + 1]
+
+            # get next coupon amount
+
+            cg = self.coupons.amounts[ti + 1]
 
         f = (t - t0) / (t1 - t0)
 
@@ -577,6 +662,23 @@ class Bond(Payments):
         pmts = Payments(amounts=amounts, times=times)
 
         return pmts
+
+    def term_floor(self):
+        if isinstance(self.alpha, (int, float)) or self.alpha is None:
+            if round(self.term % (1 / self.cfreq), 5) == 0:
+                return True
+            else:
+                return False
+        else:
+            last_alpha_t = self.alpha[-1][1]
+            last_cfreq = self.cfreq[-1]
+            interval = self.term - last_alpha_t
+            if round(interval % (1 / last_cfreq), 5) == 0:
+                return True
+            else:
+                return False
+
+
 
 
 def parse_cgr(
