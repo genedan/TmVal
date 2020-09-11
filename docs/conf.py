@@ -19,7 +19,7 @@ sys.path.insert(0, os.path.abspath('..'))
 
 project = 'TmVal Documentation'
 copyright = '2020, Gene Dan, FCAS, MAAA, CSPA'
-release = 'v0.0.8'
+release = 'v0.0.9'
 author = 'Gene Dan, FCAS, MAAA, CSPA'
 
 
