@@ -15,7 +15,7 @@ setuptools.setup(
     project_urls={
         "Documentation": "https://genedan.com/tmval/docs"
     },
-    install_requires=['numpy', 'scipy'],
+    install_requires=['numpy', 'scipy', 'dateutil'],
     packages=setuptools.find_packages(),
     classifiers=[
         "Programming Language :: Python :: 3.6",
