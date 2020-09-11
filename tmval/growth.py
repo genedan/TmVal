@@ -7,6 +7,7 @@ from __future__ import annotations
 import datetime as dt
 import numpy as np
 
+from dateutil.relativedelta import relativedelta
 from inspect import signature
 from numpy import ndarray
 from scipy.misc import derivative
@@ -524,6 +525,27 @@ def osi(
         return days / 360
     else:
         return days
+
+
+def actual_actual(
+        beg_dt: dt.datetime,
+        end_dt: dt.datetime,
+        frac=True
+):
+
+    if not frac:
+        return (end_dt - beg_dt).days
+    else:
+        years = relativedelta(end_dt, beg_dt).years
+        print(years)
+        intermediate = dt.datetime(beg_dt.year + 1, end_dt.month, end_dt.day)
+        print(intermediate)
+        days = (intermediate - beg_dt).days
+        print(days)
+
+        t = years + days / 365
+
+        return t
 
 
 def bankers_rule(
