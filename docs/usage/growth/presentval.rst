@@ -2,6 +2,9 @@
 Time Value of Money
 ========================
 
+.. meta::
+   :keywords: time vale of money, present value, discount, interest rate, python, package, principal
+
 The time value of money is a phenomenon whereby the value of money changes with time. One reason why interest is required to facilitate lending is because people attach different values of money at different times. For example, if I needed to borrow money from my neighbor today, they would no longer have immediate use of the money. But money in the future may be worth less to the neighbor than money that they can use now.
 
 Therefore, paying interest can be used to convince my neighbor to part with his money today, if he is confident that he will get the money back in the future along with the interest.

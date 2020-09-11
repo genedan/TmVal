@@ -2,6 +2,9 @@
 The Investment Year Method
 ===============================
 
+.. meta::
+   :keywords: investment year method, python, package
+
 The investment year method is a growth pattern in which the rate of interest applicable to an investment varies by year and depends on the time at which that investment was made. The rates are taken from a table, which might look something like this:
 
 .. rst-class:: right-align
