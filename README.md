@@ -105,7 +105,7 @@ are:
 The relationships between compound interest rates can be represented
 with the following expression:
 
-![interest conversion](https://github.com/genedan/TmVal/blob/master/docs/readme_gh/interest_conversion.svg)
+![interest conversion](https://raw.githubusercontent.com/genedan/TmVal/master/docs/readme_gh/interest_conversion.svg)
 
 Since there are so many varieties of rates, as well as relationships
 between them, an actuary would have to write over twenty conversion
@@ -175,7 +175,7 @@ TmVal can solve for the time τ equation of value for common
 financial instruments such as annuities and loans, as well as for
 arbitrary cash flows. This is done via the [Payments](https://genedan.com/tmval/docs/api_ref/payments/index.html) class:
 
-![equation of value](https://github.com/genedan/TmVal/blob/master/docs/readme_gh/eq_val.svg)
+![equation of value](https://raw.githubusercontent.com/genedan/TmVal/master/docs/readme_gh/eq_val.svg)
 
 For example, we can solve for the internal rate of return of an
 investment of 10,000 at time 0 which returns 5,000 at time 1 and 6,000
@@ -197,11 +197,11 @@ print(pmts.irr())
 We can also use the [Payments](https://genedan.com/tmval/docs/api_ref/payments/index.html) class to
 find the time-weighted yield:
 
-![time weighted yield](https://github.com/genedan/TmVal/blob/master/docs/readme_gh/tw_yield.svg)
+![time weighted yield](https://raw.githubusercontent.com/genedan/TmVal/master/docs/readme_gh/tw_yield.svg)
 
 where
 
-![time weighted factor](https://github.com/genedan/TmVal/blob/master/docs/readme_gh/tw_factor.svg)
+![time weighted factor](https://raw.githubusercontent.com/genedan/TmVal/master/docs/readme_gh/tw_factor.svg)
 
 Suppose we deposit 100,000 in a bank account at time 0. It grows to
 105,000 at time 1, and we immediately deposit an additional 5,000. It
@@ -359,7 +359,7 @@ olb_r method, we can calculate the
 outstanding loan balance at any time, such as after 1 year, using the
 [retrospective method](https://genedan.com/tmval/docs/usage/loan/retrospective.html#outstanding-loan-balance-retrospective-method):
 
-![olb retrospective](https://github.com/genedan/TmVal/blob/master/docs/readme_gh/olb_r.svg)
+![olb retrospective](https://raw.githubusercontent.com/genedan/TmVal/master/docs/readme_gh/olb_r.svg)
 
 ```python
 print(my_loan.olb_r(t=1))
