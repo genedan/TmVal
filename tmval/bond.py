@@ -525,6 +525,59 @@ class Bond(Payments):
 
         return it
 
+    def yield_c(self, times=None, premiums=None):
+
+        if times is None:
+            return self.irr()
+        else:
+            yields = []
+            if isinstance(times, (float, int)):
+                times = [times]
+            else:
+                pass
+
+            if premiums is None:
+                premiums = [0] * len(times)
+            elif isinstance(premiums, (float, int)):
+                premiums = [premiums]
+            else:
+                pass
+
+            for t, p in zip(times, premiums):
+                coupons = self.prior_coupons(t=t)
+                amounts = coupons.amounts
+                coupon_times = coupons.times
+
+                amounts += [-self.price] + [self.red + p]
+                coupon_times += [0] + [t]
+
+                pmts = Payments(amounts=amounts, times=coupon_times)
+
+                yields += pmts.irr()
+
+            if len(times) == 1:
+
+                res = yields
+
+            else:
+
+                res = {
+                    'times': times,
+                    'yields': yields
+                }
+
+            return res
+
+    def prior_coupons(self, t) -> Payments:
+        t0 = self.last_coupon_t(t=t)
+        ti = self.coupons.times.index(t0)
+        amounts = self.coupons.amounts[:ti + 1]
+        times = self.coupons.times[:ti + 1]
+
+        pmts = Payments(amounts=amounts, times=times)
+
+        return pmts
+
 
 def parse_cgr(
     alpha: Union[float, list] = None,
