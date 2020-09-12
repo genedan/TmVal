@@ -15,3 +15,4 @@ API Reference
    annuity/index
    payments/index
    rate/index
+   bond/index

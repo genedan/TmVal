@@ -50,3 +50,4 @@ This section documents standalone functions that do not belong to a class.
    simple_interval_solver
    pairwise
    time_weighted_yield
+   parse_cgr
