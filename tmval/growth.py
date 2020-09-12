@@ -379,6 +379,12 @@ class Accumulation(Amount):
 
         return fv / self.val(t)
 
+    def discount_amt(self, t: float, fv: float = None) -> float:
+
+        pv = self.discount_func(fv=fv, t=t)
+
+        return fv - pv
+
     def future_principal(
             self,
             fv: float,
