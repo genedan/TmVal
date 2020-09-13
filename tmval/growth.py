@@ -12,7 +12,7 @@ from inspect import signature
 from numpy import ndarray
 from scipy.misc import derivative
 from scipy.optimize import newton
-from typing import Callable, Iterable, Union
+from typing import Callable, Iterable, Tuple, Union
 
 from tmval.constants import COMPOUNDS, SIMPLES
 from tmval.rate import Rate, standardize_rate
@@ -1021,3 +1021,26 @@ def invsec(amt1: Amount, amt2: Amount, x0=range(100), precision=5) -> list:
 
     return res
 
+
+def rate_from_earned(iex: Tuple[float, float], iey: Tuple[float, float]) -> Rate:
+    """
+    Given the amount of interest earned in two time periods, calculates the annualized effective interest rate.
+
+    :param iex: Interest earned in period x, provided as (interest earned, period x).
+    :type iex: Tuple[float, float]
+    :param iey: Interest earned in period y, provided as (interest earned, period y).
+    :type iey: Tuple[float, float]
+    :return: An annualized effective interest rate.
+    :rtype: Rate
+    """
+
+    x_amt = iex[0]
+    x_t = iex[1]
+    y_amt = iey[0]
+    y_t = iey[1]
+
+    print((1 / ((y_t - 1) - (x_t - 1)) - 1))
+
+    gr = Rate((y_amt / x_amt) ** (1 / ((y_t - 1) - (x_t - 1))) - 1)
+
+    return gr
