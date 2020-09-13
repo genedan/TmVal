@@ -16,3 +16,4 @@ API Reference
    payments/index
    rate/index
    bond/index
+   loan/index
