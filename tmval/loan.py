@@ -1,16 +1,65 @@
 from math import ceil
-from typing import Union
+from typing import List, Union
 
-from tmval.annuity import Annuity, olb_r, olb_p, get_loan_pmt
-from tmval.growth import Amount, TieredTime, standardize_acc
+from tmval.annuity import (
+    Annuity,
+    get_loan_pmt,
+    olb_r,
+    olb_p
+)
+
+from tmval.growth import (
+    Amount,
+    standardize_acc,
+    TieredTime
+)
+
 from tmval.value import Payments
 from tmval.rate import Rate
 
 
 class Loan:
+
+    """
+    Loan is TmVal's class for representing loans. TmVal currently supports amortized loans, sinking fund loans,
+    amortized/sinking hybrid loans, and payment of fixed principal loans. You can specify the loan type by supplying
+    the appropriate argument.
+
+    The default case is an amortized loan, when gr, period, term, and payment amount are supplied without a
+    corresponding sinking fund rate or fixed principal payment. You do not have to supply all of the arguments. If
+    enough of them are supplied, the missing arguments are automatically calculated.
+
+    For sinking fund loans, specify the amount of the sinking fund deposit and the sinking fund rate.
+
+    For fixed principal loans, the payment is a fixed amount of principal which can be supplied with the argument pp.
+
+
+    :param gr: The interest rate of the loan.
+    :type gr: float, Rate, TieredTime
+    :param period: The time interval between payments, if the loan has regular payments.
+    :type period: float
+    :param term: The term of the loan.
+    :type term: float
+    :param amt: The loan amount.
+    :type amt: float
+    :param cents: Whether you want the payments to be rounded to cents. Defaults to False.
+    :type cents: bool
+    :param sfr: The sinking fund rate, if different from the loan interest rate.
+    :type sfr: float, Rate, TieredTime
+    :param sfd: The sinking fund deposit amount.
+    :type sfd: float
+    :param sf_split: If using a hybrid amortized/sinking loan, the % of the loan that is a sinking fund loan.
+    :type sf_split: float
+    :param sfh_gr: In the case of a hybrid loan, the loan interest rate of the sinking fund portion, if it differs \
+    from the amortization rate.
+    :type sfh_gr: float, Rate, TieredTime
+    :param pp: The principal payment, in the case of a fixed principal loan.
+    :type pp: float
+
+    """
     def __init__(
         self,
-        gr: Union[Rate, float, TieredTime] = None,
+        gr: Union[float, Rate, TieredTime] = None,
         pmt: Union[float, int, Payments] = None,
         period: float = None,
         term: float = None,
@@ -104,7 +153,15 @@ class Loan:
 
             self.sfd = self.amt / sv
 
-    def get_payments(self):
+    def get_payments(self) -> Payments:
+
+        """
+        Takes the arguments supplied and creates the payment schedule for the loan. The return type is a \
+        :class:`.Payments` object, so it contains the payment times and amounts.
+
+        :return: The payment schedule.
+        :rtype: Payments
+        """
 
         if self.sfr:
             if self.sfd is not None:
@@ -155,7 +212,23 @@ class Loan:
 
         return pmts
 
-    def olb_r(self, t, payments: Payments = None) -> float:
+    def olb_r(
+        self,
+        t: float,
+        payments: Payments = None
+    ) -> float:
+
+        """
+        Calculates the outstanding loan balance at time t, using the retrospective method. If the actual payments
+        differ from the original payment schedule, they may be supplied to the payments argument.
+
+        :param t: The valuation time.
+        :type t: float
+        :param payments: A list of payments, if they differed from the original payment schedule.
+        :type payments: Payments
+        :return: The outstanding loan balance.
+        :rtype: float
+        """
 
         if payments:
             payments.set_accumulation(gr=self.gr)
@@ -178,8 +251,22 @@ class Loan:
             self,
             t: float,
             r: float = None,
-            missed: list = None
-    ):
+            missed: List[int] = None
+    ) -> float:
+
+        """
+        Calculates the outstanding loan balance via the prospective method. If there were missed payments, they
+        may be indicated by supplying them to the missed argument.
+
+        :param t: The valuation time.
+        :type t: float
+        :param r: The final payment amount, if different from the others, defaults to None.
+        :type r: float
+        :param missed: A list of missed payments, for example, 4th and 5th payments would be [4, 5].
+        :type missed: List[int]
+        :return: The outstanding loan balance.
+        :rtype: float
+        """
 
         olb = olb_p(
             q=self.pmt,
@@ -193,7 +280,21 @@ class Loan:
 
         return olb
 
-    def amortize_payments(self, payments: Payments) -> dict:
+    def amortize_payments(
+        self,
+        payments: Payments
+    ) -> dict:
+
+        """
+        Amortizes a list of payments, this function is used when the actual payments differ from the original \
+        amortization table. It returns a dict, which may be passed to something like a pandas DataFrame for further
+        analysis and viewing.
+
+        :param payments: A list of payments.
+        :type payments: Payments
+        :return: An amortization table of the payments.
+        :rtype: dict
+        """
         amt = Amount(gr=self.gr.gr, k=self.amt)
 
         res = {
@@ -236,17 +337,65 @@ class Loan:
 
         return res
 
-    def principal_paid(self,  t2: float, t1: float = 0):
+    def principal_paid(
+        self,
+        t2: float,
+        t1: float = 0
+    ) -> float:
+
+        """
+        Calculates the principal paid between two points in time..
+
+        :param t2: The second point in time.
+        :type t2: float
+        :param t1: The first point in time.
+        :type t1: float
+        :return: The principal paid.
+        :rtype: float
+        """
 
         if self.sfr:
             return 0
         else:
             return self.olb_r(t1) - self.olb_r(t2)
 
-    def total_payments(self, t2: float, t1: float = 0):
+    def total_payments(
+        self,
+        t2: float,
+        t1: float = 0
+    ) -> float:
+
+        """
+        Calculates the total loan payments that occurred between two points in time.
+
+        :param t2: The second point in time.
+        :type t2: float
+        :param t1: The first point in time.
+        :type t1: float
+        :return: The total loan payments.
+        :rtype: float
+        """
         return round((t2 - t1) / self.period, 1) * self.pmt
 
-    def interest_paid(self, t2: float, t1: float = 0, frac: bool = False):
+    def interest_paid(
+        self,
+        t2: float,
+        t1: float = 0,
+        frac: bool = False
+    ) -> float:
+
+        """
+        Calculates the total interest paid between two points in time.
+
+        :param t2: The second point in time.
+        :type t2: float
+        :param t1: The first point in time.
+        :type t1: float
+        :param frac: Whether you want the answer as a fraction of the total interest of the loan.
+        :type frac: bool
+        :return: The total interest paid.
+        :rtype: float
+        """
         interest_paid = self.total_payments(t1=t1, t2=t2) - self.principal_paid(t1=t1, t2=t2)
 
         if frac:
@@ -256,17 +405,50 @@ class Loan:
         else:
             return interest_paid
 
-    def principal_val(self, t):
+    def principal_val(
+        self,
+        t: float
+    ) -> float:
+        """
+        Calculates the time-value adjusted principal at a desired point in time.
+
+        :param t: The valuation time.
+        :type t: float
+        :return: The time-value adjusted principal.
+        :rtype: float
+        """
+
         amt = Amount(gr=self.gr.gr, k=self.amt)
+
         return amt.val(t)
 
-    def amortization(self):
+    def amortization(self) -> dict:
+        """
+        Calculates the amortization table based off the original payment schedule. Returned as a dict which can be \
+        supplied to a pandas DataFrame for further analysis and viewing.
+
+        :return: The amortization table.
+        :rtype: dict
+        """
 
         res = self.amortize_payments(payments=self.pmt_sched)
 
         return res
 
-    def sf_final(self, payments: Payments = None) -> float:
+    def sf_final(
+        self,
+        payments: Payments = None
+    ) -> float:
+
+        """
+        Calculates the final payment required to settle a sinking fund loan. You may supply payments, if they differed \
+        from the original payment schedule.
+
+        :param payments: A list of payments, if different from the original payment schedule.
+        :type payments: Payments, optional
+        :return: The final sinking fund payment.
+        :rtype: float
+        """
 
         if self.sfr is None:
             raise Exception("sf_final only applicable to sinking fund loans.")
@@ -303,7 +485,21 @@ class Loan:
 
         return final_pmt
 
-    def sink_payments(self, payments: Payments) -> dict:
+    def sink_payments(
+            self,
+            payments: Payments
+    ) -> dict:
+
+        """
+        Calculates a sinking fund schedule for a list of payments. Intended to be called externally only if the \
+        payments differ from the original sinking fund schedule. Otherwise, use the :meth:`.sinking` method. The \
+        return type is a dict which can be passed to a pandas DataFrame for further analysis and viewing.
+
+        :param payments: A list of payments.
+        :type payments: Payments
+        :return: The sinking fund schedule for the payments.
+        :rtype: dict
+        """
 
         res = {
             'time': [],
@@ -350,12 +546,25 @@ class Loan:
 
         return res
 
-    def sinking(self):
+    def sinking(self) -> dict:
+        """
+        Calculates the sinking fund schedule based off the original payment schedule. The \
+        return type is a dict which can be passed to a pandas DataFrame for further analysis and viewing.
+
+        :return: The sinking fund schedule.
+        :rtype: dict
+        """
         res = self.sink_payments(payments=self.pmt_sched)
 
         return res
 
-    def rc_yield(self):
+    def rc_yield(self) -> list:
+        """
+        Calculates the yield rate based off replacement of capital.
+
+        :return: The yield rate based off replacement of capital.
+        :rtype: list
+        """
         n_payments = ceil(self.term / self.period)
         if self.pmt_is_level:
             extra = [self.pmt - self.sfd] * n_payments
@@ -392,6 +601,12 @@ class Loan:
         return pmts.irr()
 
     def fixed_principal(self) -> Payments:
+        """
+        Calculates the loan payment schedule if a fixed amount of principal is paid each period.
+
+        :return: The payment schedule.
+        :rtype: Payments
+        """
         # so far, last payment just gets adjusted
         n_payments = ceil(self.amt / self.pp)
 
@@ -414,7 +629,13 @@ class Loan:
 
         return pmts
 
-    def hybrid_principal(self):
+    def hybrid_principal(self) -> float:
+        """
+        Calculates the loan amount based on a hybrid amortized/sinking fund loan.
+
+        :return: The loan amount.
+        :rtype: float
+        """
         ann_am = Annuity(
             term=self.term,
             gr=self.gr,
@@ -434,7 +655,15 @@ class Loan:
 
         return self.pmt / (sfh * self.sf_split + self.sf_split / ann_sf.sv() + (1 - self.sf_split) / ann_am.pv())
 
-    def sgr_equiv(self):
+    def sgr_equiv(self) -> Rate:
+
+        """
+        Calculates the sinking fund rate such that would produce a loan payment schedule equivalent to that of an
+        amortized loan.
+
+        :return: The sinking fund rate.
+        :rtype: Rate
+        """
 
         if self.pmt_is_level:
 
