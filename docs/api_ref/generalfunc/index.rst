@@ -51,3 +51,4 @@ This section documents standalone functions that do not belong to a class.
    pairwise
    time_weighted_yield
    parse_cgr
+   rate_from_earned
