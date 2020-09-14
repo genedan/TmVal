@@ -52,3 +52,6 @@ This section documents standalone functions that do not belong to a class.
    time_weighted_yield
    parse_cgr
    rate_from_earned
+   rate_from_intdisc
+   amt_from_intdisc
+   k_from_intdisc
