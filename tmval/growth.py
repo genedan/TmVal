@@ -1044,3 +1044,123 @@ def rate_from_earned(iex: Tuple[float, float], iey: Tuple[float, float]) -> Rate
     gr = Rate((y_amt / x_amt) ** (1 / ((y_t - 1) - (x_t - 1))) - 1)
 
     return gr
+
+
+def rate_from_intdisc(
+    iex: Tuple[float, float],
+    dex: Tuple[float, float],
+    x0=np.linspace(.001, 1, 100),
+    precision=5
+) -> list:
+    """
+    Given interest earned over a time period on an unknown investment amount, and discount earned over a time period, \
+    on that same amount,, solves for an annualized compound interest rate.
+
+    :param iex: The interest earned over a time interval.
+    :type iex: Tuple[float, float]
+    :param dex: The discount earned over a time interval.
+    :type dex: Tuple[float, float]
+    :param x0: A starting guess or list of guesses for Newton's method, defaults to np.linspace(.001, 1, 100).
+    :type x0:
+    :param precision: rounding precision used to remove duplicates from Newton's method, defaults to 5.
+    :type precision: int
+    :return: a list of interest rates, if found.
+    :rtype: list
+    """
+
+    i_amt = iex[0]
+    d_amt = dex[0]
+    i_t = iex[1]
+    d_t = dex[1]
+
+    def f(i):
+        return ((1 + i) ** (i_t + d_t) - (1 + i) ** d_t) / ((1 + i) ** d_t - 1) - (i_amt / d_amt)
+
+    sol = newton(f, x0=x0)
+
+    if isinstance(sol, Iterable):
+        sol = [round(x, precision) for x in sol]
+        res = list(set(sol))
+
+    else:
+
+        res = [sol]
+
+    return res
+
+
+def amt_from_intdisc(
+    iex: Tuple[float, float],
+    dex: Tuple[float, float],
+    x0: Union[float, ndarray] = np.linspace(.001, 1, 100),
+    precision: int = 5
+) -> Amount:
+
+    """
+    Given interest earned over a time period on an unknown investment amount, and discount earned over a time period, \
+    on that same amount, generates an Amount object.
+
+    For example, if you can earn 500 in interest in two years, and the discount in one year is 200, you can supply
+    iex=[400, 2], dex=[200,1]
+
+    :param iex: The interest earned over a time interval.
+    :type iex: Tuple[float, float]
+    :param dex: The discount earned over a time interval.
+    :type dex: Tuple[float, float]
+    :param x0: A starting guess or list of guesses for Newton's method, defaults to np.linspace(.001, 1, 100).
+    :type x0:
+    :param precision: rounding precision used to remove duplicates from Newton's method, defaults to 5.
+    :type precision: int
+    :return: An amount function.
+    :rtype: Amount
+    """
+    rates = rate_from_intdisc(
+        iex=iex,
+        dex=dex,
+        x0=x0,
+        precision=precision
+    )
+
+    # use the min positive one:
+
+    gr = min([x for x in rates if x > 0])
+
+    k = iex[0] / ((1 + gr) ** iex[1] - 1)
+
+    amt = Amount(gr=gr, k=k)
+
+    return amt
+
+
+def k_from_intdisc(
+    iex: Tuple[float, float],
+    dex: Tuple[float, float],
+    x0: Union[float, ndarray] = np.linspace(.001, 1, 100),
+    precision: int = 5
+) -> float:
+
+    """
+    Given interest earned over a time period on an unknown investment amount, and discount earned over a time period, \
+    on that same amount, solves for the amount.
+
+    :param iex: The interest earned over a time interval.
+    :type iex: Tuple[float, float]
+    :param dex: The discount earned over a time interval.
+    :type dex: Tuple[float, float]
+    :param x0: A starting guess or list of guesses for Newton's method, defaults to np.linspace(.001, 1, 100).
+    :type x0:
+    :param precision: rounding precision used to remove duplicates from Newton's method, defaults to 5.
+    :type precision: int
+    :return: The investment amount.
+    :rtype: float
+    """
+
+    k = amt_from_intdisc(
+        iex=iex,
+        dex=dex,
+        x0=x0,
+        precision=precision
+    ).k
+
+    return k
+
