@@ -12,6 +12,7 @@
 #
 import os
 from os.path import relpath, dirname
+from tmval.constants import BUILD_VERSION
 import sys
 sys.path.insert(0, os.path.abspath('..'))
 
@@ -19,7 +20,7 @@ sys.path.insert(0, os.path.abspath('..'))
 
 project = 'TmVal Documentation'
 copyright = '2020, Gene Dan, FCAS, MAAA, CSPA'
-release = 'v0.0.9'
+release = 'v' + BUILD_VERSION
 author = 'Gene Dan, FCAS, MAAA, CSPA'
 
 

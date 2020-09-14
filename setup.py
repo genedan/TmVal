@@ -1,11 +1,13 @@
 import setuptools
 
+from tmval.constants import BUILD_VERSION
+
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setuptools.setup(
     name="tmval",
-    version="0.0.9",
+    version=BUILD_VERSION,
     author="Gene Dan",
     author_email="genedan@gmail.com",
     description="Time Value of Money",

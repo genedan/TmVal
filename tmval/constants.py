@@ -1,3 +1,5 @@
+BUILD_VERSION = '0.0.10'
+
 FORMAL_PATTERNS = {
     'interest': 'Effective Interest',
     'i': 'Effective Interest',
