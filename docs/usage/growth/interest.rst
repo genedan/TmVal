@@ -3,7 +3,7 @@ Interest
 ========================
 
 .. meta::
-   :keywords: interest, interest rate, compound interest, simple interest, python, package, growth
+   :keywords: interest, interest rate, compound interest, simple interest, actuarial, python, package, growth
 
 Suppose we invest :math:`K` at time 0. We define the amount of :term:`interest earned` between times :math:`t_1` and :math:`t_2` as:
 

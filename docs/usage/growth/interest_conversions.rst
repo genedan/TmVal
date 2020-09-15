@@ -4,7 +4,7 @@ Interest-Discount Rate Conversions
 
 .. meta::
    :description: Documentation for TmVal interest rate conversions.
-   :keywords: interest rate conversion, simple interest, simple discount, nominal interest, nominal discount, effective interest, effective discount, compound interest, compound discount, force of interest, conversions, python, package
+   :keywords: interest rate conversion, simple interest, simple discount, nominal interest, nominal discount, effective interest, effective discount, compound interest, compound discount, force of interest, conversions, actuarial, python, package
 
 In addition to the concept of :term:`nominal interest<nominal interest rate>`, there's also :term:`nominal discount<nominal discount rate>`. In interest theory, various relationships between interest rates, discount rates, and their nominal counterparts can be derived:
 

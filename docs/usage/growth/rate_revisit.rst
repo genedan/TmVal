@@ -2,6 +2,10 @@
 The Rate Class, Revisited
 ===============================
 
+.. meta::
+   :description: The Rate class is TmVal's class for representing interest rates.
+   :keywords: interest rate, class, conversions, compound interest, effective interest, compound discount, effective discount, nominal interest, nominal discount, force of interest, simple interest, actuarial, python, package
+
 Now that we have introduced several types of interest rates as well as the relationships between them, it's worth revisiting the :class:`.Rate` class to appreciate more of its features.
 
 **Pattern**

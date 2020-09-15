@@ -2,6 +2,10 @@
 A Friendly Reminder
 ========================
 
+.. meta::
+   :description: Account and Accumulation functions can be initialized with a float object representing compound interest.
+   :keywords: amount, accumulation, function, interest, interest theory, actuarial, python, package
+
 If you have read the last couple sections on accumulation and amount functions, you may wonder why we have to define a growth function prior to defining an :class:`.Amount` or :class:`Accumulation` class. After all, this seems cumbersome and it would be more convenient to simply create an :class:`.Amount` or :class:`.Accumulation` class by specifying an interest rate.
 
 The good news is, we can actually do this! All you have to do is supply a float object to either the :class:`.Amount` or :class:`.Accumulation` classes. Since compound annual interest is the most common scenario, these classes are defined to assume compound annual interest as the default case when supplied with a float. This reduces the amount of typing required by the user.

@@ -4,7 +4,7 @@ Accumulation Functions
 
 .. meta::
    :description: An accumulation function is a special case of an amount function where K=1.
-   :keywords: accumulation function, amount function, interest, financial mathematics, python, money growth, simple interest, compound interest
+   :keywords: accumulation function, amount function, interest, financial mathematics, actuarial, python, package, money growth, simple interest, compound interest
 
 The :term:`accumulation function` is a special case of the amount function where :math:`K=1`:
 

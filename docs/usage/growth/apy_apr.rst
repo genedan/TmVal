@@ -4,7 +4,7 @@ Nominal Interest
 
 .. meta::
    :description: Nominal vs effective interest.
-   :keywords: nominal interest, effective interest, compounding frequency, python, package, interest, financial mathematics, annual percentage rate, annual percentage yield
+   :keywords: nominal interest, effective interest, compounding frequency, actuarial, python, package, interest, financial mathematics, annual percentage rate, annual percentage yield
 
 So far, what we have called the annual effective interest rate is also called the APY, or :term:`annual percentage yield<annual percentage yield (APY)>`. However, in practice, banks often quote what is called the :term:`annual percentage rate (APR)`, which is not the same thing as the APY.
 

@@ -3,7 +3,7 @@ Compound Interest
 ========================
 
 .. meta::
-   :keywords: compound interest, interest rate, python, package
+   :keywords: compound interest, interest rate, actuarial, python, package
 
 :term:`Compound interest<compound interest>` is a pattern of money growth in which the value of money increases at a geometric rate:
 
