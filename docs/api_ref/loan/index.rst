@@ -1,5 +1,5 @@
 =============
-Bond
+Loan
 =============
 
 .. autoclass:: tmval.loan.Loan
