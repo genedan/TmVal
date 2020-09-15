@@ -1,6 +1,7 @@
 from copy import deepcopy
 
-from tmval.rate import Rate
+from tmval.rate import Rate, standardize_rate
+from tmval.value import Payments
 
 
 class Stock:
@@ -48,12 +49,17 @@ class Brokerage:
     def __init__(
         self,
         deposit,
-        sma=False
+        sma=False,
+        ndb_rate=0,
+        margin_rate=0
     ):
 
         self.cash = deposit
         self.portfolio = []
         self.sma = sma
+        self.ndb_rate = ndb_rate
+        self.margin_rate = margin_rate
+        self.age = 0
         if sma:
             self.sma_val = 0
         else:
@@ -92,32 +98,65 @@ class Brokerage:
 
     def purchase_stock(
         self,
-        stock: Stock,
-        deposit=None
+        stock: Stock = None,
+        deposit=None,
+        t=0,
+        idx=None
     ):
-        if deposit is None:
-            if self.cash >= stock.value:
-                self.cash -= stock.value
-                ndb = None
+        if stock is not None:
+            if deposit is None:
+                if self.cash >= stock.value:
+                    self.cash -= stock.value
+                    borrow = 0
+                    ndb = 0
+                else:
+                    borrow = stock.value - self.cash
+                    self.cash -= self.cash
+                    ndb = borrow
             else:
-                borrow = stock.value - self.cash
-                self.cash -= self.cash
-                ndb = borrow
+                if self.cash + deposit >= stock.value:
+                    self.cash += deposit - stock.value
+                    borrow = 0
+                    ndb = 0
+                else:
+                    borrow = stock.value - deposit - self.get_extra()
+                    ndb = borrow
+
+            pmts = Payments(
+                amounts=[-stock.value + borrow],
+                times=[t]
+            )
+
+            res = {
+                'stock': stock,
+                'ndb': ndb,
+                'payments': pmts,
+                'position': 'long'
+            }
+
+            self.portfolio += [res]
         else:
-            if self.cash + deposit >= stock.value:
-                self.cash += deposit - stock.value
-                ndb = None
-            else:
-                borrow = stock.value - deposit - self.get_extra()
-                ndb = borrow
+            if self.portfolio[idx]['position'] == 'short':
+                self.portfolio[idx]['margin_deposit'] *= (1 + self.margin_rate) ** (t - self.age)
+                print(self.portfolio[idx]['margin_deposit'])
+                repurchase = self.portfolio[idx]['stock'].value
 
-        res = {
-            'stock': stock,
-            'ndb': ndb,
-            'initial_margin_req': stock.value * stock.margin_req
-        }
+                avail = self.cash + self.portfolio[idx]['margin_deposit']
 
-        self.portfolio += [res]
+                div_sv = self.portfolio[idx]['dividends'].eq_val(t)
+
+                due = avail - repurchase - div_sv
+
+                self.portfolio[idx]['margin_deposit'] = 0
+                self.portfolio[idx]['stock'].shares = 0
+                self.cash = due
+
+                self.portfolio[idx]['payments'].append(
+                    amounts=[due],
+                    times=[t]
+                )
+
+        self.age = t
 
     def margin_threshold(self, idx=None, per=False):
         """
@@ -221,3 +260,108 @@ class Brokerage:
 
     def set_sma(self):
         self.sma_val += self.get_extra()
+
+    def dividend(self, idx, amt, t):
+        t -= self.age
+        div = self.portfolio[idx]['stock'].shares * amt
+        self.portfolio[idx]['ndb'] *= (1 + self.ndb_rate) ** t
+        if self.portfolio[idx]['ndb'] == 0:
+
+            if self.portfolio[idx]['position'] == 'short':
+                # self.cash += div
+                self.portfolio[idx]['margin_deposit'] *= (1 + self.margin_rate) ** t
+                self.portfolio[idx]['dividends'].append(
+                    amounts=[div],
+                    times=[t + self.age]
+                )
+            else:
+                self.portfolio[idx]['payments'].append(
+                    amounts=[div],
+                    times=[t]
+                )
+
+
+        elif div > self.ndb:
+            self.portfolio[idx]['ndb'] = 0
+            extra = div - self.ndb
+            self.portfolio[idx]['payments'].append(
+                amounts=[extra],
+                times=[t]
+            )
+        else:
+            self.portfolio[idx]['ndb'] -= div
+        self.age += t
+
+    def sell_stock(self, idx, shares, t):
+        self.portfolio[idx]['ndb'] *= (1 + self.ndb_rate) ** (t - self.age)
+        proceeds = self.portfolio[idx]['stock'].price * shares - self.portfolio[idx]['ndb']
+        self.portfolio[idx]['stock'].shares -= shares
+        self.cash += proceeds
+        self.portfolio[idx]['payments'].append(
+            amounts=[proceeds],
+            times=[t]
+        )
+
+    def yield_s(self, idx):
+        irr = self.portfolio[idx]['payments'].irr()
+        return irr
+
+    def prospect_yield_s(self, idx, shares, t, price):
+        s_c = deepcopy(self.portfolio[idx])
+        s_c['stock'].price = price
+        s_c['ndb'] *= (1 + self.ndb_rate) ** (t - self.age)
+        print(s_c['ndb'])
+        proceeds = s_c['stock'].price * shares - s_c['ndb']
+        print(proceeds)
+        s_c['payments'].append(
+            amounts=[proceeds],
+            times=[t]
+        )
+        print(s_c['payments'].amounts)
+        print(s_c['payments'].times)
+        irr = s_c['payments'].irr()
+        return irr
+
+    def short(self, st: Stock, deposit=None, t=0):
+
+        sale_amt = st.value
+        if deposit is None:
+            self.cash += sale_amt
+            md = st.value * st.margin_req
+            self.cash -= md
+        else:
+            self.cash += sale_amt + deposit
+            md = st.value * st.margin_req
+            self.cash -= md
+  
+        pmts = Payments(
+            amounts=[-md],
+            times=[t]
+        )
+
+        divs = Payments(
+            amounts=[],
+            times=[],
+            gr=self.margin_rate
+        )
+
+        res = {
+            'stock': st,
+            'ndb': 0,
+            'margin_deposit': md,
+            'position': 'short',
+            'payments': pmts,
+            'dividends': divs
+        }
+        
+        self.portfolio += [res]
+
+    def margin_call(self, idx, deposit, t):
+        if self.portfolio[idx]['position'] == 'short':
+            self.portfolio[idx]['margin_deposit'] *= (1 + self.margin_rate) ** (t - self.age)
+            self.portfolio[idx]['margin_deposit'] += deposit
+            self.portfolio[idx]['payments'].append(
+                amounts=[-deposit],
+                times=[t]
+            )
+        self.age = t
