@@ -18,7 +18,7 @@ from tmval.value import Payments
 from tmval.rate import Rate
 
 
-class Loan:
+class Loan(Payments):
 
     """
     Loan is TmVal's class for representing loans. TmVal currently supports amortized loans, sinking fund loans,
@@ -152,6 +152,12 @@ class Loan:
             ).sv()
 
             self.sfd = self.amt / sv
+
+        Payments.__init__(
+            self,
+            amounts=[amt] + [-x for x in self.pmt_sched.amounts],
+            times=[0] + self.pmt_sched.times
+        )
 
     def get_payments(self) -> Payments:
 
