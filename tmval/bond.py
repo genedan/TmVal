@@ -109,7 +109,15 @@ class Bond(Payments):
         else:
             pass
 
-        args = [gr, red, price, term, c_args]
+        if [alpha, cfreq, fr, cgr].count(None) == 4:
+            self.is_zero = True
+        else:
+            self.is_zero = False
+
+        if self.is_zero:
+            args = [gr, red, price, term]
+        else:
+            args = [gr, red, price, term, c_args]
 
         n_missing = args.count(None)
 
@@ -204,8 +212,12 @@ class Bond(Payments):
         else:
             raise Exception("Unable to evaluate bond. Too many missing arguments.")
 
-        amounts = self.coupons.amounts + [self.red]
-        times = self.coupons.times + [self.term]
+        if self.is_zero:
+            amounts = [self.red]
+            times = [self.term]
+        else:
+            amounts = self.coupons.amounts + [self.red]
+            times = self.coupons.times + [self.term]
 
         Payments.__init__(
             self,
@@ -231,7 +243,9 @@ class Bond(Payments):
 
         self.append(amounts=[-self.price], times=[0])
 
-        if self.fr_is_level:
+        if self.is_zero:
+            pass
+        elif self.fr_is_level:
             self.j = self.gr.val(1 / self.cfreq) - 1
             self.base = self.fr / self.j
             self.g = self.fr / self.red
@@ -303,7 +317,10 @@ class Bond(Payments):
         :return: The number of coupons.
         :rtype: int
         """
-        if self.fr_is_level:
+
+        if self.is_zero:
+            n_coupons = 0
+        elif self.fr_is_level:
             # if term is evenly divisible by period, assume bond purchased at beginning of period
             if round(self.term % (1 / self.cfreq), 5) == 0:
                 n_coupons = self.term * self.cfreq
@@ -325,7 +342,9 @@ class Bond(Payments):
         :return: The bond coupons.
         :rtype: Annuity
         """
-        if self.fr_is_level:
+        if self.is_zero:
+            coupons = None
+        elif self.fr_is_level:
 
             if round(self.term % (1 / self.cfreq), 5) == 0:
 
@@ -1096,7 +1115,10 @@ class Bond(Payments):
         :return: Whether the term provided coincides with bond issuance or a coupon payment.
         :rtype: bool
         """
-        if isinstance(self.alpha, (int, float)) or self.alpha is None:
+
+        if self.alpha is None and self.cfreq is None and self.fr is None:
+            return True
+        elif isinstance(self.alpha, (int, float)) or self.alpha is None and self.cfreq is not None:
             if round(self.term % (1 / self.cfreq), 5) == 0:
                 return True
             else:
