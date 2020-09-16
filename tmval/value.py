@@ -12,6 +12,7 @@ from typing import (
     Callable,
     Iterable,
     Iterator,
+    List,
     Union
 )
 
@@ -77,6 +78,9 @@ class Payments:
         self.gr = None
         if gr is not None:
             self.set_accumulation(gr=gr)
+
+    def __add__(self, other):
+        self.append(amounts=other.amounts, times=other.times)
 
     def set_accumulation(self, gr: Union[float, Rate, Accumulation, TieredBal, TieredTime]):
 
@@ -664,3 +668,21 @@ def pairwise(iterable: Iterable) -> Iterator:
     a, b = itertools.tee(iterable)
     next(b, None)
     return zip(a, b)
+
+
+def extract_flows(payments: Union[Payments, List[Payments]]) -> Payments:
+
+    if isinstance(payments, Payments):
+        payments = [payments]
+    amounts = []
+    times = []
+    for pmts in payments:
+        amounts += pmts.amounts
+        times += pmts.times
+
+    res = Payments(
+        amounts=amounts,
+        times=times
+    )
+
+    return res
