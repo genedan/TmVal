@@ -4,7 +4,7 @@ This file contains the Bond class, which is TmVal's class for representing bonds
 import numpy as np
 
 from math import floor
-from typing import Iterable, Union
+from typing import Iterable, List, Union
 
 from tmval.annuity import Annuity
 from tmval.growth import standardize_acc, TieredTime
@@ -134,7 +134,9 @@ class Bond(Payments):
                 self.red = red
                 self.price = price
 
-                if self.fr_is_level:
+                if self.is_zero:
+                    amounts = [-price, red]
+                elif self.fr_is_level:
                     amounts = [-price] + [self.fr] * self.n_coupons + [red]
                 else:
                     amounts = [-price]
@@ -263,7 +265,9 @@ class Bond(Payments):
         :rtype: list
         """
 
-        if self.fr_is_level:
+        if self.is_zero:
+            times = []
+        elif self.fr_is_level:
             times = [(x + 1) * 1 / self.cfreq for x in range(self.n_coupons)]
         else:
             times = []
@@ -1238,3 +1242,37 @@ def parse_cgr(
 #     j = cgr.rate / cgr.freq
 #
 #     acc = Accumulation(gr=j)
+
+
+def term_structure(bonds: List[Bond]):
+    """
+    Solves for the term structure of interest given a list of bonds.
+    :param bonds:
+    :type bonds:
+    :return:
+    :rtype:
+    """
+    # find bond with shortest term
+    bond_ts = [b.term for b in bonds]
+    min_t = min(bond_ts)
+    b0_i = bond_ts.index(min_t)
+    b0 = bonds[b0_i]
+
+    r_1 = b0.gr.interest_rate
+    rates = [r_1]
+    r = r_1
+    base = bonds[1].price
+    for i in range(len(bonds[1].group_payments()) - 2):
+        t = i + 1
+
+        base -= bonds[1].group_payments()[t] / (1 + r)
+        print((bonds[1].group_payments()[t + 1] / base) ** (1 / t + 1))
+
+        r_next = (bonds[1].group_payments()[t + 1] / base) ** (1 / (t + 1)) - 1
+
+        rates += [Rate(r_next)]
+
+    return rates
+
+
+    return r_1
