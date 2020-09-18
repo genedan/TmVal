@@ -1244,14 +1244,25 @@ def parse_cgr(
 #     acc = Accumulation(gr=j)
 
 
-def term_structure(bonds: List[Bond]):
+def spot_rates(bonds: List[Bond] = None, yields=None, alpha=None):
     """
-    Solves for the term structure of interest given a list of bonds.
+    Solves for the spot rates given a list of bonds.
     :param bonds:
     :type bonds:
     :return:
     :rtype:
     """
+
+    if yields is not None and alpha is not None and bonds is None:
+        bonds = [Bond(
+            face=100,
+            red=100,
+            alpha=alpha,
+            cfreq=1,
+            term=t + 1,
+            gr=y
+        ) for t, y in zip(range(len(yields)), yields)]
+
     # find bond with shortest term
     bond_ts = [b.term for b in bonds]
     min_t = min(bond_ts)
@@ -1260,19 +1271,43 @@ def term_structure(bonds: List[Bond]):
 
     r_1 = b0.gr.interest_rate
     rates = [r_1]
-    r = r_1
-    base = bonds[1].price
-    for i in range(len(bonds[1].group_payments()) - 2):
-        t = i + 1
 
-        base -= bonds[1].group_payments()[t] / (1 + r)
-        print((bonds[1].group_payments()[t + 1] / base) ** (1 / t + 1))
+    bonds.pop(0)
 
-        r_next = (bonds[1].group_payments()[t + 1] / base) ** (1 / (t + 1)) - 1
+    t0 = 1
 
-        rates += [Rate(r_next)]
+    res = {
+        t0: r_1
+    }
 
-    return rates
+    for b in bonds:
+        pmts = b.group_payments()
+        del pmts[0]
+        times = list(pmts.keys())
+        times.sort()
+        t_max = times.pop()
+        base = b.price
+        for r, t in zip(rates, times):
+            pv = pmts[t] / ((1 + r) ** t)
+            base -= pv
+        r_t = (pmts[t_max] / base) ** (1 / t_max) - 1
+        r_t = Rate(r_t)
+        rates += [r_t]
+        res.update({t_max: r_t})
+
+    return res
 
 
-    return r_1
+def forward_rates(term, bonds=None, yields=None, alpha=None):
+    sr = spot_rates(bonds=bonds, yields=yields, alpha=alpha)
+
+    res = {}
+    for t in range(len(sr) + 1 - term):
+        if t == 0:
+            f = sr[term]
+        else:
+            f_factor = (1 + sr[t + term]) ** (t + term) / (1 + sr[t]) ** t
+            f = Rate(f_factor ** (1 / term) - 1)
+        res.update({(t, t + term): f})
+
+    return res
