@@ -1299,6 +1299,20 @@ def spot_rates(bonds: List[Bond] = None, yields=None, alpha=None):
 
 
 def forward_rates(term, bonds=None, yields=None, alpha=None):
+    """
+    Given a list of bonds, or yields and coupon rates, returns the forward rates.
+
+    :param term:
+    :type term:
+    :param bonds:
+    :type bonds:
+    :param yields:
+    :type yields:
+    :param alpha:
+    :type alpha:
+    :return:
+    :rtype:
+    """
     sr = spot_rates(bonds=bonds, yields=yields, alpha=alpha)
 
     res = {}
