@@ -7,7 +7,7 @@ from math import floor
 from typing import Iterable, List, Union
 
 from tmval.annuity import Annuity
-from tmval.growth import standardize_acc, TieredTime
+from tmval.growth import Amount, standardize_acc, TieredTime
 from tmval.rate import Rate
 from tmval.value import Payments
 
@@ -160,6 +160,13 @@ class Bond(Payments):
 
                 self.coupons = self.get_coupons()
 
+            elif term is None:
+                if self.is_zero:
+                    self.red = red
+                    self.gr = standardize_acc(gr)
+                    self.price = price
+                    self.term = Amount(gr=gr, k=price).solve_t(fv=red)
+
             else:
                 self.n_coupons = self.get_n_coupons()
                 self.red = red
@@ -308,7 +315,11 @@ class Bond(Payments):
         :return: The redemption amount.
         :rtype: float
         """
-        c = (self.price - self.coupons.pv()) * self.gr.val(self.term)
+
+        if self.is_zero:
+            c = self.price * self.gr.val(self.term)
+        else:
+            c = (self.price - self.coupons.pv()) * self.gr.val(self.term)
         return c
 
     def get_n_coupons(
@@ -1249,6 +1260,10 @@ def spot_rates(bonds: List[Bond] = None, yields=None, alpha=None):
     Solves for the spot rates given a list of bonds.
     :param bonds:
     :type bonds:
+    :param yields:
+    :type yields:
+    :param alpha:
+    :type alpha:
     :return:
     :rtype:
     """
