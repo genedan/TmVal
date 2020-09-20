@@ -136,13 +136,18 @@ class Loan(Payments):
                 self.pmt_sched = self.get_payments()
                 self.pmt = self.pmt_sched.amounts[0]
 
-        if pmt and isinstance(pmt, (float, int)) and period and term:
+        elif pmt and isinstance(pmt, (float, int)) and period and term:
             n_payments = ceil(term / period)
             self.pmt_sched = Payments(
                 times=[(x + 1) * period for x in range(n_payments)],
                 amounts=[pmt] * n_payments
             )
             self.pmt_is_level = True
+        else:
+            self.pmt_sched = Payments(
+                times=[],
+                amounts=[]
+            )
 
         if sfr is not None and sfd is None and pmt is not None:
             sv = Annuity(
@@ -156,7 +161,8 @@ class Loan(Payments):
         Payments.__init__(
             self,
             amounts=[amt] + [-x for x in self.pmt_sched.amounts],
-            times=[0] + self.pmt_sched.times
+            times=[0] + self.pmt_sched.times,
+            gr=self.gr
         )
 
     def get_payments(self) -> Payments:
