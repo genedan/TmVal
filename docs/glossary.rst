@@ -41,6 +41,9 @@ Glossary
    basic perpetuity-immediate
       A perpetuity-immediate that pays 1 at the end of each period.
 
+   bond
+      A financial instrument that entities, called bond issuers, can use to borrow money from other entities, called bondholders.
+
    compound interest
       A geometric pattern of money growth in which interest earned is reinvested at the rate of interest.
 
@@ -86,6 +89,9 @@ Glossary
    internal rate of return
       See :term:`yield rate`
 
+   modified coupon rate
+      The bond coupon rate expressed in terms of the redemption amount.
+
    net present value (NPV)
       The sum of the present value of a stream of returns:
 
@@ -101,6 +107,10 @@ Glossary
 
    retrospective method
       A way of calculating the outstanding loan balance at time :math:`t` by subtracting the accumulated value of the payments to date from the accumulated value of the principal.
+
+   par-value bond
+
+      A bond whose face value equals its redemption amount.
 
    perpetuity
       An annuity with an infinite number of payments
