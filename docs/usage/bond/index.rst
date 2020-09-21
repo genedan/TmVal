@@ -35,3 +35,6 @@ This section explains how you can use TmVal to define bonds as well as the calcu
 
    zerocoupon
    couponbond
+   nonlevelcoupon
+   premdisc
+   makeham
