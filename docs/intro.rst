@@ -23,7 +23,7 @@ Feature Highlights
 
 ..
 
-- TmVal provides equations of value computations for core financial instruments in actuarial science, such as annuities, loans, and arbitrary cash flow streams. As development is still in the alpha stage, the types of investments TmVal supports is rapidly expanding. I expect the package to soon offer classes for bonds, stocks, and options.
+- TmVal provides equations of value computations for core financial instruments in actuarial science, such as annuities, loans, bonds, and arbitrary cash flow streams. As development is still in the alpha stage, the types of investments TmVal supports is rapidly expanding. I expect the package to soon offer classes for stocks and options.
 
 ..
 
@@ -32,7 +32,7 @@ Feature Highlights
 Amount and Accumulation Functions
 ==================================
 
-TmVal supports the core growth functions of mathematical interest theory, the :ref:`amount <Amount Functions>` (:math:`A_K(t)`) and :ref:`accumulation <Accumulation Functions>` (:math:`a(t)`)functions, implemented via the :class:`.Amount` and :class:`.Accumulation` classes. These classes support all sorts of growth patterns, from simple and compound interest to more complex cases such as tiered investment accounts and polynomial growth.
+TmVal supports the core growth functions of mathematical interest theory, the :ref:`amount <Amount Functions>` (:math:`A_K(t)`) and :ref:`accumulation <Accumulation Functions>` (:math:`a(t)`) functions, implemented via the :class:`.Amount` and :class:`.Accumulation` classes. These classes support all sorts of growth patterns, from simple and compound interest to more complex cases such as tiered investment accounts and polynomial growth.
 
 For instance, suppose we have the tiered investment account with annually compounded interest rates:
 
@@ -309,12 +309,92 @@ Now, what if we choose to overpay during the first two months, with payments of 
 
    print(my_loan.olb_r(t=1, payments=pmts))
 
+Bonds
+======
+
+TmVal's :class:`.Bond` class supports all sorts of bond calculations. For example, suppose we have a 5-year, 1,000 bond that pays 5% annual coupons and is redeemable for 1,250. Let's s find the price of this bond if it has an 8% yield:
+
+.. ipython:: python
+
+   from tmval import Bond
+
+   bd = Bond(
+      face=1000,
+      red=1250,
+      alpha=.05,
+      cfreq=1,
+      term=5,
+      gr=.08
+   )
+
+   print(bd.price)
+
+We can also price bonds that have more complex, nonlevel coupon payments. Suppose instead that the bond in the previous example instead pays 5% annual coupons in the first two years and 6% coupons in the last three years:
+
+.. ipython:: python
+
+   bd = Bond(
+      face=1000,
+      red=1250,
+      alpha=[(.05, 0), (.06, 2)],
+      cfreq=[1,1],
+      term=5,
+      gr=.08
+   )
+
+   # verify coupon amounts
+   print(bd.coupons.amounts)
+
+   # verify coupon times
+   print(bd.coupons.times)
+
+   print(bd.price)
+
+
+Term Structure
+==============
+
+TmVal supports term structure of interest rate calculations. Suppose we have the following yields to maturity for 5% par-value bonds with annual coupons:
+
+.. rst-class:: right-align
+.. table::
+   :align: center
+
+   +--------+-------+
+   |Term    | Yield |
+   +========+=======+
+   |1 Year  | 1.8%  |
+   +--------+-------+
+   |2 Years | 3%    |
+   +--------+-------+
+   |3 Years | 3.6%  |
+   +--------+-------+
+   |4 Years | 3.9%  |
+   +--------+-------+
+   |5 Years | 4.4%  |
+   +--------+-------+
+
+We can calculate the forward rates...
+
+.. math::
+
+   (1 + f_[t, s])^{s - t} = \frac{(1 + r_s)^s}{(1 + r_t)^t}
+
+... for a 3-year bond:
+
+.. ipython:: python
+
+   from tmval import forward_rates
+
+   ytms = [.018, .03, .036, .039, .044]
+
+   forward_rates(yields=ytms, alpha=.05, term=3)
+
 Development Status
 ===================
 
 TmVal is currently in the alpha stage of development. In the coming weeks, I expect to add many more features, such as:
 
-#. Bonds
 #. Stocks
 #. Options
 #. Immunization
