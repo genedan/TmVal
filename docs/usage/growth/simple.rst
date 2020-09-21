@@ -1,6 +1,11 @@
 ========================
 Simple Interest
 ========================
+
+.. meta::
+   :description: Modeling simple interest with TmVal, a Python package for interest theory.
+   :keywords: interest, simple, rate, actuarial, python, package
+
 :term:`Simple interest<simple interest>` is a pattern of money growth in which the value of money increases at a linear rate:
 
 .. math::

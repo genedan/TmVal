@@ -2,6 +2,10 @@
 Tiered Accounts
 ========================
 
+.. meta::
+   :description: Modeling tiered investment accounts with TmVal
+   :keywords: amount, accumulation, function, tiered investment account, interest rate, actuarial, python, package
+
 Recall that the amount and accumulation functions are often related by the property:
 
 .. math::
