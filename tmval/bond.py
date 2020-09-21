@@ -104,6 +104,11 @@ class Bond(Payments):
             self.fr = fr
             self.cfreq = cfreq
 
+        if [red, k].count(None) == 2:
+            red_args = None
+        else:
+            red_args = len([red, k])
+
         if term is not None:
             self.is_term_floor = self.term_floor()
         else:
@@ -115,9 +120,9 @@ class Bond(Payments):
             self.is_zero = False
 
         if self.is_zero:
-            args = [gr, red, price, term]
+            args = [gr, red_args, price, term]
         else:
-            args = [gr, red, price, term, c_args]
+            args = [gr, red_args, price, term, c_args]
 
         n_missing = args.count(None)
 
@@ -176,7 +181,7 @@ class Bond(Payments):
                 self.red = self.get_redemption()
 
         elif n_missing == 2:
-            if price is None and red is None:
+            if price is None and red_args is None:
                 if pd is not None:
                     self.n_coupons = self.get_n_coupons()
                     self.gr = standardize_acc(gr)
@@ -197,6 +202,7 @@ class Bond(Payments):
 
                     self.price = self.makeham()
                     self.term = self.gr.solve_t(pv=k, fv=self.red)
+                    self.n_coupons = self.get_n_coupons()
                     self.coupons = self.get_coupons()
                     self.is_term_floor = self.term_floor()
                 else:
@@ -432,8 +438,9 @@ class Bond(Payments):
         :rtype: float
         """
         k = self.k
-        j = self.gr.val(1/self.cfreq)
-        p = self.g / j * (self.red - k + k)
+        j = self.gr.val(1/self.cfreq) - 1
+
+        p = self.g / j * (self.red - k) + k
         return p
 
     def base_amount(self) -> float:
