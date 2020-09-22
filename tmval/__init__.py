@@ -5,3 +5,4 @@ from tmval.annuity import *
 from tmval.loan import *
 from tmval.bond import *
 from tmval.stock import *
+from tmval.option import *
