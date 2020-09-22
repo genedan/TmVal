@@ -164,14 +164,17 @@ class Payments:
         # if times are fractional, use Newton's method:
         else:
             def f(x):
-                return sum([payments_dict[k] * (x ** k) for k in payments_dict.keys()])
+                return sum([payments_dict[k] * (x ** - k) for k in payments_dict.keys()])
+
             roots = newton(func=f, x0=x0)
+
             if isinstance(roots, ndarray):
                 pass
             else:
                 roots = np.array(roots)
             reals = roots[np.isreal(roots)]
-            i_s = [(np.real(x) ** -1) - 1 for x in reals]
+
+            i_s = [(np.real(x)) - 1 for x in reals]
 
         return i_s
 
