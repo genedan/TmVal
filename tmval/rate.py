@@ -722,7 +722,7 @@ def standardize_rate(
     :return: A standardized interest rate.
     :rtype: Rate
     """
-    if isinstance(gr, float):
+    if isinstance(gr, (int, float)):
         gr = Rate(gr)
     elif isinstance(gr, Rate):
         gr = gr.standardize()
