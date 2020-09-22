@@ -308,7 +308,7 @@ class Accumulation(Amount):
     """
     def __init__(
         self,
-        gr: Union[Callable, float, Rate]
+        gr: Union[Callable, float, int, Rate]
     ):
         super().__init__(
             gr=gr,
@@ -331,10 +331,10 @@ class Accumulation(Amount):
 
             return f
 
-        elif isinstance(self.gr, (float, Rate)):
+        elif isinstance(self.gr, (float, int, Rate)):
             return standardize_rate(self.gr).acc_func
         else:
-            raise Exception("Growth object must be a callable or Rate object.")
+            raise Exception("Growth object must be a callable, float, int, or Rate object.")
 
     def _validate_func(self):
         """
