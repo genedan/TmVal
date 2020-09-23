@@ -1164,3 +1164,34 @@ def k_from_intdisc(
 
     return k
 
+
+def nominal_m_solver(im, dm) -> float:
+    """
+    Given a nominal interest and nominal discount rate with the same compounding frequency,
+    finds the compuonding frequency
+
+    :param im:
+    :type im:
+    :param dm:
+    :type dm:
+    :return:
+    :rtype:
+    """
+    return (im * dm) / (im - dm)
+
+
+def vaalern(s, r) -> float:
+    """
+    Given two compounding frequencies s, and r, finds n such that
+    .. math::
+       1-\frac{d^{(n)}}{n} = \frac{1 + \frac{i^{(s)}}{s}}{1 + \frac{i^{(r)}}{r}}
+
+    :param s:
+    :type s:
+    :param r:
+    :type r:
+    :return:
+    :rtype:
+    """
+
+    return (r * s) / (r - s)
