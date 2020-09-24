@@ -139,6 +139,39 @@ class Put:
             option='put'
         )
 
+    def binomial_f(self, u, d, nu, nd, gr, period):
+
+        return binomial_f(
+            n=self.n,
+            s0=self.s0,
+            t=self.t,
+            k=self.k,
+            u=u,
+            d=d,
+            nu=nu,
+            nd=nd,
+            gr=gr,
+            period=period,
+            option='put'
+        )
+
+    def binomial_node(self, u, d, nu, nd, gr, period):
+
+        return binomial_node(
+            s0=self.s0,
+            n=self.n,
+            t=self.t,
+            k=self.k,
+            u=u,
+            d=d,
+            nu=nu,
+            nd=nd,
+            gr=gr,
+            period=period,
+            option='put'
+        )
+
+
 
 def binomial_st(s0, n, u, d, nu, nd):
     return n * s0 * (1 + u) ** nu * (1 - d) ** nd
@@ -162,7 +195,7 @@ def binomial_node(s0, n, t, k, u, d, nu, nd, gr, period, option):
         if option == 'call':
             return max(st - k * n, 0)
         elif option == 'put':
-            return max(k * st - st, 0)
+            return max(k * n - st, 0)
         else:
             raise ValueError("Invalid option type specified")
     else:
