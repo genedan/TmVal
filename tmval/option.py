@@ -1,5 +1,9 @@
+from typing import Tuple
+
 from tmval.growth import Accumulation
 from tmval.value import Payments
+from tmval.stock import Stock
+from tmval.loan import Loan
 
 
 class Call:
@@ -101,6 +105,32 @@ class Call:
             option='call'
         )
 
+    def decomp(self, u, d, gr, nu, nd, period) -> Tuple[Loan, Stock]:
+        """
+        Decomposes an option into an equivalent loan and stock. May generalize the stock to be any kind of \
+        underlier in the future.
+
+        :param u:
+        :type u:
+        :param d:
+        :type d:
+        :param gr:
+        :type gr:
+        :param period:
+        :type period:
+        :return:
+        :rtype:
+        """
+        delta = self.binomial_delta(u=u, d=d, nu=nu, nd=nd, gr=gr, period=period)
+        print(delta)
+        st = self.binomial_st(u=u, d=d, nu=nu, nd=nd)
+        st = Stock(gr=gr, shares=self.n * delta, price=st / self.n)
+        price = self.binomial_node(u=u, d=d, nu=nu, nd=nd, gr=gr, period=period)
+        loan_amt = st.value - price
+        loan_res = Loan(gr=gr, term=self.t, amt=loan_amt, period=self.t)
+
+        return loan_res, st
+
 
 class Put:
     def __init__(
@@ -170,7 +200,6 @@ class Put:
             period=period,
             option='put'
         )
-
 
 
 def binomial_st(s0, n, u, d, nu, nd):
