@@ -135,6 +135,9 @@ class Loan(Payments):
             elif pp:
                 self.pmt_sched = self.get_payments()
                 self.pmt = self.pmt_sched.amounts[0]
+            else:
+                self.pmt_sched = Payments(times=[], amounts=[])
+                self.pmt = None
 
         elif pmt and isinstance(pmt, (float, int)) and period and term:
             n_payments = ceil(term / period)

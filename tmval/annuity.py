@@ -449,9 +449,9 @@ class Annuity(Payments):
                 sv = self.sbar_angln()
 
             else:
-                sv = self.amount * \
-                     ((1 + self.gr.interest_rate) ** self.term - 1) / \
-                     (self.gr.val(self.period) - 1)
+                i = self.gr.val(self.period) - 1
+                n = self.n_payments
+                sv = self.amount * ((1 + i) ** n - 1) / i
 
         elif self.aprog != 0 and self.mprog == 0:
 
@@ -934,7 +934,7 @@ def olb_p(
 
     else:
         ann = Annuity(
-            period=period,
+            period=min(period, term - t),
             term=term - t,
             gr=gr,
             amount=q
