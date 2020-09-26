@@ -1,4 +1,5 @@
-from typing import Tuple
+from math import floor
+from typing import Iterable, Tuple, Union
 
 from tmval.growth import Accumulation
 from tmval.value import Payments
@@ -105,6 +106,35 @@ class Call:
             option='call'
         )
 
+    def risk_neutral_prob(self, gr, u, d, nu=0, nd=0, period=None):
+
+        return risk_neutral_prob(
+            t=self.t,
+            s0=self.s0,
+            gr=gr,
+            u=u,
+            d=d,
+            nu=nu,
+            nd=nd,
+            period=period
+        )
+
+    def risk_neutral_price(self, gr, u, d, nu, nd, period: Union[float, list]):
+
+        return risk_neutral_price(
+            s0=self.s0,
+            t=self.t,
+            k=self.k,
+            n=self.n,
+            gr=gr,
+            u=u,
+            d=d,
+            nu=nu,
+            nd=nd,
+            period=period,
+            option='call'
+        )
+
     def decomp(self, u, d, gr, nu, nd, period) -> Tuple[Loan, Stock]:
         """
         Decomposes an option into an equivalent loan and stock. May generalize the stock to be any kind of \
@@ -122,7 +152,7 @@ class Call:
         :rtype:
         """
         delta = self.binomial_delta(u=u, d=d, nu=nu, nd=nd, gr=gr, period=period)
-        print(delta)
+
         st = self.binomial_st(u=u, d=d, nu=nu, nd=nd)
         st = Stock(gr=gr, shares=self.n * delta, price=st / self.n)
         price = self.binomial_node(u=u, d=d, nu=nu, nd=nd, gr=gr, period=period)
@@ -201,6 +231,36 @@ class Put:
             option='put'
         )
 
+    def risk_neutral_prob(self, gr, u, d, nu=0, nd=0, period=None):
+
+        return risk_neutral_prob(
+            t=self.t,
+            s0=self.s0,
+            gr=gr,
+            u=u,
+            d=d,
+            nu=nu,
+            nd=nd,
+            period=period
+        )
+
+    def risk_neutral_price(self, gr, u, d, nu, nd, period: Union[float, list]):
+
+        return risk_neutral_price(
+            s0=self.s0,
+            t=self.t,
+            k=self.k,
+            n=self.n,
+            gr=gr,
+            u=u,
+            d=d,
+            nu=nu,
+            nd=nd,
+            period=period,
+            option='put'
+        )
+
+
 
 def binomial_st(s0, n, u, d, nu, nd):
     return n * s0 * (1 + u) ** nu * (1 - d) ** nd
@@ -262,3 +322,42 @@ def binomial_f(n, s0, t, k, u, d, nu, nd, gr, period, option):
     sd = binomial_st(n=n, s0=s0, u=u, d=d, nu=nu, nd=nd + 1)
 
     return rf_factor * (su * vd - sd * vu) / (su - sd)
+
+
+def risk_neutral_prob(t, s0, gr, u, d, nu=0, nd=0, period=None):
+    if period is None:
+        period = t
+    s0 = s0 * (1 + u) ** nu * (1 - d) ** nd
+
+    rf_factor = Accumulation(gr=gr).discount_func(t=period)
+
+    return (s0 - s0 * (1-d) * rf_factor) / ((s0 * (1 + u) - s0 * (1 - d)) * rf_factor)
+
+
+def risk_neutral_price(s0, t, k, n, gr, u, d, nu, nd, period: Union[float, list], option):
+
+    if isinstance(period, (int, float)):
+        n_periods = t / period
+        periods = [period] * floor(n_periods)
+    else:
+        n_periods = len(period)
+        periods = period
+
+    if nu + nd == n_periods:
+        st = binomial_st(s0=s0, n=n, u=u, d=d, nu=nu, nd=nd)
+        if option == 'call':
+            return max(st - k * n, 0)
+        elif option == 'put':
+            return max(k * n - st, 0)
+        else:
+            raise ValueError("Invalid option type specified")
+    else:
+        t = periods[nu + nd]
+
+        rf_factor = Accumulation(gr=gr).discount_func(t=t)
+
+        p = risk_neutral_prob(s0=s0, t=t, gr=gr, u=u, d=d, period=t)
+
+        vu = risk_neutral_price(s0=s0, n=n, k=k, t=t, gr=gr, u=u, d=d, nu=nu + 1, nd=nd, period=periods, option=option)
+        vd = risk_neutral_price(s0=s0, n=n, k=k, t=t, gr=gr, u=u, d=d, nu=nu, nd=nd + 1, period=periods, option=option)
+        return p * vu * rf_factor + (1 - p) * vd * rf_factor
