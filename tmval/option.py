@@ -408,3 +408,45 @@ class EquitySwap:
         pmts = [x - y for x, y in zip(interest, gains)]
 
         return pmts
+
+
+class CurrencySwap:
+    def __init__(
+        self,
+        n1,
+        gr1,
+        gr2,
+        fx,
+        period,
+        term
+     ):
+
+        self.n1 = n1
+        self.n2 = n1 * fx
+        self.acc1 = standardize_acc(gr1)
+        self.acc2 = standardize_acc(gr2)
+        self.fx = fx
+        self.period = period
+        self.term = term
+
+    def get_payments(self, perspective=1):
+        n_payments = floor(self.term / self.period)
+        times = [(x + 1) * self.period for x in range(n_payments)]
+        times_p = times.copy()
+        times_p = [0] + times_p
+        if perspective == 1:
+
+            interest_payments = [self.n2 * self.acc2.effective_interval(t1=x, t2=y)
+                                 for x, y in zip(times_p, times)]
+            pmts = interest_payments
+            pmts[-1] += self.n2
+        elif perspective == 2:
+            print([self.acc1.effective_interval(t1=x, t2=y)
+                   for x, y in zip(times_p, times)])
+            interest_payments = [self.n1 * self.acc1.effective_interval(t1=x, t2=y)
+                                 for x, y in zip(times_p, times)]
+
+            pmts = interest_payments
+            pmts[-1] += self.n1
+
+        return pmts
