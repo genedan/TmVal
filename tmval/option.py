@@ -1,7 +1,9 @@
+import numpy as np
+
 from math import floor
 from typing import Iterable, Tuple, Union
 
-from tmval.growth import Accumulation
+from tmval.growth import Accumulation, standardize_acc
 from tmval.value import Payments
 from tmval.stock import Stock
 from tmval.loan import Loan
@@ -361,3 +363,48 @@ def risk_neutral_price(s0, t, k, n, gr, u, d, nu, nd, period: Union[float, list]
         vu = risk_neutral_price(s0=s0, n=n, k=k, t=t, gr=gr, u=u, d=d, nu=nu + 1, nd=nd, period=periods, option=option)
         vd = risk_neutral_price(s0=s0, n=n, k=k, t=t, gr=gr, u=u, d=d, nu=nu, nd=nd + 1, period=periods, option=option)
         return p * vu * rf_factor + (1 - p) * vd * rf_factor
+
+
+class EquitySwap:
+    def __init__(
+        self,
+        s0,
+        gr,
+    ):
+        self.s0 = s0
+        self.acc = standardize_acc(gr)
+
+    def get_interest_payments(self, times):
+
+        prev_times = times.copy()
+        prev_times.pop()
+        prev_times = [0.0] + prev_times
+        i_s = [self.acc.effective_interval(t1=x, t2=y) for x, y in zip(prev_times, times)]
+        pmts = [self.s0 * x for x in i_s]
+
+        return pmts
+
+    def get_gain_pmts(
+        self,
+        divs,
+        sts
+    ):
+        sts = [self.s0] + sts
+        gains = list(np.diff(sts))
+
+        pmts = [x + y for x, y in zip(divs, gains)]
+
+        return pmts
+
+    def get_net_payments(
+            self,
+            times,
+            divs,
+            sts
+    ):
+        interest = self.get_interest_payments(times=times)
+        gains = self.get_gain_pmts(divs=divs, sts=sts)
+
+        pmts = [x - y for x, y in zip(interest, gains)]
+
+        return pmts
