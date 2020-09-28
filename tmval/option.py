@@ -450,3 +450,12 @@ class CurrencySwap:
             pmts[-1] += self.n1
 
         return pmts
+
+
+class RateSwap:
+    def __init__(
+        self,
+        principal,
+
+    ):
+        self.principal = principal
