@@ -1347,3 +1347,51 @@ def forward_rates(term, bonds=None, yields=None, alpha=None):
         res.update({(t, t + term): f})
 
     return res
+
+def alm(
+        times,
+        amounts,
+        bonds
+):
+    bd1_dict = bonds[0]
+    bd2_dict = bonds[1]
+    bd3_dict = bonds[-1]
+    alpha3 = bd3_dict['alpha']
+    cfreq3 = bd3_dict['cfreq']
+    fc = amounts[-1] / (1 + alpha3 / cfreq3)
+
+    bd3 = Bond(
+        face=fc,
+        red=fc,
+        alpha=alpha3,
+        cfreq=cfreq3,
+        term=bd3_dict['term'],
+        gr=bd1_dict['gr']
+    )
+
+    coupon3 = bd3.fr
+    alpha2 = bd2_dict['alpha']
+    cfreq2 = bd2_dict['cfreq']
+
+    fb = (amounts[-2] - coupon3) / (1 + alpha2 / cfreq2)
+
+    bd2 = Bond(
+        face=fb,
+        red=fb,
+        alpha=alpha2,
+        cfreq=cfreq2,
+        term=bd2_dict['term'],
+        gr=bd1_dict['gr']
+    )
+
+    gr1 = bd1_dict['gr']
+
+    fc = (amounts[-3] - bd3.fr - bd2.fr) / gr1.acc_func(.5)
+
+    bd1 = Bond(
+        face=fc,
+        red=fc,
+        gr=gr1,
+        term=bd3_dict['term']
+    )
+    return [bd1, bd2, bd3]
