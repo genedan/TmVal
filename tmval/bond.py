@@ -256,7 +256,8 @@ class Bond(Payments):
         else:
             pass
 
-        self.append(amounts=[-self.price], times=[0])
+        self.amounts = [-self.price] + self.amounts
+        self.times = [0] + self.times
 
         if self.is_zero:
             pass

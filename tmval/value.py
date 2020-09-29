@@ -125,13 +125,13 @@ class Payments:
         return payments_dict
 
     def npv(self, gr=None):
-        if self.gr is None:
-            if gr is None:
+        if gr is None:
+            if self.gr is None:
                 raise Exception("Growth rate object not set.")
             else:
-                acc = Accumulation(gr=gr)
+                acc = self.gr
         else:
-            acc = self.gr
+            acc = standardize_acc(gr=gr)
 
         pv = sum([acc.discount_func(t=t, fv=fv) for t, fv in zip(self.times, self.amounts)])
 
@@ -370,6 +370,64 @@ class Payments:
         # print(derivative(self.npv, x0=i0, dx=1e-5, n=2))
         return self.tangent_line_approx(i0=i0, i=i) + \
                derivative(self.npv, x0=i0, dx=1e-5, n=2) / 2 * (i - i0) ** 2
+
+    def relchg(self, i, i0=None, approx=False, excl_inv=True):
+        if i0 is None:
+            if self.gr is not None:
+                i0 = self.gr
+            else:
+                raise ValueError("Growth rate object not set")
+        else:
+            i0 = standardize_acc(gr=i0)
+
+        if approx:
+            if i0.is_compound:
+                res = - self.modified_duration(i=i0.interest_rate, excl_inv=excl_inv) * (i - i0.interest_rate)
+            else:
+                raise Exception("Relative change approximation is unsupported for non-compound interest.")
+        else:
+            res = (self.npv(gr=i) - self.npv(gr=i0)) / self.npv(gr=i0)
+
+        return res
+
+    def modified_duration(self, i, excl_inv=True):
+        if excl_inv:
+            times = self.times.copy()
+            amounts = self.amounts.copy()
+            times.pop(0)
+            amounts.pop(0)
+            pmts = Payments(times=times, amounts=amounts, gr=self.gr)
+            return - derivative(pmts.npv, x0=i, dx=1e-6) / pmts.npv(gr=i)
+        else:
+
+            return - derivative(self.npv, x0=i, dx=1e-6) / self.npv(gr=i)
+
+    def macaulay_duration(self, gr=None, excl_inv=True):
+        if gr is None:
+            if self.gr is None:
+                raise Exception("Growth rate object not set.")
+            else:
+                acc = self.gr
+        else:
+            acc = standardize_acc(gr=gr)
+
+        if excl_inv:
+            times = self.times.copy()
+            amounts = self.amounts.copy()
+            times.pop(0)
+            amounts.pop(0)
+            pmts = Payments(times=times, amounts=amounts, gr=acc)
+            pv = pmts.npv()
+        else:
+            pv = self.npv(gr=gr)
+            times = self.times
+            amounts = self.amounts
+
+        md = sum([acc.discount_func(t=t, fv=fv) * t / pv for t, fv in zip(times, amounts)])
+
+        return md
+
+
 
 def npv(
         payments: list,
