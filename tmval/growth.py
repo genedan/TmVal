@@ -334,6 +334,7 @@ class Accumulation(Amount):
         elif isinstance(self.gr, (float, int, Rate)):
             return standardize_rate(self.gr).acc_func
         else:
+
             raise Exception("Growth object must be a callable, float, int, or Rate object.")
 
     def _validate_func(self):
@@ -543,11 +544,11 @@ def actual_actual(
         return (end_dt - beg_dt).days
     else:
         years = relativedelta(end_dt, beg_dt).years
-        print(years)
+
         intermediate = dt.datetime(beg_dt.year + 1, end_dt.month, end_dt.day)
-        print(intermediate)
+
         days = (intermediate - beg_dt).days
-        print(days)
+
 
         t = years + days / 365
 
@@ -1038,8 +1039,6 @@ def rate_from_earned(iex: Tuple[float, float], iey: Tuple[float, float]) -> Rate
     x_t = iex[1]
     y_amt = iey[0]
     y_t = iey[1]
-
-    print((1 / ((y_t - 1) - (x_t - 1)) - 1))
 
     gr = Rate((y_amt / x_amt) ** (1 / ((y_t - 1) - (x_t - 1))) - 1)
 

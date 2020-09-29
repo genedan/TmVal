@@ -4,6 +4,8 @@ import numpy as np
 import warnings
 
 from numpy import ndarray
+from scipy.interpolate import approximate_taylor_polynomial
+from scipy.misc import derivative
 from scipy.optimize import newton
 
 from itertools import groupby
@@ -122,11 +124,16 @@ class Payments:
 
         return payments_dict
 
-    def npv(self):
+    def npv(self, gr=None):
         if self.gr is None:
-            raise Exception("Growth rate object not set.")
+            if gr is None:
+                raise Exception("Growth rate object not set.")
+            else:
+                acc = Accumulation(gr=gr)
+        else:
+            acc = self.gr
 
-        pv = sum([self.gr.discount_func(t=t, fv=fv) for t, fv in zip(self.times, self.amounts)])
+        pv = sum([acc.discount_func(t=t, fv=fv) for t, fv in zip(self.times, self.amounts)])
 
         return pv
 
@@ -344,6 +351,25 @@ class Payments:
 
         return jtw
 
+    def taylor(self, gr, x, degree):
+
+        def f(grs):
+            res = []
+            for i in grs:
+                res += [self.npv(gr=i)]
+            return res
+
+        #approx = approximate_taylor_polynomial(f, x=x, degree=degree, scale=gr)
+        return approximate_taylor_polynomial(f, x=x, degree=degree, scale=gr)
+
+    def tangent_line_approx(self, i0, i):
+
+        return self.npv(gr=i0) + derivative(self.npv, x0=i0, dx=1e-6) * (i - i0)
+
+    def taylor2(self, i0, i):
+        # print(derivative(self.npv, x0=i0, dx=1e-5, n=2))
+        return self.tangent_line_approx(i0=i0, i=i) + \
+               derivative(self.npv, x0=i0, dx=1e-5, n=2) / 2 * (i - i0) ** 2
 
 def npv(
         payments: list,
