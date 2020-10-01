@@ -81,8 +81,17 @@ class Bond(Payments):
         self.k = k
 
         if [cgr, alpha].count(None) == 2:
-            c_args = None
-            self.alpha = None
+            # if bond is par and priced at par
+            if price == red == face and gr is not None:
+                alpha = standardize_acc(gr).interest_rate.convert_rate(
+                    pattern="Nominal Interest",
+                    freq=cfreq
+                ).rate
+                self.alpha = alpha
+                c_args = 1
+            else:
+                c_args = None
+                self.alpha = None
         else:
             c_args = len([cgr, alpha])
 
@@ -126,7 +135,14 @@ class Bond(Payments):
 
         n_missing = args.count(None)
 
-        if n_missing == 1:
+        if n_missing == 0:
+            self.red = red
+            self.n_coupons = self.get_n_coupons()
+            self.gr = standardize_acc(gr)
+            self.coupons = self.get_coupons()
+            self.price = price
+
+        elif n_missing == 1:
 
             if price is None:
                 self.n_coupons = self.get_n_coupons()

@@ -390,14 +390,22 @@ class Payments:
 
         return res
 
-    def modified_duration(self, i, excl_inv=True):
+    def modified_duration(self, i, m=1, excl_inv=True):
+
         if excl_inv:
-            times = self.times.copy()
-            amounts = self.amounts.copy()
-            times.pop(0)
-            amounts.pop(0)
-            pmts = Payments(times=times, amounts=amounts, gr=self.gr)
-            return - derivative(pmts.npv, x0=i, dx=1e-6) / pmts.npv(gr=i)
+            if m != 1:
+                im = Rate(i).convert_rate(
+                    pattern="Nominal Interest",
+                    freq=m
+                )
+                return self.macaulay_duration() / (1 + im.rate / m)
+            else:
+                times = self.times.copy()
+                amounts = self.amounts.copy()
+                times.pop(0)
+                amounts.pop(0)
+                pmts = Payments(times=times, amounts=amounts, gr=self.gr)
+                return - derivative(pmts.npv, x0=i, dx=1e-6) / pmts.npv(gr=i)
         else:
 
             return - derivative(self.npv, x0=i, dx=1e-6) / self.npv(gr=i)
@@ -771,5 +779,13 @@ def extract_flows(payments: Union[Payments, List[Payments]]) -> Payments:
         amounts=amounts,
         times=times
     )
+
+    return res
+
+
+def macaulay_duration(portfolio: List[Payments]):
+
+    price = sum([x.npv() for x in portfolio])
+    res = sum([x.macaulay_duration() *  x.npv() for x in portfolio]) / price
 
     return res
