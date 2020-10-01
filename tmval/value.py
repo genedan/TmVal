@@ -371,7 +371,7 @@ class Payments:
         return self.tangent_line_approx(i0=i0, i=i) + \
                derivative(self.npv, x0=i0, dx=1e-5, n=2) / 2 * (i - i0) ** 2
 
-    def relchg(self, i, i0=None, approx=False, excl_inv=True):
+    def relchg(self, i, i0=None, approx=False, excl_inv=True, degree=1):
         if i0 is None:
             if self.gr is not None:
                 i0 = self.gr
@@ -382,11 +382,26 @@ class Payments:
 
         if approx:
             if i0.is_compound:
-                res = - self.modified_duration(i=i0.interest_rate, excl_inv=excl_inv) * (i - i0.interest_rate)
+                d1 = - self.modified_duration(i=i0.interest_rate, excl_inv=excl_inv) * (i - i0.interest_rate)
+                if degree == 1:
+                    res = d1
+                elif degree == 2:
+                    d2 = self.modified_convexity(i=i0.interest_rate, excl_inv=excl_inv) * ((i -i0.interest_rate) ** 2) / 2
+                    res = d1 + d2
+                else:
+                    raise ValueError("Relative change approximation is only supported for 1st and 2nd degrees.")
             else:
                 raise Exception("Relative change approximation is unsupported for non-compound interest.")
         else:
-            res = (self.npv(gr=i) - self.npv(gr=i0)) / self.npv(gr=i0)
+            if excl_inv:
+                times = self.times.copy()
+                amounts = self.amounts.copy()
+                times.pop(0)
+                amounts.pop(0)
+                pmts = Payments(times=times, amounts=amounts, gr=self.gr)
+                res = (pmts.npv(gr=i) - pmts.npv(gr=i0)) / pmts.npv(gr=i0)
+            else:
+                res = (self.npv(gr=i) - self.npv(gr=i0)) / self.npv(gr=i0)
 
         return res
 
@@ -435,6 +450,42 @@ class Payments:
 
         return md
 
+    def modified_convexity(self, i, m=1, excl_inv=True, dx=1e-5):
+        if excl_inv:
+            times = self.times.copy()
+            amounts = self.amounts.copy()
+            times.pop(0)
+            amounts.pop(0)
+            pmts = Payments(times=times, amounts=amounts, gr=self.gr)
+            p_double_prime = derivative(pmts.npv, x0=i, dx=dx, n=2)
+
+            return p_double_prime / pmts.npv(gr=i)
+
+    def macaulay_convexity(self, gr=None, excl_inv=True):
+
+        if gr is None:
+            if self.gr is None:
+                raise Exception("Growth rate object not set.")
+            else:
+                acc = self.gr
+        else:
+            acc = standardize_acc(gr=gr)
+
+        if excl_inv:
+            times = self.times.copy()
+            amounts = self.amounts.copy()
+            times.pop(0)
+            amounts.pop(0)
+            pmts = Payments(times=times, amounts=amounts, gr=acc)
+            pv = pmts.npv()
+        else:
+            pv = self.npv(gr=gr)
+            times = self.times
+            amounts = self.amounts
+
+        mc = sum([acc.discount_func(t=t, fv=fv) * t ** 2 / pv for t, fv in zip(times, amounts)])
+
+        return mc
 
 
 def npv(
