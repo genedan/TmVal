@@ -110,6 +110,26 @@ class Payments:
         self.amounts += amounts
         self.times += times
 
+    def paymentize(self, other, gr=None):
+        if gr is None:
+            gr = self.gr
+
+        grouped = Payments(
+            times=self.times + other.times,
+            amounts=self.amounts + other.amounts
+        ).group_payments()
+
+        times = [k for k in grouped.keys()]
+        amounts = [grouped[k] for k in grouped.keys()]
+
+        pmts = Payments(
+            times=times,
+            amounts=amounts,
+            gr=gr
+        )
+
+        return pmts
+
     def group_payments(self) -> dict:
         times = self.times.copy()
         amounts = self.amounts.copy()
@@ -487,6 +507,24 @@ class Payments:
 
         return mc
 
+    def check_redington(self, precision=4):
+        if round(self.npv(), precision) == 0:
+            c1 = True
+        else:
+            c1 = False
+
+        if round(derivative(self.npv, x0=self.gr.interest_rate, dx=1e-6), precision) == 0.0:
+            c2 = True
+        else:
+            c2 = False
+
+        if round(derivative(self.npv, x0=self.gr.interest_rate, dx=1e-6, n=2), precision) >= 0.0:
+            c3 = True
+        else:
+            c3 = False
+
+        return c1 and c2 and c3
+
 
 def npv(
         payments: list,
@@ -834,9 +872,3 @@ def extract_flows(payments: Union[Payments, List[Payments]]) -> Payments:
     return res
 
 
-def macaulay_duration(portfolio: List[Payments]):
-
-    price = sum([x.npv() for x in portfolio])
-    res = sum([x.macaulay_duration() *  x.npv() for x in portfolio]) / price
-
-    return res
