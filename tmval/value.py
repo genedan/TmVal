@@ -114,9 +114,21 @@ class Payments:
         if gr is None:
             gr = self.gr
 
+        if isinstance(other, Payments):
+            times = self.times + other.times
+            amounts = self.amounts + other.amounts
+        elif isinstance(other, list):
+            times = []
+            amounts = []
+            for x in other:
+                times += x.times
+                amounts += x.amounts
+        else:
+            raise ValueError("Invalid object passed to argument 'other'.")
+
         grouped = Payments(
-            times=self.times + other.times,
-            amounts=self.amounts + other.amounts
+            times=times,
+            amounts=amounts
         ).group_payments()
 
         times = [k for k in grouped.keys()]
@@ -262,9 +274,16 @@ class Payments:
 
         # return bal
 
-    def eq_val(self, t: float) -> float:
+    def eq_val(self, t: float, gr=None) -> float:
+        if gr is None:
+            if self.gr is None:
+                raise Exception("Growth rate object not set.")
+            else:
+                acc = self.gr
+        else:
+            acc = standardize_acc(gr=gr)
 
-        b = sum([c * self.gr.val(t) / self.gr.val(tk) for c, tk in zip(self.amounts, self.times)])
+        b = sum([c * acc.val(t) / acc.val(tk) for c, tk in zip(self.amounts, self.times)])
 
         return b
 
@@ -387,7 +406,7 @@ class Payments:
         return self.npv(gr=i0) + derivative(self.npv, x0=i0, dx=1e-6) * (i - i0)
 
     def taylor2(self, i0, i):
-        # print(derivative(self.npv, x0=i0, dx=1e-5, n=2))
+
         return self.tangent_line_approx(i0=i0, i=i) + \
                derivative(self.npv, x0=i0, dx=1e-5, n=2) / 2 * (i - i0) ** 2
 
@@ -524,6 +543,32 @@ class Payments:
             c3 = False
 
         return c1 and c2 and c3
+
+    def effective_duration(self, i0, h, call=None, excl_inv=True):
+
+        if excl_inv:
+            times = self.times.copy()
+            amounts = self.amounts.copy()
+            times.pop(0)
+            amounts.pop(0)
+            pmts = Payments(times=times, amounts=amounts)
+        else:
+            pmts = self
+
+        if call is not None:
+            p1 = call
+        else:
+            p1 = pmts.npv(gr=i0 - h)
+
+        p2 = pmts.npv(gr=i0 + h)
+
+        p0 = pmts.npv(gr=i0)
+
+        mh = (p2 - p1) / (2 * h)
+
+        eh = - mh / p0
+
+        return eh
 
 
 def npv(

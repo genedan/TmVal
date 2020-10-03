@@ -168,7 +168,6 @@ class Bond(Payments):
                         amounts += [afr[0]] * n
                     amounts += [red]
 
-                print(amounts)
                 times = [0.0] + self.get_coupon_times() + [term]
 
                 pmts = Payments(
@@ -265,7 +264,7 @@ class Bond(Payments):
 
                     j = self.gr.val(1 / self.cfreq) - 1
                     f = 1 - self.term / (1 / self.cfreq)
-                    print((1 + (1 - f) * j))
+
                     self.price = (self.red + self.fr) / (1 + (1 - f) * j) - f * self.fr
                 else:
                     self.price = self.clean(t=0)
@@ -1365,8 +1364,8 @@ def forward_rates(term, bonds=None, yields=None, alpha=None):
 
     return res
 
+
 def alm(
-        times,
         amounts,
         bonds
 ):

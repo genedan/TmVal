@@ -59,12 +59,6 @@ def reddingtonize(fv, t, gr, terms=None, portfolio=List[Payments]):
 
         b_fac = b / portfolio[1].price
 
-        print(portfolio[0].macaulay_duration())
-        print(portfolio[1].macaulay_duration() )
-        print(a)
-        print(b)
-        print(pv)
-
         bd1 = Bond(
             red=portfolio[0].red * a_fac,
             face=portfolio[0].face * a_fac if portfolio[0].face is not None else None,
@@ -89,3 +83,13 @@ def reddingtonize(fv, t, gr, terms=None, portfolio=List[Payments]):
         raise Exception("Unable to calculate weights.")
 
     return [bd1, bd2]
+
+
+def price_from_efd(p0, efd, chg):
+    """
+    Estimates the price from the effective duration
+    :return:
+    :rtype:
+    """
+
+    return p0 * (1 - chg * efd)
