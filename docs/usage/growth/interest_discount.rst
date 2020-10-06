@@ -3,6 +3,7 @@ Interest-Discount Relationships
 ===============================
 
 .. meta::
+   :description: TmVal documentation for describing the relationships between interest and discount rates. Introduces rate conversions but does not go into depth on the method.
    :keywords: interest rate conversion, simple interest, simple discount, nominal interest, nominal discount, effective interest, effective discount, compound interest, compound discount, force of interest, conversions, actuarial, python, package
 
 The relationship between interest rates and discount rates can be expressed with a variety of equations. One thing to keep in mind is that if we borrow a dollar at time :math:`t_1` a discount rate of :math:`d`, we will receive :math:`(1-d)` dollars today.
