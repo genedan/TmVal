@@ -115,8 +115,18 @@ class Payments:
             gr = self.gr
 
         if isinstance(other, Payments):
-            times = self.times + other.times
-            amounts = self.amounts + other.amounts
+            if (
+                isinstance(self.times, list) and
+                isinstance(self.amounts, list) and
+                isinstance(other.times, list) and
+                isinstance(other.amounts, list)
+            ):
+
+                times = self.times + other.times
+                amounts = self.amounts + other.amounts
+            else:
+                raise ValueError("Invalid object passed to argument 'other'.")
+
         elif isinstance(other, list):
             times = []
             amounts = []
