@@ -3,6 +3,7 @@ Discount
 =========
 
 .. meta::
+   :description: TmVal's documentation on discount rates, explains the difference between the discount rate and interest rate.
    :keywords: discount rate, interest up front, simple loan, actuarial, python, package, interest theory
 
 **Note:** This definition of :term:`discount` may differ from what you are used to in finance. If you typically use the terms **interest rate** and **discount rate** interchangeably, then stick with the interest rate operations in TmVal. If you encounter the term 'discount rate' in TmVal, please be aware that it refers to actuarial discount, discount interest, or interest up front.
