@@ -3,6 +3,7 @@ The Investment Year Method
 ===============================
 
 .. meta::
+   :description: TmVal documentation on the investment year method.
    :keywords: investment year method, actuarial, python, package
 
 The investment year method is a growth pattern in which the rate of interest applicable to an investment varies by year and depends on the time at which that investment was made. The rates are taken from a table, which might look something like this:
