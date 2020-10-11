@@ -2,6 +2,10 @@
 Approximate Dollar-Weighted Yield Rate
 =======================================
 
+.. meta::
+   :description: TmVal documentation on approximate dollar-weighted yield rate.
+   :keywords: approximate dollar-weighted yield rate, dollar-weighted yield, actuarial, python, package
+
 Sometimes, we would like to approximate the dollar-weighted yield rate. One such approximation is to set the investment term to 1:
 
 .. math::
