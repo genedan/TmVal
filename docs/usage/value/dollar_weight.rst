@@ -2,6 +2,10 @@
 Dollar-Weighted Yield
 ======================
 
+.. meta::
+   :description: TmVal documentation on dollar-weighted yield rate.
+   :keywords: dollar-weighted yield rate, dollar-weighted yield, actuarial, python, package
+
 A common problem in finance is to calculate an interest rate that solves the time :math:`\tau` equation of value:
 
 .. math::
