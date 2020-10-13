@@ -2,6 +2,11 @@
 Equated Time
 =============
 
+.. meta::
+   :description: TmVal documentation on the method of equated time.
+   :keywords: equated time, actuarial, python, package
+
+
 Suppose we have a series of contributions :math:`C_{t_k}` for :math:`k=1, 2, \ldots, n`. The method that solves for :math:`T` such that a single payment of :math:`C=\sum_{k=1}^n C_{t_k}` at time :math:`T` has the same value at :math:`t=0` as the sequence of :math:`n` contributions is known as the method of equated time.
 
 Examples
