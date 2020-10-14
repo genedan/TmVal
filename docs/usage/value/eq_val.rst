@@ -2,6 +2,10 @@
 Equations of Value
 ===================
 
+.. meta::
+   :description: TmVal documentation on equations of value.
+   :keywords: equation of value, equations of value, time t equation, actuarial, python, package
+
 An equation of value is the valuation of a collection of cash flows at a desired point in time. Mathematically, the time :math:`\tau` equation of value is defined as:
 
 .. math::
