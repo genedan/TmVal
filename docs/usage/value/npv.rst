@@ -2,6 +2,10 @@
 Net Present Value
 ========================
 
+.. meta::
+   :description: TmVal documentation on net present value.
+   :keywords: net present value, npv, present value, python net present value formula, python npv formula, actuarial, python, package
+
 In the context of this section, we define a return at time :math:`t` to be the net cash flow of payments occurring at that time. For example, if you have to pay someone 5,000 at time t=0, but receive 2500 from your pay check at the same time, your return is 5,000 - 2,500 = 500.
 
 The :term:`net present value (NPV)` is the sum of the present value of a stream of returns. If we denote the undiscounted returns as :math:`R_0, R_1, R_2, ... , R_n`, occurring at times :math:`0, t_1, t_2, ..., t_n`, the NPV is defined as:
