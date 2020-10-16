@@ -2,6 +2,10 @@
 The Payments Class
 ===================
 
+.. meta::
+   :description: TmVal documentation on payments class.
+   :keywords: payment, payments, net present value, npv, present value, python net present value formula, python npv formula, actuarial, python, package
+
 TmVal offers a :class:`.Payments` class, which is exactly what you think it is, a collection of transfers of money from one entity to another. Since we don't really care who is getting what at the moment, a :class:`.Payments` object in TmVal is simply a collection of payment amounts, payment times, and a growth rate object.
 
 The growth rate object can be a float, in which case we assume compound effective interest. You can also provide a :class:`.Rate` object for other interest patterns, including compound effective interest. It can also be an Accumulation object, which gives you an option if the growth pattern you want to model is more complex.
