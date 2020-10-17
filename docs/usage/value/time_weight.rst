@@ -2,6 +2,10 @@
 Time-Weighted Yield
 ====================
 
+.. meta::
+   :description: TmVal documentation on time-weighted yield.
+   :keywords: time weighted yield, time, weight, yield, actuarial, python, package
+
 The time-weighted yield is a measure of how well a fund was managed. Mathematically, it is defined as:
 
 .. math::
