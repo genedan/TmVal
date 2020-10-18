@@ -2,6 +2,10 @@
 Outstanding Loan Balance - Prospective Method
 ==============================================
 
+.. meta::
+   :description: TmVal documentation on prospective method for calculating outstanding loan balance.
+   :keywords: outstanding loan balance, prospective, method, actuarial, python, package
+
 Another way to calculate the outstanding loan balance at a point in time is the :term:`prospective method`, which sums up the value of the remaining loan payments, discounted to that time period. Assuming compound interest, if the last payment is adjusted to avoid over/under payment, the outstanding loan balance calculated via the prospective method is defined as:
 
 .. math::
