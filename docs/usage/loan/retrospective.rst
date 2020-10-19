@@ -2,6 +2,10 @@
 Outstanding Loan Balance - Retrospective Method
 ================================================
 
+.. meta::
+   :description: TmVal documentation on retrospective method for calculating outstanding loan balance.
+   :keywords: outstanding loan balance, retrospective, method, actuarial, python, package
+
 A common problem involving loans is calculating the outstanding loan balance at a point in time. One way to do this is called the :term:`retrospective method`, which first calculates the accumulated value of the principal, and then subtracts the accumulated value of the payments. The formula for the outstanding loan balance after the :math:`k\text{-th}` payment is thus:
 
 .. math::
