@@ -2,6 +2,10 @@
 Nonlevel Annuities - Arithmetic Progression
 ===========================================
 
+.. meta::
+   :description: TmVal documentation on annuities with payments in increasing arithmetic progression.
+   :keywords: annuity, payment, increasing, arithmetic, progression, formula, equation, actuarial, python, package
+
 TmVal's :class:`.Annuity` class can also handle annuities with increasing arithmetic progression. This means that if an annuity makes an initial payment :math:`P`, the next payment is :math:`P+Q`, and the payment after that is :math:`P+2Q`, and so on. The present value of such an annuity is:
 
 .. math::
