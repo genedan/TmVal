@@ -2,6 +2,10 @@
 Deferred Annuities
 ===================
 
+.. meta::
+   :description: TmVal documentation deferred annuities.
+   :keywords: annuity, deferred, deferred annuity, actuarial, python, package
+
 A :term:`deferred annuity` is a type of annuity whose first payment begins more than one payment period later than its present valuation date. For example, we can purchase a deferred annuity-immediate today that makes annual payments beginning 5 years from now.
 
 We denote a deferred annuity-immediate as :math:`\ax[w|n]{}`, where :math:`w` indicates that the first payment will occur :math:`w + 1` periods from the present valuation date. For example, the annuity in the preceding paragraph would be denoted :math:`\ax[4|n]{}` because the first payment occurs at time 5, which is equal to :math:`w + 1`, since in this case :math:`w = 4`.
