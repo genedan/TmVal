@@ -2,6 +2,10 @@
 Annuities-Due
 ==============
 
+.. meta::
+   :description: TmVal documentation annuity due.
+   :keywords: annuity, due, annuity due, formula, actuarial, python, package
+
 An :term:`annuity-due` is a type of annuity in which the payments occur at the beginning of each payment period. We define a :term:`basic annuity-due` as an annuity-due in which every payment equals 1.
 
 The formulas for basic annuities-due are similar to those for basic annuities-immediate, except the present value of the basic annuity-due is taken at the time of the first payment, and the accumulated value is taken at the next period following the final payment of the annuity. In the case of compound interest:
