@@ -2,6 +2,11 @@
 General Accumulation Functions
 ===============================
 
+.. meta::
+   :description: TmVal documentation on using general accumulation functions with annuities
+   :keywords: annuity, accumulation, general accumulation, accumulation function, function, formula, actuarial, python, package
+
+
 The annuities supported by TmVal need not be limited to the main growth patterns supported by the :class:`.Rate` class. TmVal can also handle annuities governed by more complex growth patterns, such as polynomial growth.
 
 Examples
