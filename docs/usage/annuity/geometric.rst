@@ -2,6 +2,10 @@
 Nonlevel Annuities - Geometric Progression
 ===========================================
 
+.. meta::
+   :description: TmVal documentation on nonlevel annuities with payments of increasing geometric progression.
+   :keywords: annuity, nonlevel, non-level, geometric, progression, payment, function, formula, actuarial, python, package
+
 Annuities can have payments that increase geometrically. For example, an annuity might have payments that increase by 2% per year. If we have payments that increase by g% per year, we define the present value of an annuity-immediate with an initial payment :math:`P` as:
 
 .. math::
