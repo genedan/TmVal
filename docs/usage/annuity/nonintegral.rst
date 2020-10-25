@@ -2,6 +2,10 @@
 Nonintegral Terms
 ==================
 
+.. meta::
+   :description: TmVal documentation annuities with nonintegral terms.
+   :keywords: annuity, nonintegral, integral, non-integral, term, formula, actuarial, python, package
+
 Sometimes, certain payment structures will not yield an integral number of payments for a desired present value. For example, suppose we were to take out a loan for 10,000 at 5% interest compounded annually. If we were to pay 1,000 per year to settle the loan, solving the equation :math:`L=Q\ax{\angl{r} i}` for :math:`r` will not result in an integer. Specifically, the formula for solving r is:
 
 .. math::
