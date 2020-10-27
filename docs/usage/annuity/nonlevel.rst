@@ -2,6 +2,10 @@
 Nonlevel Annuities
 ===================
 
+.. meta::
+   :description: TmVal documentation annuities with nonlevel payments.
+   :keywords: annuity, nonlevel, non-level, formula, actuarial, python, package
+
 Sometimes annuities involves nonlevel payments that do not correspond to a standard annuity symbol. In this case, TmVal's :class:`.Annuity` class defaults to using methods from its parent class, :class:`.Payments`.
 
 Examples
