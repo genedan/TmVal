@@ -2,6 +2,11 @@
 Perpetuities - Arithmetic Progression
 =======================================
 
+.. meta::
+   :description: TmVal documentation for perpetuities with payments in increasing arithmetic progression.
+   :keywords: annuity, perpetuity, arithmetic, progression, formula, actuarial, python, package
+
+
 TmVal's :class:`.Annuity` class can also handle perpetuities with payments of increasing arithmetic progression:
 
 .. math::
