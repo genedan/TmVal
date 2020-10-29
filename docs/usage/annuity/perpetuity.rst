@@ -2,6 +2,10 @@
 Perpetuities
 ==============
 
+.. meta::
+   :description: TmVal documentation on perpetuities.
+   :keywords: annuity, perpetuity, formula, actuarial, python, package
+
 A :term:`perpetuity` is a type of annuity that has an infinite number of payments. Perpetuities come in both :term:`immediate<perpetuity-immediate>` and :term:`due<perpetuity-due>` forms. For the former, the payments occur at the beginning of each period, whereas for the latter, they occur at the end of each period. A basic perpetuity (either :term:`immediate<basic perpetuity-immediate>` or :term:`due<basic perpetuity-due>`), is one that pays 1 for each period.
 
 Like annuities, perpetuities have present value formulas that can be simplified to concise algebraic expressions. This fact can be proved via properties of infinite series. For a perpetuity-immediate:
