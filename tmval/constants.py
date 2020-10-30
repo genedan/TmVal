@@ -1,5 +1,11 @@
+"""
+This file contains aliases and other values that might be referenced throughout the package, such as the build version.
+"""
+
+# The build version is referenced by the setup file and documentation.
 BUILD_VERSION = '0.0.11'
 
+# Formal patterns refer to canonical names of different types of growth rates and their aliases.
 FORMAL_PATTERNS = {
     'interest': 'Effective Interest',
     'i': 'Effective Interest',
@@ -35,7 +41,7 @@ FORMAL_PATTERNS = {
     'simpdisc': 'Simple Discount'
 }
 
-
+# Various names to refer to compound growth rates.
 COMPOUNDS = [
             'Effective Interest',
             'Effective Discount',
@@ -44,16 +50,19 @@ COMPOUNDS = [
             'Force of Interest'
         ]
 
+# Various names to refer to simple growth rates.
 SIMPLES = [
     'Simple Interest',
     'Simple Discount'
 ]
 
+# Various names to refer to nominal growth rates.
 NOMINALS = [
     'Nominal Interest',
     'Nominal Discount'
 ]
 
+# Various names to refer to effective growth rates.
 EFFECTIVES = [
     'Effective Interest',
     'Effective Discount',
