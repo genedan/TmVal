@@ -42,10 +42,11 @@ extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.autosummary",
     "sphinx.ext.linkcode",
-    "sphinx.ext.autosectionlabel"
+    "sphinx.ext.autosectionlabel",
 ]
 
-autosectionlabel_maxdepth=1
+autosectionlabel_maxdepth = 1
+autosectionlabel_prefix_document = True
 
 def linkcode_resolve(domain, info):
     """
@@ -98,6 +99,8 @@ def linkcode_resolve(domain, info):
         
     return "https://github.com/genedan/TmVal/blob/master/tmval/%s%s" % (
         fn, linespec)
+        
+master_doc = 'index'
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']

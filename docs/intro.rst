@@ -19,7 +19,7 @@ This article begins by highlighting the advantages TmVal has over existing time 
 Feature Highlights
 ===================
 
-- TmVal supports growth patterns that are more complex than compound interest. In addition to supporting simple, compound, and nominal interest, TmVal handles growth patterns that may be of theoretical interest to actuaries, such as continuously compounded rates (:ref:`force of interest <Force of Interest>`), polynomial growth, and arbitrary amount and accumulation functions.
+- TmVal supports growth patterns that are more complex than compound interest. In addition to supporting simple, compound, and nominal interest, TmVal handles growth patterns that may be of theoretical interest to actuaries, such as continuously compounded rates (:ref:`force of interest <usage/growth/force_of_interest:Force of Interest>`), polynomial growth, and arbitrary amount and accumulation functions.
 
 ..
 
@@ -27,12 +27,12 @@ Feature Highlights
 
 ..
 
-- TmVal's classes are intended to correspond closely to symbols used in actuarial notation. Well-known symbols encountered by actuaries, such as :math:`\ax{\angln i}`, :math:`\sx**{\angln i}[(m)]`, :math:`(I_{P,Q}\ax**{}){\angln i}`, etc., are supported. Refer to the :ref:`Notation guide` in this documentation to see the available symbols.
+- TmVal's classes are intended to correspond closely to symbols used in actuarial notation. Well-known symbols encountered by actuaries, such as :math:`\ax{\angln i}`, :math:`\sx**{\angln i}[(m)]`, :math:`(I_{P,Q}\ax**{}){\angln i}`, etc., are supported. Refer to the :ref:`notation:Notation guide` in this documentation to see the available symbols.
 
 Amount and Accumulation Functions
 ==================================
 
-TmVal supports the core growth functions of mathematical interest theory, the :ref:`amount <Amount Functions>` (:math:`A_K(t)`) and :ref:`accumulation <Accumulation Functions>` (:math:`a(t)`) functions, implemented via the :class:`.Amount` and :class:`.Accumulation` classes. These classes support all sorts of growth patterns, from simple and compound interest to more complex cases such as tiered investment accounts and polynomial growth.
+TmVal supports the core growth functions of mathematical interest theory, the :ref:`amount <usage/growth/amount:Amount Functions>` (:math:`A_K(t)`) and :ref:`accumulation <usage/growth/accumulation:Accumulation Functions>` (:math:`a(t)`) functions, implemented via the :class:`.Amount` and :class:`.Accumulation` classes. These classes support all sorts of growth patterns, from simple and compound interest to more complex cases such as tiered investment accounts and polynomial growth.
 
 For instance, suppose we have the tiered investment account with annually compounded interest rates:
 
@@ -132,7 +132,7 @@ Furthermore, we can demonstrate a conversion to nominal interest compounded quar
 
    print(i2)
 
-For more details, see :ref:`The Rate Class, Revisited` of the :ref:`Usage Tutorial`.
+For more details, see :ref:`usage/growth/rate_revisit:The Rate Class, Revisited` of the :ref:`usage/index:Usage Tutorial`.
 
 Equations of Value
 ===================
@@ -211,7 +211,7 @@ Annuities are one of the core financial instruments underlying life insurance pr
 #. Level annuity-immediate with payments more frequent than each interest period: :math:`\ax{\angln i}[(m)]`
 #. Continuously-paying annuity: :math:`\ax*{\angln i}`
 
-... and many more. To see what other symbols are supported, consult the :ref:`Notation Guide`.
+... and many more. To see what other symbols are supported, consult the :ref:`notation:Notation Guide`.
 
 Unlike other packages, which tend to use functions to represent the different types of annuities, TmVal represents annuities as a class, which gives it access to several methods that can be performed on the annuity, such as equations of value. So rather than simply returning a float value via a function, TmVal expands the manipulations that can be done with an annuity. My aim is to allow the :class:`.Annuity` class to serve as a base class for, or to be embedded into more complex insurance products.
 
@@ -288,7 +288,7 @@ For example, suppose we were to obtain a 2-year loan of 50,000, to be paid back 
 
    print(amort)
 
-Using the :class:`.Loan` class's :meth:`.olb_r` method, we can calculate the outstanding loan balance at any time, such as after 1 year, using the :ref:`retrospective method <Outstanding Loan Balance - Retrospective Method>`:
+Using the :class:`.Loan` class's :meth:`.olb_r` method, we can calculate the outstanding loan balance at any time, such as after 1 year, using the :ref:`retrospective method <usage/loan/retrospective:Outstanding Loan Balance - Retrospective Method>`:
 
 .. math::
 
@@ -404,6 +404,6 @@ I anticipate declaring the project to be in beta stage once I've incorporated al
 Further Reading
 ================
 
-Go ahead and give TmVal a try! The next section is the :ref:`Installation and Quickstart` followed by the :ref:`Usage Tutorial`. For technical documentation, consult the :ref:`API Reference`, which links to the source code of the project.
+Go ahead and give TmVal a try! The next section is the :ref:`quickstart:Installation and Quickstart` followed by the :ref:`usage/index:Usage Tutorial`. For technical documentation, consult the :ref`:api_ref:API Reference`, which links to the source code of the project.
 
 If you encounter bugs, in TmVal or its documentation, feel free to create a `ticket <https://github.com/genedan/tmval/issues>`_ or `pull request <https://github.com/genedan/tmval/pulls>`_ on the `GitHub Repository <https://github.com/genedan/tmval>`_.

@@ -15,7 +15,7 @@ TmVal's :class:`.Bond` class is used to define bonds. You can initialize a bond 
 
 The bond price is the amount a bondholder pays to acquire a bond. If purchased from the issuer, this also represents the amount loaned to the issuer. Otherwise, it refers to the amount one pays to another bondholder for the rights to the remaining stream of payments promised by the bond.
 
-Coupons are regular payments made by the bond issuer to the bondholder. A bond may have zero coupons, in which case it is referred to as a :ref:`zero-coupon <Zero-Coupon Bonds>` bond.
+Coupons are regular payments made by the bond issuer to the bondholder. A bond may have zero coupons, in which case it is referred to as a :ref:`zero-coupon <usage/bond/zerocoupon:Zero-Coupon Bonds>` bond.
 
 The yield rate on a bond is the yield rate to the bondholder if the bond is held to maturity.
 

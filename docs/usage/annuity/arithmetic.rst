@@ -30,7 +30,7 @@ and
 
    (I_{P,Q}\ax**{}){\angln i} = P\ax**{\angln i} + \frac{Q}{d}(\ax{\angln i} - n).
 
-For special cases :math:`(I\sx{}){\angln i}`, :math:`(I\ax{}){\angln i}`, :math:`(D\ax{}){\angln i}`, :math:`(I\sx**{}){\angln i}`, :math:`(D\ax**{}){\angln i}`, see the :ref:`Notation guide`.
+For special cases :math:`(I\sx{}){\angln i}`, :math:`(I\ax{}){\angln i}`, :math:`(D\ax{}){\angln i}`, :math:`(I\sx**{}){\angln i}`, :math:`(D\ax**{}){\angln i}`, see the :ref:`notation:Notation guide`.
 
 Examples
 =========
@@ -66,4 +66,4 @@ Now, suppose instead that the annuity makes beginning-of-year payments. What is 
 
    print(ann2.sv())
 
-The special cases mentioned earlier can be achieved by simply modifying the ``amount`` and ``aprog`` argument to be equal to the corresponding special case values. For more information on what these symbols mean and how to derive them, refer to a text on interest theory (some can be found in the :ref:`References` section).
+The special cases mentioned earlier can be achieved by simply modifying the ``amount`` and ``aprog`` argument to be equal to the corresponding special case values. For more information on what these symbols mean and how to derive them, refer to a text on interest theory (some can be found in the :ref:`references:References` section).
