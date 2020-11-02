@@ -1029,6 +1029,16 @@ def n_solver(
         sv=None,
         period=None,
 ):
+    """
+    Given the present value, future value, growth rate, and payment interval, solves for the number of payments
+    in a level annuity.
+
+    :param gr:
+    :param amount:
+    :param sv:
+    :param period:
+    :return:
+    """
     if sv:
         acc = standardize_acc(gr)
         i = acc.effective_rate(period)
