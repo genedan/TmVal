@@ -1024,20 +1024,20 @@ def get_perpetuity_pmt(
 
 
 def n_solver(
-        gr,
-        amount,
-        sv=None,
-        period=None,
-):
+        gr: Union[Accumulation, float, Rate],
+        amount: Union[float, int],
+        sv: Union[float, int] = None,
+        period: float = None,
+) -> float:
     """
     Given the present value, future value, growth rate, and payment interval, solves for the number of payments
     in a level annuity.
 
-    :param gr:
-    :param amount:
-    :param sv:
-    :param period:
-    :return:
+    :param gr: A growth rate object.
+    :param amount: The present value of the annuity.
+    :param sv: The future value of the annuity.
+    :param period: The payment period.
+    :return: The number of periods.
     """
     if sv:
         acc = standardize_acc(gr)
