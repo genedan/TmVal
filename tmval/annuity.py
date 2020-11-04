@@ -1034,9 +1034,13 @@ def n_solver(
     in a level annuity.
 
     :param gr: A growth rate object.
+    :type gr: Accumulation, float, Rate
     :param amount: The present value of the annuity.
+    :type amount: float, int
     :param sv: The future value of the annuity.
+    :type sv: float, int
     :param period: The payment period.
+    :type period: float
     :return: The number of periods.
     """
     if sv:
