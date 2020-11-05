@@ -10,6 +10,7 @@ import numpy as np
 from dateutil.relativedelta import relativedelta
 from inspect import signature
 from numpy import ndarray
+from scipy.integrate import quad
 from scipy.misc import derivative
 from scipy.optimize import newton
 from typing import Callable, Iterable, Tuple, Union
@@ -433,6 +434,10 @@ class Accumulation(Amount):
         res = round(reals[0])
 
         return res
+
+    def dval(self, k, t1, t2):
+        k0 = self.discount_func(t=t1, fv=k)
+        return k0 * self.val(t2)
 
 
 def simple_solver(
@@ -1194,3 +1199,17 @@ def vaalern(s, r) -> float:
     """
 
     return (r * s) / (r - s)
+
+
+def acc_from_delta_t(delta_t: Callable) -> Callable:
+    def f(t):
+        return np.exp(quad(delta_t, 0, t)[0])
+
+    return f
+
+
+def amt_from_delta_t(delta_t: Callable) -> Callable:
+    def f(t, k):
+        return k * np.exp(quad(delta_t, 0, t)[0])
+
+    return f
