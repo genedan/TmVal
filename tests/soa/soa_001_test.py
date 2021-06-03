@@ -1,6 +1,12 @@
 from tmval import Rate
 
-delta = Rate(rate=.04, pattern="Nominal Interest", freq=2).convert_rate(pattern="Force of Interest")
+delta = Rate(
+    rate=.04,
+    pattern="Nominal Interest",
+    freq=2
+).convert_rate(
+    pattern="Force of Interest"
+)
 
 
 def test_result():
