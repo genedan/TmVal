@@ -1,0 +1,28 @@
+======================
+SOA Example Problem #1
+======================
+
+Bruce deposits 100 into a bank account. His account is credited interest at an annual nominal rate of interest of 4% convertible semiannually.
+
+At the same time, Peter deposits 100 into a separate account. Peter's account is credited interest at an annual force of :math:`\delta`.
+
+After 7.25 years, the value of each account is the same.
+
+Solution
+=========
+
+Because both deposits grow to the same value at the end of the period, all we have to do is convert the nominal rate of interest to its equivalent continually compounded rate.
+
+.. ipython:: python
+
+   from tmval import Rate
+
+   delta = Rate(
+       rate=.04,
+       pattern="Nominal Interest",
+       freq=2
+   ).convert_rate(
+       pattern="Force of Interest"
+   )
+
+   print(delta)
