@@ -6,9 +6,11 @@ from collections import namedtuple
 import decimal
 import numpy as np
 from scipy.integrate import quad
+from scipy.optimize import newton
 
 from typing import (
     Callable,
+    Iterable,
     Union
 )
 
@@ -1052,3 +1054,61 @@ def n_solver(
         n = None
 
     return n
+
+
+def isolve_multiple(
+        t1: float,
+        t2: float,
+        multiple: float,
+        period: float = 1,
+        x0=np.linspace(.001, 1, 100),
+        precision=5,
+        result_period: float = 1,
+) -> Rate:
+    """
+    Given two points in time, returns the growth rate needed for the investment to grow a specified number of multiples
+    between those two points in time.
+
+    :param t1:
+    :param t2:
+    :param multiple:
+    :param period:
+    :param x0:
+    :param precision:
+    :param result_period:
+    :return:
+    """
+
+    n1 = t1 / period
+
+    n2 = t2 / period
+
+    def f(x):
+        return x ** n2 - multiple * (x ** n1) + (multiple - 1)
+
+    def fp(x):
+        return n2 * (x ** (n2 - 1)) - (multiple * n1) * (x ** (n1 - 1))
+
+    roots = newton(func=f, fprime=fp, x0=x0)
+
+    if isinstance(roots, Iterable):
+        sol = [round(x, precision) for x in roots]
+        acc = list(set(sol))
+
+    else:
+        acc = [roots]
+
+    acc = max(acc)
+
+    j = acc - 1
+
+    i = Rate(
+        rate=j,
+        pattern="Effective Interest",
+        interval=period
+    ).convert_rate(
+        pattern="Effective Interest",
+        interval=result_period
+    )
+
+    return i
