@@ -1067,27 +1067,45 @@ def isolve_multiple(
 ) -> Rate:
     """
     Given two points in time, returns the growth rate needed for the investment to grow a specified number of multiples
-    between those two points in time.
+    between those two points in time. This function assumes that an investor is making regular contributions at a
+    specified interval into some kind of investment account. For example, we might want to know what interest rate
+    would be needed for the an investor who deposits 100 each year for the investment to grow 5 times between years
+    2 and 10.
 
-    :param t1:
-    :param t2:
-    :param multiple:
-    :param period:
-    :param x0:
-    :param precision:
-    :param result_period:
-    :return:
+    :param t1: The point in time corresponding to the beginning of the relevant interval of growth.
+    :type t1: float
+    :param t2: The point in time corresponding to the end of the relevant interval of growth.
+    :type t2: float
+    :param multiple: The desired factor by which the investment will grow.
+    :type multiple: float
+    :param period: The time interval between payments.
+    :type period: float
+    :param x0: The initial guess used in Newton's method.
+    :type x0: float
+    :param precision: The desired precision of the result.
+    :type precision: float
+    :param result_period: The desired period for the returned growth rate.
+    :type result_period: float
+    :return: The required growth rate.
     """
+
+    # Calculate the exponents used in the polynomial.
 
     n1 = t1 / period
 
     n2 = t2 / period
 
+    # Set the polynomial equal to zero in preparation for Newton's method.
+
     def f(x):
         return x ** n2 - multiple * (x ** n1) + (multiple - 1)
 
+    # Calculate the derivative, this improves the accuracy when used in Newton's method.
+
     def fp(x):
         return n2 * (x ** (n2 - 1)) - (multiple * n1) * (x ** (n1 - 1))
+
+    # Solve for the roots.
 
     roots = newton(func=f, fprime=fp, x0=x0)
 
