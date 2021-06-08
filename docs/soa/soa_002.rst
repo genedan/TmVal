@@ -1,0 +1,9 @@
+======================
+SOA Example Problem #2
+======================
+
+Kathryn deposits 100 into an account at the beginning of each 4-year period for 40 years. The account credits interest at an annual effective interest rate of :math:`i`.
+
+The accumulated amount in the account at the end of 40 years is :math:`X`, which is 5 times the accumulated amount in the account at the end of 20 years.
+
+Calculate :math:`X`.
