@@ -9,3 +9,4 @@ This section illustrates how to use TmVal on examples provided by the SOA.
    :hidden:
 
    soa_001
+   soa_002
