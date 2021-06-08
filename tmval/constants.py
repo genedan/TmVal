@@ -3,7 +3,7 @@ This file contains aliases and other values that might be referenced throughout 
 """
 
 # The build version is referenced by the setup file and documentation.
-BUILD_VERSION = '0.0.11'
+BUILD_VERSION = '0.0.12'
 
 # Formal patterns refer to canonical names of different types of growth rates and their aliases.
 FORMAL_PATTERNS = {
